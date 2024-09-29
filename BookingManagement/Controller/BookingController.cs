@@ -1,25 +1,31 @@
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using BookingManagement.Service;
 
-namespace WebApplication1.Controller
+namespace BookingManagement.Controller
 {
     [Route("api/[controller]")]
     [ApiController]
     public class BookingController : ControllerBase
     {
-
-        [HttpGet("/bookings")]
-        public async Task<IActionResult> GetProducts(
-            string? filterField,
-            string? filterValue,
-            string? sortField,
-            string? sortValue,
-            int? pageNumber = 1,
-            int? pageSize = 5
-            )
+        private readonly IBookingService _bookingService;
+        
+        public BookingController(IBookingService bookingService)
         {
-
-            return null;
+            _bookingService = bookingService;
+        }
+        
+        [HttpGet]
+        public async Task<IActionResult> GetBookings(
+            [FromQuery] string? filterField,
+            [FromQuery] string? filterValue,
+            [FromQuery] string? sortField,
+            [FromQuery] string sortValue = "asc",
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 5
+        )
+        {
+            var responseDto = await _bookingService.GetBookings(filterField, filterValue, sortField, sortValue, pageNumber, pageSize);
+            return StatusCode(responseDto.StatusCode, responseDto);
         }
     }
 }
