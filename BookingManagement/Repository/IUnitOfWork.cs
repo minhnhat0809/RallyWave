@@ -1,4 +1,4 @@
-﻿using WebApplication1.Repository;
+﻿using BookingManagement.Repository;
 
 namespace BookingManagement.Repository;
 
