@@ -1,4 +1,5 @@
 ﻿using BookingManagement.DTOs;
+using BookingManagement.DTOs.BookingDto;
 
 namespace BookingManagement.Service;
 
@@ -10,4 +11,12 @@ public interface IBookingService
         string sortValue,
         int pageNumber,
         int pageSize);
+
+    Task<ResponseDto> GetBookingById(int bookingId);
+
+    Task<ResponseDto> CreateBooking(BookingCreateDto bookingCreateDto);
+
+    Task<ResponseDto> UpdateBooking(int id, BookingUpdateDto bookingUpdateDto);
+
+    Task<ResponseDto> DeleteBooking(int id);
 }

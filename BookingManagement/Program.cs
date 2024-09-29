@@ -3,8 +3,8 @@ using BookingManagement.Service;
 using BookingManagement.Service.Impl;
 using Entity;
 using Microsoft.EntityFrameworkCore;
-using WebApplication1.Repository;
-using WebApplication1.Repository.Impl;
+using BookingManagement.Repository;
+using BookingManagement.Repository.Impl;
 
 var builder = WebApplication.CreateBuilder(args);
 

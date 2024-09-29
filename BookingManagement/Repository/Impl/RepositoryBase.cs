@@ -2,7 +2,7 @@
 using Entity;
 using Microsoft.EntityFrameworkCore;
 
-namespace WebApplication1.Repository.Impl;
+namespace BookingManagement.Repository.Impl;
 
 public class RepositoryBase<T>(RallywaveContext repositoryContext) : IRepositoryBase<T>
     where T : class

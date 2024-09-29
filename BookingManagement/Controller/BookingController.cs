@@ -1,3 +1,4 @@
+using BookingManagement.DTOs.BookingDto;
 using Microsoft.AspNetCore.Mvc;
 using BookingManagement.Service;
 
@@ -5,16 +6,9 @@ namespace BookingManagement.Controller
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class BookingController : ControllerBase
+    public class BookingController(IBookingService bookingService) : ControllerBase
     {
-        private readonly IBookingService _bookingService;
-        
-        public BookingController(IBookingService bookingService)
-        {
-            _bookingService = bookingService;
-        }
-        
-        [HttpGet]
+        [HttpGet("bookings")]
         public async Task<IActionResult> GetBookings(
             [FromQuery] string? filterField,
             [FromQuery] string? filterValue,
@@ -24,8 +18,37 @@ namespace BookingManagement.Controller
             [FromQuery] int pageSize = 5
         )
         {
-            var responseDto = await _bookingService.GetBookings(filterField, filterValue, sortField, sortValue, pageNumber, pageSize);
-            return StatusCode(responseDto.StatusCode, responseDto);
+            var response = await bookingService.GetBookings(filterField, filterValue, sortField, sortValue, pageNumber, pageSize);
+            return StatusCode(response.StatusCode, response);
         }
+        
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetBookingById(int id)
+        {
+            var response = await bookingService.GetBookingById(id);
+            return StatusCode(response.StatusCode, response);
+        }
+
+        [HttpPost("bookings")]
+        public async Task<IActionResult> CreateBooking([FromBody] BookingCreateDto bookingCreateDto)
+        {
+            var response = await bookingService.CreateBooking(bookingCreateDto);
+            return StatusCode(response.StatusCode, response);
+        }
+        
+        [HttpPut("bookings/{id}")]
+        public async Task<IActionResult> UpdateBooking(int id, [FromBody] BookingUpdateDto bookingUpdateDto)
+        {
+            var response = await bookingService.UpdateBooking(id, bookingUpdateDto);
+            return StatusCode(response.StatusCode, response);
+        }
+        
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteBooking(int id)
+        {
+            var response = await bookingService.DeleteBooking(id);
+            return StatusCode(response.StatusCode, response);
+        }
+        
     }
 }

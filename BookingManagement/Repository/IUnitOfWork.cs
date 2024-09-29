@@ -1,4 +1,6 @@
-﻿namespace WebApplication1.Repository;
+﻿using WebApplication1.Repository;
+
+namespace BookingManagement.Repository;
 
 public interface IUnitOfWork
 { 

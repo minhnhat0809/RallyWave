@@ -1,6 +1,7 @@
-﻿using Entity;
+﻿using BookingManagement.Repository;
+using Entity;
 
-namespace WebApplication1.Repository.Impl;
+namespace BookingManagement.Repository.Impl;
 
 public class UnitOfWork(RallywaveContext context) : IUnitOfWork
 {

@@ -1,28 +1,29 @@
 ﻿using AutoMapper;
 using Entity;
 using BookingManagement.DTOs;
+using BookingManagement.DTOs.BookingDto;
 using BookingManagement.DTOs.BookingDto.ViewDto;
-using WebApplication1.Repository;
+using BookingManagement.Repository;
 
 namespace BookingManagement.Service.Impl;
 
 public class BookingService(IUnitOfWork unitOfWork, IMapper mapper) : IBookingService
 {
-    private readonly IUnitOfWork _unitOfWork = unitOfWork;
-
+    
     public async Task<ResponseDto> GetBookings(string? filterField, string? filterValue, string? sortField, string sortValue, int pageNumber,
         int pageSize)
     {
         var responseDto = new ResponseDto(null, "", true, 200);
         try
         {
-            var bookings = await _unitOfWork.bookingRepo.GetBookings(filterField, filterValue);
+            var bookings = await unitOfWork.bookingRepo.GetBookings(filterField, filterValue);
 
             bookings = Sort(bookings, sortField, sortValue);
 
             bookings = Paging(bookings, pageNumber, pageSize);
             
             responseDto.Result = mapper.Map<List<BookingViewDto>>(bookings);
+            responseDto.Message = "Get successfully!";
         }
         catch (Exception e)
         {
@@ -33,6 +34,110 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper) : IBookingSe
         return responseDto;
     }
 
+    public async Task<ResponseDto> GetBookingById(int bookingId)
+    {
+        var responseDto = new ResponseDto(null, "", true, 200);
+        try
+        {
+            var booking = await unitOfWork.bookingRepo.GetBookingById(bookingId);
+            if (booking == null)
+            {
+                responseDto.Message = "There are no bookings with this id";
+            }
+            else
+            {
+                responseDto.Result = booking;
+                responseDto.Message = "Get successfully!";
+            }
+        }
+        catch (Exception e)
+        {
+            responseDto.IsSucceed = false;
+            responseDto.StatusCode = 500;
+            responseDto.Message = e.Message;
+        }
+
+        return responseDto;
+    }
+
+    public async Task<ResponseDto> CreateBooking(BookingCreateDto bookingCreateDto)
+    {
+        var responseDto = new ResponseDto(null, "", true, 200);
+        try
+        {
+
+            var booking = mapper.Map<Booking>(bookingCreateDto);
+            await unitOfWork.bookingRepo.CreateBooking(booking);
+            
+            responseDto.Message = "Create successfully!";
+        }
+        catch (Exception e)
+        {
+            responseDto.IsSucceed = false;
+            responseDto.Message = e.Message;
+            responseDto.StatusCode = 500;
+        }
+
+        return responseDto; 
+    }
+
+    public async Task<ResponseDto> UpdateBooking(int id, BookingUpdateDto bookingUpdateDto)
+    {
+        var responseDto = new ResponseDto(null, "", true, 200);
+        try
+        {
+            var booking = await unitOfWork.bookingRepo.GetBookingById(id);
+            if (booking == null)
+            {
+                responseDto.IsSucceed = false;
+                responseDto.Message = "There are no bookings with this id";
+                responseDto.StatusCode = 401;
+            }
+            else
+            {
+                booking = mapper.Map<Booking>(bookingUpdateDto);
+                await unitOfWork.bookingRepo.UpdateBooking(booking);
+
+                responseDto.Message = "Update successfully!";
+            }
+        }
+        catch (Exception e)
+        {
+            responseDto.IsSucceed = false;
+            responseDto.Message = e.Message;
+            responseDto.StatusCode = 500;
+        }
+
+        return responseDto; 
+    }
+
+    public async Task<ResponseDto> DeleteBooking(int id)
+    {
+        var responseDto = new ResponseDto(null, "", true, 200);
+        try
+        {
+            var booking = await unitOfWork.bookingRepo.GetBookingById(id);
+            if (booking == null)
+            {
+                responseDto.IsSucceed = false;
+                responseDto.Message = "There are no bookings with this id";
+                responseDto.StatusCode = 401;
+            }
+            else
+            {
+                await unitOfWork.bookingRepo.DeleteAsync(booking);
+                responseDto.Message = "Delete successfully!";
+            }
+        }
+        catch (Exception e)
+        {
+            responseDto.IsSucceed = false;
+            responseDto.Message = e.Message;
+            responseDto.StatusCode = 500;
+        }
+
+        return responseDto;
+    }
 
     private List<Booking>? Paging(List<Booking>? bookings, int pageNumber, int pageSize)
     {
