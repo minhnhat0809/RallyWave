@@ -1,0 +1,36 @@
+﻿services:
+  webapplication1:
+    image: webapplication1
+    build:
+      context: .
+      dockerfile: WebApplication1/Dockerfile
+
+  usermanagement:
+    image: usermanagement
+    build:
+      context: .
+      dockerfile: UserManagement/Dockerfile
+
+  chattingmanagement:
+    image: chattingmanagement
+    build:
+      context: .
+      dockerfile: ChattingManagement/Dockerfile
+
+  courtmanagement:
+    image: courtmanagement
+    build:
+      context: .
+      dockerfile: CourtManagement/Dockerfile
+
+  notificationmanagement:
+    image: notificationmanagement
+    build:
+      context: .
+      dockerfile: NotificationManagement/Dockerfile
+
+  matchmanagement:
+    image: matchmanagement
+    build:
+      context: .
+      dockerfile: MatchManagement/Dockerfile
