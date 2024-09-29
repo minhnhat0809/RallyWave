@@ -47,11 +47,7 @@ public partial class RallywaveContext : DbContext
     public virtual DbSet<UserSport> UserSports { get; set; }
 
     public virtual DbSet<UserTeam> UserTeams { get; set; }
-
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseMySql("server=localhost;database=rallywave;user=root;password=N@hat892003.", Microsoft.EntityFrameworkCore.ServerVersion.Parse("8.0.39-mysql"));
-
+    
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder
@@ -66,9 +62,9 @@ public partial class RallywaveContext : DbContext
 
             entity.HasIndex(e => e.CourtId, "FK_Booking_Court");
 
-            entity.HasIndex(e => e.MatchId, "FK_Booking_Match");
-
             entity.HasIndex(e => e.UserId, "FK_Booking_User");
+
+            entity.HasIndex(e => e.MatchId, "match_id").IsUnique();
 
             entity.Property(e => e.BookingId).HasColumnName("booking_id");
             entity.Property(e => e.CourtId).HasColumnName("court_id");
@@ -93,8 +89,8 @@ public partial class RallywaveContext : DbContext
                 .HasForeignKey(d => d.CourtId)
                 .HasConstraintName("FK_Booking_Court");
 
-            entity.HasOne(d => d.Match).WithMany(p => p.Bookings)
-                .HasForeignKey(d => d.MatchId)
+            entity.HasOne(d => d.Match).WithOne(p => p.Booking)
+                .HasForeignKey<Booking>(d => d.MatchId)
                 .HasConstraintName("FK_Booking_Match");
 
             entity.HasOne(d => d.User).WithMany(p => p.Bookings)
@@ -330,7 +326,7 @@ public partial class RallywaveContext : DbContext
 
             entity.ToTable("payment_detail");
 
-            entity.HasIndex(e => e.BookingId, "FK_Payment_Booking");
+            entity.HasIndex(e => e.BookingId, "booking_id").IsUnique();
 
             entity.Property(e => e.PaymentId).HasColumnName("payment_id");
             entity.Property(e => e.BookingId).HasColumnName("booking_id");
@@ -344,8 +340,8 @@ public partial class RallywaveContext : DbContext
                 .IsFixedLength()
                 .HasColumnName("type");
 
-            entity.HasOne(d => d.Booking).WithMany(p => p.PaymentDetails)
-                .HasForeignKey(d => d.BookingId)
+            entity.HasOne(d => d.Booking).WithOne(p => p.PaymentDetail)
+                .HasForeignKey<PaymentDetail>(d => d.BookingId)
                 .HasConstraintName("FK_Payment_Booking");
         });
 

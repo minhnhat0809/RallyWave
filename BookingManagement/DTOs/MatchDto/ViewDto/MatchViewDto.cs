@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿namespace BookingManagement.DTOs.MatchDto.ViewDto;
 
-namespace Entity;
-
-public partial class Match
+public class MatchViewDto
 {
     public int MatchId { get; set; }
 
@@ -46,12 +43,4 @@ public partial class Match
     public sbyte Mode { get; set; }
 
     public sbyte? Status { get; set; }
-
-    public virtual Booking? Booking { get; set; }
-
-    public virtual ICollection<Conservation> Conservations { get; set; } = new List<Conservation>();
-
-    public virtual Sport? Sport { get; set; }
-
-    public virtual ICollection<User> Users { get; set; } = new List<User>();
 }

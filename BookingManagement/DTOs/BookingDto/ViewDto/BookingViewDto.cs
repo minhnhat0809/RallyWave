@@ -1,4 +1,8 @@
-﻿namespace BookingManagement.DTOs.BookingDto.ViewDto;
+﻿using BookingManagement.DTOs.CourtDto.ViewDto;
+using BookingManagement.DTOs.MatchDto.ViewDto;
+using BookingManagement.DTOs.UserDto.ViewDto;
+
+namespace BookingManagement.DTOs.BookingDto.ViewDto;
 
 public class BookingViewDto
 {
@@ -21,4 +25,10 @@ public class BookingViewDto
     public string? Note { get; set; }
 
     public sbyte Status { get; set; }
+    
+    public CourtViewDto? Court { get; set; }
+
+    public MatchViewDto? Match { get; set; }
+
+    public UserViewDto? User { get; set; }
 }

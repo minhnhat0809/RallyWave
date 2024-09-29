@@ -65,8 +65,15 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper) : IBookingSe
         var responseDto = new ResponseDto(null, "", true, 200);
         try
         {
+            responseDto = Validate(bookingCreateDto);
+            if (responseDto.IsSucceed == false)
+            {
+                return responseDto;
+            }
 
             var booking = mapper.Map<Booking>(bookingCreateDto);
+            booking.CreateAt = DateTime.Now;
+            
             await unitOfWork.bookingRepo.CreateBooking(booking);
             
             responseDto.Message = "Create successfully!";
@@ -139,6 +146,50 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper) : IBookingSe
         return responseDto;
     }
 
+    private ResponseDto Validate(BookingCreateDto bookingCreateDto)
+    {
+        var response = new ResponseDto(null, "", true, 200);
+
+        var today = DateOnly.FromDateTime(DateTime.Now.Date);
+
+        var timeNow = TimeOnly.FromDateTime(DateTime.Now);
+        
+        // validate court
+        if (!bookingCreateDto.CourtId.HasValue)
+        {
+            response.IsSucceed = false;
+            response.Message = "Court Id cannot be null.";
+            return response;
+        }
+
+        //validate date and time start
+        switch (bookingCreateDto.Date.CompareTo(today))
+        {
+            case < 0:
+                response.IsSucceed = false;
+                response.Message = "Reserved date is in the past.";
+                return response;
+            case 0:
+                if (bookingCreateDto.TimeStart.CompareTo(timeNow) < 0.5)
+                {
+                    response.IsSucceed = false;
+                    response.Message = "Reserved time is too closed.";
+                    return response;
+                }
+                break;
+        }
+
+        // validate time start and time end
+        if (bookingCreateDto.TimeStart >= bookingCreateDto.TimeEnd)
+        {
+            response.IsSucceed = false;
+            response.Message = "Time start is bigger than time end.";
+            return response;
+        }
+
+        return response;
+    }
+
     private List<Booking>? Paging(List<Booking>? bookings, int pageNumber, int pageSize)
     {
         if (bookings == null || bookings.Count == 0)
@@ -150,7 +201,6 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper) : IBookingSe
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
                 .ToList();
-
         
         return bookings;
     }

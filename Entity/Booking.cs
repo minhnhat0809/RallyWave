@@ -29,7 +29,7 @@ public partial class Booking
 
     public virtual Match? Match { get; set; }
 
-    public virtual ICollection<PaymentDetail> PaymentDetails { get; set; } = new List<PaymentDetail>();
+    public virtual PaymentDetail? PaymentDetail { get; set; }
 
     public virtual User? User { get; set; }
 }
