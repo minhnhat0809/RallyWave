@@ -15,6 +15,8 @@ public partial class Court
 
     public sbyte? MaxPlayers { get; set; }
 
+    public string? Image { get; set; }
+
     public string Address { get; set; } = null!;
 
     public string Province { get; set; } = null!;

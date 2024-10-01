@@ -1,4 +1,4 @@
-﻿namespace BookingManagement.Enum;
+﻿namespace CourtManagement.Enum;
 
 public enum CourtStatus : sbyte
 {

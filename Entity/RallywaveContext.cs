@@ -76,6 +76,7 @@ public partial class RallywaveContext : DbContext
             entity.Property(e => e.Note)
                 .HasMaxLength(255)
                 .HasColumnName("note");
+            entity.Property(e => e.SlotId).HasColumnName("slot_id");
             entity.Property(e => e.Status).HasColumnName("status");
             entity.Property(e => e.TimeEnd)
                 .HasColumnType("time")
@@ -143,6 +144,9 @@ public partial class RallywaveContext : DbContext
                 .HasMaxLength(100)
                 .HasColumnName("court_name");
             entity.Property(e => e.CourtOwnerId).HasColumnName("court_owner_id");
+            entity.Property(e => e.Image)
+                .HasMaxLength(255)
+                .HasColumnName("image");
             entity.Property(e => e.MaxPlayers).HasColumnName("max_players");
             entity.Property(e => e.Province)
                 .HasMaxLength(255)
@@ -169,6 +173,9 @@ public partial class RallywaveContext : DbContext
             entity.Property(e => e.Address)
                 .HasMaxLength(255)
                 .HasColumnName("address");
+            entity.Property(e => e.Avatar)
+                .HasMaxLength(255)
+                .HasColumnName("avatar");
             entity.Property(e => e.Dob).HasColumnName("dob");
             entity.Property(e => e.Email)
                 .HasMaxLength(100)
@@ -414,6 +421,9 @@ public partial class RallywaveContext : DbContext
             entity.Property(e => e.Address)
                 .HasMaxLength(255)
                 .HasColumnName("address");
+            entity.Property(e => e.Avatar)
+                .HasMaxLength(255)
+                .HasColumnName("avatar");
             entity.Property(e => e.Dob).HasColumnName("dob");
             entity.Property(e => e.Email)
                 .HasMaxLength(100)

@@ -9,6 +9,13 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
 
+//cors
+builder.Services.AddCors(opts =>
+{
+    opts.AddPolicy("CORSPolicy", builder => builder.AllowAnyHeader().WithOrigins()
+        .AllowAnyMethod().AllowCredentials().SetIsOriginAllowed((host) => true));
+});
+
 //db context
 builder.Services.AddDbContext<RallywaveContext>(options =>
 {
@@ -25,5 +32,6 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseCors("CORSPolicy");
 app.UseHttpsRedirection();
 app.Run();

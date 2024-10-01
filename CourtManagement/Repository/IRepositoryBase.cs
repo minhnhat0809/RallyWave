@@ -1,6 +1,6 @@
 ﻿using System.Linq.Expressions;
 
-namespace BookingManagement.Repository;
+namespace CourtManagement.Repository;
 
 public interface IRepositoryBase<T>
 {

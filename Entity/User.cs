@@ -21,6 +21,8 @@ public partial class User
 
     public string Province { get; set; } = null!;
 
+    public string? Avatar { get; set; }
+
     public sbyte Status { get; set; }
 
     public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();

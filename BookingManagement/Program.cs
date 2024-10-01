@@ -5,6 +5,7 @@ using Entity;
 using Microsoft.EntityFrameworkCore;
 using BookingManagement.Repository;
 using BookingManagement.Repository.Impl;
+using MassTransit;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,9 +29,32 @@ builder.Services.AddScoped<IBookingService, BookingService>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IBookingRepo, BookingRepo>();
 
+//cors
+builder.Services.AddCors(opts =>
+{
+    opts.AddPolicy("CORSPolicy", builder => builder.AllowAnyHeader().WithOrigins()
+        .AllowAnyMethod().AllowCredentials().SetIsOriginAllowed((host) => true));
+});
+
 
 //mapper 
 builder.Services.AddAutoMapper(typeof(MapperConfig).Assembly);
+
+//rabbitmq
+builder.Services.AddMassTransit(x =>
+{
+    // Add RabbitMQ
+    x.UsingRabbitMq((context, cfg) =>
+    {
+        // Configure RabbitMQ host
+        cfg.Host(builder.Configuration["RabbitMQ:Host"], "/", host => {
+            // Default rabbitMq authentication
+            host.Username(builder.Configuration.GetValue("RabbitMQ:Username", "guest"));
+            host.Password(builder.Configuration.GetValue("RabbitMQ:Password", "guest"));
+        });
+        cfg.ConfigureEndpoints(context);
+    });
+});
 
 var app = builder.Build();
 
@@ -43,5 +67,6 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseRouting();
+app.UseCors("CORSPolicy");
 app.MapControllers();
 app.Run();

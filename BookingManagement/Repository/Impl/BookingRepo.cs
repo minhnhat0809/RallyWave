@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using BookingManagement.Enum;
 using Entity;
 
 namespace BookingManagement.Repository.Impl;
@@ -44,9 +45,13 @@ public class BookingRepo(RallywaveContext repositoryContext) : RepositoryBase<Bo
                             b => b.Match ?? new Match(), b => b.User ?? new User(), b => b.PaymentDetail ?? new PaymentDetail());
                         break;
                     case "status":
-                        var status = Encoding.UTF8.GetBytes(filterValue);
-                        bookings = await FindByConditionAsync(b => b.Status.Equals(status),b => b.Court ?? new Court(),
-                            b => b.Match ?? new Match(), b => b.User ?? new User(), b => b.PaymentDetail ?? new PaymentDetail());
+                        if (System.Enum.TryParse<BookingStatus>(filterValue, true, out var status))
+                        {
+                            bookings = await FindByConditionAsync(b => b.Status.Equals(status),
+                                b => b.Court ?? new Court(),
+                                b => b.Match ?? new Match(), b => b.User ?? new User(),
+                                b => b.PaymentDetail ?? new PaymentDetail());
+                        }
                         break;
                 }
             }

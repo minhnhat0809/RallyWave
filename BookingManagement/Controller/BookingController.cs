@@ -22,7 +22,7 @@ namespace BookingManagement.Controller
             return StatusCode(response.StatusCode, response);
         }
         
-        [HttpGet("{id}")]
+        [HttpGet("{id:int}")]
         public async Task<IActionResult> GetBookingById(int id)
         {
             var response = await bookingService.GetBookingById(id);
@@ -36,14 +36,14 @@ namespace BookingManagement.Controller
             return StatusCode(response.StatusCode, response);
         }
         
-        [HttpPut("bookings/{id}")]
+        [HttpPut("bookings/{id:int}")]
         public async Task<IActionResult> UpdateBooking(int id, [FromBody] BookingUpdateDto bookingUpdateDto)
         {
             var response = await bookingService.UpdateBooking(id, bookingUpdateDto);
             return StatusCode(response.StatusCode, response);
         }
         
-        [HttpDelete("{id}")]
+        [HttpDelete("{id:int}")]
         public async Task<IActionResult> DeleteBooking(int id)
         {
             var response = await bookingService.DeleteBooking(id);

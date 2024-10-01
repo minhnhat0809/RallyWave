@@ -21,6 +21,8 @@ public partial class CourtOwner
 
     public string Province { get; set; } = null!;
 
+    public string? Avatar { get; set; }
+
     public sbyte Status { get; set; }
 
     public virtual ICollection<Court> Courts { get; set; } = new List<Court>();
