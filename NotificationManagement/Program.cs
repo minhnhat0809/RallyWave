@@ -1,5 +1,10 @@
 using Entity;
 using Microsoft.EntityFrameworkCore;
+using NotificationManagement.Repository;
+using NotificationManagement.Repository.Impl;
+using NotificationManagement.Service;
+using NotificationManagement.Service.Impl;
+using NotificationManagement.Ultility;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,6 +13,16 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
+
+//service
+builder.Services.AddScoped<INotificationService, NotificationService>();
+
+//repo
+builder.Services.AddScoped<INotificationRepo, NotificationRepo>();
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+//validate
+builder.Services.AddScoped(typeof(Validate));
 
 //cors
 builder.Services.AddCors(opts =>
@@ -32,6 +47,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseCors("CORSPolicy");
 app.UseHttpsRedirection();
+app.UseRouting();
+app.UseCors("CORSPolicy");
+app.MapControllers();
 app.Run();

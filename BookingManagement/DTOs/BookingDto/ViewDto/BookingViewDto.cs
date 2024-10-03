@@ -1,5 +1,6 @@
 ﻿using BookingManagement.DTOs.CourtDto.ViewDto;
 using BookingManagement.DTOs.MatchDto.ViewDto;
+using BookingManagement.DTOs.PaymentDto.ViewDto;
 using BookingManagement.DTOs.UserDto.ViewDto;
 
 namespace BookingManagement.DTOs.BookingDto.ViewDto;
@@ -31,4 +32,6 @@ public class BookingViewDto
     public MatchViewDto? Match { get; set; }
 
     public UserViewDto? User { get; set; }
+    
+    public PaymentDetailViewDto? PaymentDetail { get; set; }
 }

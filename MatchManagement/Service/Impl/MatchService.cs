@@ -20,8 +20,7 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
             List<Match>? matches;
             if (validate.IsEmptyOrWhiteSpace(filterField) || validate.IsEmptyOrWhiteSpace(filterValue))
             {
-                matches = await unitOfWork.matchRepo.FindAllAsync(m => m.Booking ?? new Booking(),
-                    m => m.UserMatches, m => m.Conservation ?? new Conservation(), m => m.Sport!);
+                matches = await unitOfWork.matchRepo.FindAllAsync(m => m.Booking, m => m.UserMatches, m => m.Conservation, m => m.Sport!);
             }
             else
             {
@@ -49,8 +48,7 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
         var responseDto = new ResponseDto(null, "Get successfully", true, StatusCodes.Status302Found);
         try
         {
-            var match = await unitOfWork.matchRepo.GetByIdAsync(id, m => m.Booking ?? new Booking(),
-                m => m.UserMatches, m => m.Conservation ?? new Conservation(), m => m.Sport!);
+            var match = await unitOfWork.matchRepo.GetByIdAsync(id, m => m.Booking, m => m.UserMatches, m => m.Conservation, m => m.Sport!);
             if (match == null)
             {
                 responseDto.Message = "There are no matches with this id";

@@ -44,21 +44,6 @@ builder.Services.AddScoped(typeof(Validate));
 //mapper 
 builder.Services.AddAutoMapper(typeof(MapperConfig).Assembly);
 
-//rabbitmq
-builder.Services.AddMassTransit(x =>
-{
-    // Add RabbitMQ
-    x.UsingRabbitMq((context, cfg) =>
-    {
-        // Configure RabbitMQ host
-        cfg.Host(builder.Configuration["RabbitMQ:Host"], "/", host => {
-            // Default rabbitMq authentication
-            host.Username(builder.Configuration.GetValue("RabbitMQ:Username", "guest"));
-            host.Password(builder.Configuration.GetValue("RabbitMQ:Password", "guest"));
-        });
-        cfg.ConfigureEndpoints(context);
-    });
-});
 
 var app = builder.Build();
 

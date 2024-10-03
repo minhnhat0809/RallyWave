@@ -22,8 +22,8 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
             
             if (validate.IsEmptyOrWhiteSpace(filterField) || validate.IsEmptyOrWhiteSpace(filterValue))
             {
-                bookings = await unitOfWork.bookingRepo.FindAllAsync(b => b.Court ?? new Court(),
-                    b => b.Match ?? new Match(), b => b.User ?? new User(), b => b.PaymentDetail ?? new PaymentDetail());
+                bookings = await unitOfWork.bookingRepo.FindAllAsync(b => b.Court,
+                    b => b.Match, b => b.User, b => b.PaymentDetail);
             }
             else
             {

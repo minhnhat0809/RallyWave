@@ -12,7 +12,7 @@ public class CourtRepo(RallywaveContext repositoryContext) : RepositoryBase<Cour
         {
             if (string.IsNullOrEmpty(filterField) || string.IsNullOrEmpty(filterValue))
             {
-                courts =  await FindAllAsync( c => c.Bookings, c => c.CourtOwner!, c => c.Sport ?? new Sport(), c => c.Slots);
+                courts =  await FindAllAsync( c => c.Bookings, c => c.CourtOwner!, c => c.Sport, c => c.Slots);
             }
             else
             {
@@ -20,21 +20,21 @@ public class CourtRepo(RallywaveContext repositoryContext) : RepositoryBase<Cour
                 {
                     case "sport":
                         courts =  await FindByConditionAsync(c => c.Sport!.SportId.Equals(int.Parse(filterValue)),
-                            c => c.Bookings, c => c.CourtOwner!, c => c.Sport ?? new Sport(), c => c.Slots);
+                            c => c.Bookings, c => c.CourtOwner!, c => c.Sport, c => c.Slots);
                         break;
                     
                     case "status":
                         if (System.Enum.TryParse<CourtStatus>(filterValue, true, out var status))
                         {
                             courts =  await FindByConditionAsync(c => c.Status.Equals(status),
-                                c => c.Bookings, c => c.CourtOwner!, c => c.Sport ?? new Sport(), c => c.Slots);
+                                c => c.Bookings, c => c.CourtOwner!, c => c.Sport, c => c.Slots);
                         }
                         break;
                     
                     case "maxplayers":
                         var number = sbyte.Parse(filterValue);
                         courts =  await FindByConditionAsync(c => c.MaxPlayers.Equals(number),
-                            c => c.Bookings, c => c.CourtOwner!, c => c.Sport ?? new Sport(), c => c.Slots);
+                            c => c.Bookings, c => c.CourtOwner!, c => c.Sport, c => c.Slots);
                         break;
                     
                 }
@@ -52,7 +52,7 @@ public class CourtRepo(RallywaveContext repositoryContext) : RepositoryBase<Cour
     {
         try
         {
-            return await GetByIdAsync(courtId, c => c.Bookings, c => c.CourtOwner!, c => c.Sport ?? new Sport(), c => c.Slots);
+            return await GetByIdAsync(courtId,  c => c.Bookings, c => c.CourtOwner!, c => c.Sport, c => c.Slots);
         }
         catch (Exception e)
         {
