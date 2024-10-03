@@ -1,12 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿namespace MatchManagement.DTOs.MatchDto;
 
-namespace Entity;
-
-public partial class Match
+public class MatchUpdateDto
 {
-    public int MatchId { get; set; }
-
     public int? SportId { get; set; }
 
     public string MatchName { get; set; } = null!;
@@ -31,9 +26,7 @@ public partial class Match
 
     public string? Gender { get; set; }
 
-    public sbyte? MinAge { get; set; }
-
-    public sbyte? MaxAge { get; set; }
+    public sbyte? AgeRange { get; set; }
 
     public sbyte? Iteration { get; set; }
 
@@ -48,12 +41,5 @@ public partial class Match
     public sbyte Mode { get; set; }
 
     public sbyte? Status { get; set; }
-
-    public virtual Booking? Booking { get; set; }
-
-    public virtual Conservation? Conservation { get; set; }
-
-    public virtual Sport? Sport { get; set; }
-
-    public virtual ICollection<UserMatch> UserMatches { get; set; } = new List<UserMatch>();
+    
 }

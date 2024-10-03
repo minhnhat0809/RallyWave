@@ -23,4 +23,10 @@
       <ProjectReference Include="..\Entity\Entity.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Controller\" />
+      <Folder Include="Repository\Impl\" />
+      <Folder Include="Service\Impl\" />
+    </ItemGroup>
+
 </Project>

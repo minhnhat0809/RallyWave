@@ -5,6 +5,7 @@ using Entity;
 using Microsoft.EntityFrameworkCore;
 using BookingManagement.Repository;
 using BookingManagement.Repository.Impl;
+using BookingManagement.Ultility;
 using MassTransit;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -35,6 +36,9 @@ builder.Services.AddCors(opts =>
     opts.AddPolicy("CORSPolicy", builder => builder.AllowAnyHeader().WithOrigins()
         .AllowAnyMethod().AllowCredentials().SetIsOriginAllowed((host) => true));
 });
+
+//ultility
+builder.Services.AddScoped(typeof(Validate));
 
 
 //mapper 

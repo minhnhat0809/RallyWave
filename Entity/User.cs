@@ -33,6 +33,8 @@ public partial class User
 
     public virtual ICollection<Message> Messages { get; set; } = new List<Message>();
 
+    public virtual ICollection<UserMatch> UserMatches { get; set; } = new List<UserMatch>();
+
     public virtual ICollection<UserNotification> UserNotifications { get; set; } = new List<UserNotification>();
 
     public virtual ICollection<UserSport> UserSports { get; set; } = new List<UserSport>();
@@ -40,6 +42,4 @@ public partial class User
     public virtual ICollection<UserTeam> UserTeams { get; set; } = new List<UserTeam>();
 
     public virtual ICollection<Conservation> Conservations { get; set; } = new List<Conservation>();
-
-    public virtual ICollection<Match> Matches { get; set; } = new List<Match>();
 }

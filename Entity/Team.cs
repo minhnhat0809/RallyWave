@@ -15,7 +15,7 @@ public partial class Team
 
     public sbyte Status { get; set; }
 
-    public virtual ICollection<Conservation> Conservations { get; set; } = new List<Conservation>();
+    public virtual Conservation? Conservation { get; set; }
 
     public virtual Sport? Sport { get; set; }
 

@@ -1,6 +1,6 @@
 ﻿using Entity;
 
-namespace BookingManagement.Repository.Impl;
+namespace BookingManagement.Repository;
 
 public interface IMatchRepo : IRepositoryBase<Match>
 {

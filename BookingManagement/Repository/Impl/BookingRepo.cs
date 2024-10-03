@@ -1,5 +1,5 @@
-﻿using System.Text;
-using BookingManagement.Enum;
+﻿using BookingManagement.Enum;
+using BookingManagement.Ultility;
 using Entity;
 
 namespace BookingManagement.Repository.Impl;
@@ -11,36 +11,28 @@ public class BookingRepo(RallywaveContext repositoryContext) : RepositoryBase<Bo
         var bookings = new List<Booking>();
         try
         {
-            if (string.IsNullOrEmpty(filterField) || string.IsNullOrEmpty(filterValue))
-            {
-                bookings = await FindAllAsync(b => b.Court ?? new Court(),
-                    b => b.Match ?? new Match(), b => b.User ?? new User(), b => b.PaymentDetail ?? new PaymentDetail());
-                
-            }
-            else
-            {
-                switch (filterField.ToLower())
+            switch (filterField!.ToLower())
                 {
                     case "date":
-                        var date = DateOnly.Parse(filterValue);
+                        var date = DateOnly.Parse(filterValue!);
                         bookings = await FindByConditionAsync(b => b.Date.Equals(date), b => b.Court ?? new Court(),
                             b => b.Match ?? new Match(), b => b.User ?? new User(), b => b.PaymentDetail ?? new PaymentDetail());
                         break;
                     
                     case "timestart":
-                        var timeStart = TimeOnly.Parse(filterValue);
+                        var timeStart = TimeOnly.Parse(filterValue!);
                         bookings = await FindByConditionAsync(b => b.TimeStart.Equals(timeStart),b => b.Court ?? new Court(),
                             b => b.Match ?? new Match(), b => b.User ?? new User(), b => b.PaymentDetail ?? new PaymentDetail());
                         break;
                     
                     case "timeend":
-                        var timeEnd = TimeOnly.Parse(filterValue);
+                        var timeEnd = TimeOnly.Parse(filterValue!);
                         bookings = await FindByConditionAsync(b => b.TimeStart.Equals(timeEnd),b => b.Court ?? new Court(),
                             b => b.Match ?? new Match(), b => b.User ?? new User(), b => b.PaymentDetail ?? new PaymentDetail());
                         break;
                     
                     case "createat":
-                        var createAt = TimeOnly.Parse(filterValue);
+                        var createAt = TimeOnly.Parse(filterValue!);
                         bookings = await FindByConditionAsync(b => b.TimeStart.Equals(createAt),b => b.Court ?? new Court(),
                             b => b.Match ?? new Match(), b => b.User ?? new User(), b => b.PaymentDetail ?? new PaymentDetail());
                         break;
@@ -54,7 +46,6 @@ public class BookingRepo(RallywaveContext repositoryContext) : RepositoryBase<Bo
                         }
                         break;
                 }
-            }
         }
         catch (Exception e)
         {

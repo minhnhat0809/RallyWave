@@ -5,10 +5,11 @@ using BookingManagement.DTOs.BookingDto;
 using BookingManagement.DTOs.BookingDto.ViewDto;
 using BookingManagement.Enum;
 using BookingManagement.Repository;
+using BookingManagement.Ultility;
 
 namespace BookingManagement.Service.Impl;
 
-public class BookingService(IUnitOfWork unitOfWork, IMapper mapper) : IBookingService
+public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate validate) : IBookingService
 {
     
     public async Task<ResponseDto> GetBookings(string? filterField, string? filterValue, string? sortField, string sortValue, int pageNumber,
@@ -17,9 +18,19 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper) : IBookingSe
         var responseDto = new ResponseDto(null, "", true, 200);
         try
         {
-            var bookings = await unitOfWork.bookingRepo.GetBookings(filterField, filterValue);
+            List<Booking>? bookings;
             
-
+            if (validate.IsEmptyOrWhiteSpace(filterField) || validate.IsEmptyOrWhiteSpace(filterValue))
+            {
+                bookings = await unitOfWork.bookingRepo.FindAllAsync(b => b.Court ?? new Court(),
+                    b => b.Match ?? new Match(), b => b.User ?? new User(), b => b.PaymentDetail ?? new PaymentDetail());
+            }
+            else
+            {
+                bookings = await unitOfWork.bookingRepo.GetBookings(filterField, filterValue);
+            }
+            
+            
             bookings = Sort(bookings, sortField, sortValue);
 
             bookings = Paging(bookings, pageNumber, pageSize);

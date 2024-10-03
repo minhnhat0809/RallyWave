@@ -1,7 +1,4 @@
-﻿using BookingManagement.Repository;
-using BookingManagement.Repository.Impl;
-
-namespace BookingManagement.Repository;
+﻿namespace BookingManagement.Repository;
 
 public interface IUnitOfWork
 { 
