@@ -1,3 +1,8 @@
+using CourtManagement;
+using CourtManagement.Repository;
+using CourtManagement.Repository.Impl;
+using CourtManagement.Service;
+using CourtManagement.Service.Impl;
 using Entity;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,6 +13,23 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
+
+//service
+builder.Services.AddScoped<ICourtService, CourtService>();
+
+//repository
+builder.Services.AddScoped<ICourtRepo, CourtRepo>();
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+//cors
+builder.Services.AddCors(opts =>
+{
+    opts.AddPolicy("CORSPolicy", builder => builder.AllowAnyHeader().WithOrigins()
+        .AllowAnyMethod().AllowCredentials().SetIsOriginAllowed((host) => true));
+});
+
+//mapper 
+builder.Services.AddAutoMapper(typeof(MapperConfig).Assembly);
 
 //db context
 builder.Services.AddDbContext<RallywaveContext>(options =>
@@ -26,5 +48,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
+app.UseRouting();
+app.UseCors("CORSPolicy");
+app.MapControllers();
 app.Run();

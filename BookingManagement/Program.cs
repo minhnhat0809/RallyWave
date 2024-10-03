@@ -5,6 +5,8 @@ using Entity;
 using Microsoft.EntityFrameworkCore;
 using BookingManagement.Repository;
 using BookingManagement.Repository.Impl;
+using BookingManagement.Ultility;
+using MassTransit;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,9 +30,20 @@ builder.Services.AddScoped<IBookingService, BookingService>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IBookingRepo, BookingRepo>();
 
+//cors
+builder.Services.AddCors(opts =>
+{
+    opts.AddPolicy("CORSPolicy", builder => builder.AllowAnyHeader().WithOrigins()
+        .AllowAnyMethod().AllowCredentials().SetIsOriginAllowed((host) => true));
+});
+
+//ultility
+builder.Services.AddScoped(typeof(Validate));
+
 
 //mapper 
 builder.Services.AddAutoMapper(typeof(MapperConfig).Assembly);
+
 
 var app = builder.Build();
 
@@ -43,5 +56,6 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseRouting();
+app.UseCors("CORSPolicy");
 app.MapControllers();
 app.Run();

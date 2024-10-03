@@ -11,4 +11,4 @@ public interface IRepositoryBase<T>
     Task<bool> DeleteAsync(T entity);
     Task<bool> UpdateAsync(T entity);
     Task<bool> SaveChange();
-}
+} 

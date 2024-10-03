@@ -42,5 +42,5 @@ public class MatchViewDto
 
     public sbyte Mode { get; set; }
 
-    public sbyte? Status { get; set; }
+    public sbyte? Status { get; set; } 
 }

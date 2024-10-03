@@ -1,3 +1,8 @@
+using ChattingManagement.Repository;
+using ChattingManagement.Repository.Impl;
+using ChattingManagement.Service;
+using ChattingManagement.Service.Impl;
+using ChattingManagement.Ultility;
 using Entity;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,10 +14,30 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
 
+//service
+builder.Services.AddScoped<IConservationService, ConservationService>();
+builder.Services.AddScoped<IMessageService, MessageService>();
+
+//repo
+builder.Services.AddScoped<IConservationRepo, ConservationRepo>();
+builder.Services.AddScoped<IMessageRepo, MessageRepo>();
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+//validate
+builder.Services.AddScoped(typeof(Validate));
+
+//db context
 builder.Services.AddDbContext<RallywaveContext>(options =>
 {
     options.UseMySql(builder.Configuration.GetConnectionString("RallyWave"),
         new MySqlServerVersion(new Version(8, 0, 39))); 
+});
+
+//cors
+builder.Services.AddCors(opts =>
+{
+    opts.AddPolicy("CORSPolicy", builder => builder.AllowAnyHeader().WithOrigins()
+        .AllowAnyMethod().AllowCredentials().SetIsOriginAllowed((host) => true));
 });
 
 var app = builder.Build();
@@ -25,4 +50,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseRouting();
+app.UseCors("CORSPolicy");
+app.MapControllers();
 app.Run();

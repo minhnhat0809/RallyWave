@@ -4,33 +4,60 @@
     build:
       context: .
       dockerfile: UserManagement/Dockerfile
+    networks:
+      - rallywave
 
   chattingmanagement:
     image: chattingmanagement
     build:
       context: .
       dockerfile: ChattingManagement/Dockerfile
+    networks:
+      - rallywave
 
   courtmanagement:
     image: courtmanagement
     build:
       context: .
       dockerfile: CourtManagement/Dockerfile
+    networks:
+      - rallywave
 
   notificationmanagement:
     image: notificationmanagement
     build:
       context: .
       dockerfile: NotificationManagement/Dockerfile
+    networks:
+      - rallywave
 
   matchmanagement:
     image: matchmanagement
     build:
       context: .
       dockerfile: MatchManagement/Dockerfile
+    networks:
+      - rallywave
 
   bookingmanagement:
     image: bookingmanagement
     build:
       context: .
       dockerfile: BookingManagement/Dockerfile
+    networks:
+      - rallywave
+        
+  rabbitmq:
+    container_name: rabbitmq
+    image: rabbitmq
+    ports:
+      - 5672:5672 # internal port
+      - 15672:15672 # access in browser port
+    networks:
+      - rallywave
+    volumes:
+      - /var/lib/rabbitmq
+
+networks:
+  rallywave: 
+    driver: bridge

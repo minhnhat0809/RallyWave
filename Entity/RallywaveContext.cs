@@ -42,12 +42,14 @@ public partial class RallywaveContext : DbContext
 
     public virtual DbSet<User> Users { get; set; }
 
+    public virtual DbSet<UserMatch> UserMatches { get; set; }
+
     public virtual DbSet<UserNotification> UserNotifications { get; set; }
 
     public virtual DbSet<UserSport> UserSports { get; set; }
 
     public virtual DbSet<UserTeam> UserTeams { get; set; }
-    
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder
@@ -76,6 +78,7 @@ public partial class RallywaveContext : DbContext
             entity.Property(e => e.Note)
                 .HasMaxLength(255)
                 .HasColumnName("note");
+            entity.Property(e => e.SlotId).HasColumnName("slot_id");
             entity.Property(e => e.Status).HasColumnName("status");
             entity.Property(e => e.TimeEnd)
                 .HasColumnType("time")
@@ -104,9 +107,9 @@ public partial class RallywaveContext : DbContext
 
             entity.ToTable("conservation");
 
-            entity.HasIndex(e => e.MatchId, "FK_Conservation_Match");
+            entity.HasIndex(e => e.MatchId, "match_id").IsUnique();
 
-            entity.HasIndex(e => e.TeamId, "FK_Conservation_Team");
+            entity.HasIndex(e => e.TeamId, "team_id").IsUnique();
 
             entity.Property(e => e.ConservationId).HasColumnName("conservation_id");
             entity.Property(e => e.ConservationName)
@@ -116,12 +119,12 @@ public partial class RallywaveContext : DbContext
             entity.Property(e => e.Status).HasColumnName("status");
             entity.Property(e => e.TeamId).HasColumnName("team_id");
 
-            entity.HasOne(d => d.Match).WithMany(p => p.Conservations)
-                .HasForeignKey(d => d.MatchId)
+            entity.HasOne(d => d.Match).WithOne(p => p.Conservation)
+                .HasForeignKey<Conservation>(d => d.MatchId)
                 .HasConstraintName("FK_Conservation_Match");
 
-            entity.HasOne(d => d.Team).WithMany(p => p.Conservations)
-                .HasForeignKey(d => d.TeamId)
+            entity.HasOne(d => d.Team).WithOne(p => p.Conservation)
+                .HasForeignKey<Conservation>(d => d.TeamId)
                 .HasConstraintName("FK_Conservation_Team");
         });
 
@@ -143,6 +146,9 @@ public partial class RallywaveContext : DbContext
                 .HasMaxLength(100)
                 .HasColumnName("court_name");
             entity.Property(e => e.CourtOwnerId).HasColumnName("court_owner_id");
+            entity.Property(e => e.Image)
+                .HasMaxLength(255)
+                .HasColumnName("image");
             entity.Property(e => e.MaxPlayers).HasColumnName("max_players");
             entity.Property(e => e.Province)
                 .HasMaxLength(255)
@@ -169,6 +175,9 @@ public partial class RallywaveContext : DbContext
             entity.Property(e => e.Address)
                 .HasMaxLength(255)
                 .HasColumnName("address");
+            entity.Property(e => e.Avatar)
+                .HasMaxLength(255)
+                .HasColumnName("avatar");
             entity.Property(e => e.Dob).HasColumnName("dob");
             entity.Property(e => e.Email)
                 .HasMaxLength(100)
@@ -224,7 +233,6 @@ public partial class RallywaveContext : DbContext
             entity.Property(e => e.AddByOthers)
                 .HasColumnType("bit(1)")
                 .HasColumnName("add_by_others");
-            entity.Property(e => e.AgeRange).HasColumnName("age_range");
             entity.Property(e => e.AutoApprove)
                 .HasColumnType("bit(1)")
                 .HasColumnName("auto_approve");
@@ -242,7 +250,9 @@ public partial class RallywaveContext : DbContext
                 .HasMaxLength(100)
                 .HasColumnName("match_name");
             entity.Property(e => e.MatchType).HasColumnName("match_type");
+            entity.Property(e => e.MaxAge).HasColumnName("max_age");
             entity.Property(e => e.MaxLevel).HasColumnName("max_level");
+            entity.Property(e => e.MinAge).HasColumnName("min_age");
             entity.Property(e => e.MinLevel).HasColumnName("min_level");
             entity.Property(e => e.Mode).HasColumnName("mode");
             entity.Property(e => e.Note)
@@ -414,6 +424,9 @@ public partial class RallywaveContext : DbContext
             entity.Property(e => e.Address)
                 .HasMaxLength(255)
                 .HasColumnName("address");
+            entity.Property(e => e.Avatar)
+                .HasMaxLength(255)
+                .HasColumnName("avatar");
             entity.Property(e => e.Dob).HasColumnName("dob");
             entity.Property(e => e.Email)
                 .HasMaxLength(100)
@@ -452,28 +465,31 @@ public partial class RallywaveContext : DbContext
                         j.IndexerProperty<int>("UserId").HasColumnName("user_id");
                         j.IndexerProperty<int>("ConservationId").HasColumnName("conservation_id");
                     });
+        });
 
-            entity.HasMany(d => d.Matches).WithMany(p => p.Users)
-                .UsingEntity<Dictionary<string, object>>(
-                    "UserMatch",
-                    r => r.HasOne<Match>().WithMany()
-                        .HasForeignKey("MatchId")
-                        .OnDelete(DeleteBehavior.ClientSetNull)
-                        .HasConstraintName("FK_User_Match_Match"),
-                    l => l.HasOne<User>().WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.ClientSetNull)
-                        .HasConstraintName("FK_User_Match_User"),
-                    j =>
-                    {
-                        j.HasKey("UserId", "MatchId")
-                            .HasName("PRIMARY")
-                            .HasAnnotation("MySql:IndexPrefixLength", new[] { 0, 0 });
-                        j.ToTable("user_match");
-                        j.HasIndex(new[] { "MatchId" }, "FK_User_Match_Match");
-                        j.IndexerProperty<int>("UserId").HasColumnName("user_id");
-                        j.IndexerProperty<int>("MatchId").HasColumnName("match_id");
-                    });
+        modelBuilder.Entity<UserMatch>(entity =>
+        {
+            entity.HasKey(e => new { e.UserId, e.MatchId })
+                .HasName("PRIMARY")
+                .HasAnnotation("MySql:IndexPrefixLength", new[] { 0, 0 });
+
+            entity.ToTable("user_match");
+
+            entity.HasIndex(e => e.MatchId, "FK_User_Match_Match");
+
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+            entity.Property(e => e.MatchId).HasColumnName("match_id");
+            entity.Property(e => e.Status).HasColumnName("status");
+
+            entity.HasOne(d => d.Match).WithMany(p => p.UserMatches)
+                .HasForeignKey(d => d.MatchId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_User_Match_Match");
+
+            entity.HasOne(d => d.User).WithMany(p => p.UserMatches)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_User_Match_User");
         });
 
         modelBuilder.Entity<UserNotification>(entity =>

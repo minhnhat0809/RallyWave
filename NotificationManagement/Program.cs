@@ -1,5 +1,10 @@
 using Entity;
 using Microsoft.EntityFrameworkCore;
+using NotificationManagement.Repository;
+using NotificationManagement.Repository.Impl;
+using NotificationManagement.Service;
+using NotificationManagement.Service.Impl;
+using NotificationManagement.Ultility;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,6 +13,23 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
+
+//service
+builder.Services.AddScoped<INotificationService, NotificationService>();
+
+//repo
+builder.Services.AddScoped<INotificationRepo, NotificationRepo>();
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+//validate
+builder.Services.AddScoped(typeof(Validate));
+
+//cors
+builder.Services.AddCors(opts =>
+{
+    opts.AddPolicy("CORSPolicy", builder => builder.AllowAnyHeader().WithOrigins()
+        .AllowAnyMethod().AllowCredentials().SetIsOriginAllowed((host) => true));
+});
 
 //db context
 builder.Services.AddDbContext<RallywaveContext>(options =>
@@ -26,4 +48,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseRouting();
+app.UseCors("CORSPolicy");
+app.MapControllers();
 app.Run();

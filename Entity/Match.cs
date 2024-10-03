@@ -31,7 +31,9 @@ public partial class Match
 
     public string? Gender { get; set; }
 
-    public sbyte? AgeRange { get; set; }
+    public sbyte? MinAge { get; set; }
+
+    public sbyte? MaxAge { get; set; }
 
     public sbyte? Iteration { get; set; }
 
@@ -49,9 +51,9 @@ public partial class Match
 
     public virtual Booking? Booking { get; set; }
 
-    public virtual ICollection<Conservation> Conservations { get; set; } = new List<Conservation>();
+    public virtual Conservation? Conservation { get; set; }
 
     public virtual Sport? Sport { get; set; }
 
-    public virtual ICollection<User> Users { get; set; } = new List<User>();
+    public virtual ICollection<UserMatch> UserMatches { get; set; } = new List<UserMatch>();
 }
