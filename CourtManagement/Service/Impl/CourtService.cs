@@ -3,11 +3,12 @@ using CourtManagement.DTOs;
 using CourtManagement.DTOs.CourtDto;
 using CourtManagement.DTOs.CourtDto.ViewDto;
 using CourtManagement.Repository;
+using CourtManagement.Ultility;
 using Entity;
 
 namespace CourtManagement.Service.Impl;
 
-public class CourtService(IUnitOfWork unitOfWork, IMapper mapper) : ICourtService
+public class CourtService(IUnitOfWork unitOfWork, IMapper mapper, ListExtensions listExtensions) : ICourtService
 {
     public async Task<ResponseDto> GetCourts(string? filterField, string? filterValue, string? sortField, string sortValue, int pageNumber,
         int pageSize)
@@ -19,7 +20,7 @@ public class CourtService(IUnitOfWork unitOfWork, IMapper mapper) : ICourtServic
 
             courts = Sort(courts, sortField, sortValue);
 
-            courts = Paging(courts, pageNumber, pageSize);
+            courts = listExtensions.Paging(courts, pageNumber, pageSize);
 
             responseDto.Result = mapper.Map<List<CourtViewDto>>(courts);
             responseDto.Message = "Get successfully!";
@@ -121,7 +122,7 @@ public class CourtService(IUnitOfWork unitOfWork, IMapper mapper) : ICourtServic
         return responseDto;
     }
 
-    private static List<Court>? Sort(List<Court>? courts, string? sortField, string? sortValue)
+    private List<CourtsViewDto>? Sort(List<CourtsViewDto>? courts, string? sortField, string? sortValue)
     {
         if (courts == null || courts.Count == 0 || string.IsNullOrEmpty(sortField) || 
             string.IsNullOrEmpty(sortValue) || string.IsNullOrWhiteSpace(sortField) || string.IsNullOrWhiteSpace(sortValue))
@@ -132,36 +133,20 @@ public class CourtService(IUnitOfWork unitOfWork, IMapper mapper) : ICourtServic
         courts = sortField.ToLower() switch
         {
             "courtname" => sortValue.Equals("asc")
-                ? courts.OrderBy(c => c.CourtName).ToList()
-                : courts.OrderByDescending(c => c.CourtName).ToList(),
-            "maxplayers" => sortValue.Equals("asc")
-                ? courts.OrderBy(c => c.MaxPlayers).ToList()
-                : courts.OrderByDescending(c => c.MaxPlayers).ToList(),
+                ? listExtensions.Sort(courts, c => c.CourtName, true)
+                : listExtensions.Sort(courts, c => c.CourtName, false),
             "address" => sortValue.Equals("asc")
-                ? courts.OrderBy(c => c.Address).ToList()
-                : courts.OrderByDescending(c => c.Address).ToList(),
+                ? listExtensions.Sort(courts, c => c.Address, true)
+                : listExtensions.Sort(courts, c => c.Address, false),
             "province" => sortValue.Equals("asc")
-                ? courts.OrderBy(c => c.Province).ToList()
-                : courts.OrderByDescending(c => c.Province).ToList(),
+                ? listExtensions.Sort(courts, c => c.Province, true)
+                : listExtensions.Sort(courts, c => c.Province, false),
             "status" => sortValue.Equals("asc")
-                ? courts.OrderBy(c => c.Status).ToList()
-                : courts.OrderByDescending(c => c.Status).ToList(),
+                ? listExtensions.Sort(courts, c => c.Status, true)
+                : listExtensions.Sort(courts, c => c.Status, false),
             _ => courts
         };
 
         return courts;
-    }
-
-    private static List<Court>? Paging(List<Court>? courts, int pageNumber, int pageSize)
-    {
-        if (courts == null || courts.Count == 0)
-        {
-            return courts;
-        }
-        
-        return courts
-            .Skip((pageNumber - 1) * pageSize)
-            .Take(pageNumber)
-            .ToList();
     }
 }

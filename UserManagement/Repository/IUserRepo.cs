@@ -1,6 +1,8 @@
-﻿namespace UserManagement.Repository;
+﻿using Entity;
 
-public interface IUserRepo
+namespace UserManagement.Repository;
+
+public interface IUserRepo : IRepositoryBase<User>
 {
     
 }

@@ -21,8 +21,9 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IUserRepo, UserRepo>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
-//validate
+//utilities
 builder.Services.AddScoped(typeof(Validate));
+builder.Services.AddScoped(typeof(ListExtensions));
 
 //cors
 builder.Services.AddCors(opts =>

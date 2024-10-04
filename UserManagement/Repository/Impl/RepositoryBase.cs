@@ -2,7 +2,7 @@
 using Entity;
 using Microsoft.EntityFrameworkCore;
 
-namespace CourtManagement.Repository.Impl;
+namespace UserManagement.Repository.Impl;
 
 public class RepositoryBase<T>(RallywaveContext repositoryContext) : IRepositoryBase<T>
     where T : class

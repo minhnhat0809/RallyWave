@@ -11,4 +11,6 @@ public class UnitOfWork(RallywaveContext context) : IUnitOfWork
     public ISlotRepo slotRepo { get; } = new SlotRepo(context);
 
     public IMatchRepo matchRepo { get; } = new MatchRepo(context);
+
+    public IUserRepo userRepo { get; } = new UserRepo(context);
 }

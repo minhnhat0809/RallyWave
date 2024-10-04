@@ -39,6 +39,7 @@ builder.Services.AddCors(opts =>
 
 //ultility
 builder.Services.AddScoped(typeof(Validate));
+builder.Services.AddScoped(typeof(ListExtensions));
 
 
 //mapper 

@@ -21,8 +21,9 @@ builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<INotificationRepo, NotificationRepo>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
-//validate
+//utilities
 builder.Services.AddScoped(typeof(Validate));
+builder.Services.AddScoped(typeof(ListExtensions));
 
 //cors
 builder.Services.AddCors(opts =>

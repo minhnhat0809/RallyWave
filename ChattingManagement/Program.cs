@@ -23,8 +23,9 @@ builder.Services.AddScoped<IConservationRepo, ConservationRepo>();
 builder.Services.AddScoped<IMessageRepo, MessageRepo>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
-//validate
+//utilities
 builder.Services.AddScoped(typeof(Validate));
+builder.Services.AddScoped(typeof(ListExtensions));
 
 //db context
 builder.Services.AddDbContext<RallywaveContext>(options =>

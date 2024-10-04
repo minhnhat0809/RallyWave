@@ -1,6 +1,6 @@
 ﻿using System.Linq.Expressions;
 
-namespace ChattingManagement.Repository;
+namespace UserManagement.Repository;
 
 public interface IRepositoryBase<T>
 {

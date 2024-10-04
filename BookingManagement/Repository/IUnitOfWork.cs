@@ -9,4 +9,6 @@ public interface IUnitOfWork
     ISlotRepo slotRepo { get; }
     
     IMatchRepo matchRepo { get; }
+    
+    IUserRepo userRepo { get; }
 }
