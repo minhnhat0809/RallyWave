@@ -70,7 +70,7 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
         var responseDto = new ResponseDto(null, "Create successfully", true, StatusCodes.Status201Created);
         try
         {
-            //overall validaiton
+            //overall validation
             responseDto = await ValidateForCreating(matchCreateDto);
             if (responseDto.IsSucceed == false)
             {

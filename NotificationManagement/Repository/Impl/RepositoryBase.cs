@@ -11,7 +11,7 @@ public class RepositoryBase<T>(RallywaveContext repositoryContext) : IRepository
     {
         IQueryable<T> query = repositoryContext.Set<T>();
 
-        query = includes.Aggregate(query, (current, include) => current.Include(include));
+        query = includes.Aggregate(query, (current, include) => current.Include(include)).AsSplitQuery();
 
         return query.ToListAsync();
     }
@@ -21,7 +21,7 @@ public class RepositoryBase<T>(RallywaveContext repositoryContext) : IRepository
     {
         var query = repositoryContext.Set<T>().Where(expression);
 
-        query = includes.Aggregate(query, (current, include) => current.Include(include));
+        query = includes.Aggregate(query, (current, include) => current.Include(include)).AsSplitQuery();
 
         return query.ToListAsync();
     }
@@ -31,7 +31,7 @@ public class RepositoryBase<T>(RallywaveContext repositoryContext) : IRepository
     {
         IQueryable<T> query = repositoryContext.Set<T>();
 
-        query = includes.Aggregate(query, (current, include) => current.Include(include));
+        query = includes.Aggregate(query, (current, include) => current.Include(include)).AsSplitQuery();
 
         return await query.FirstOrDefaultAsync(e => EF.Property<object>(e, "Id") == id);
     }

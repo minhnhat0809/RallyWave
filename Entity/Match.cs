@@ -9,6 +9,8 @@ public partial class Match
 
     public int? SportId { get; set; }
 
+    public int? CreateBy { get; set; }
+
     public string MatchName { get; set; } = null!;
 
     public string? Note { get; set; }
@@ -52,6 +54,8 @@ public partial class Match
     public virtual Booking? Booking { get; set; }
 
     public virtual Conservation? Conservation { get; set; }
+
+    public virtual User? CreateByNavigation { get; set; }
 
     public virtual Sport? Sport { get; set; }
 

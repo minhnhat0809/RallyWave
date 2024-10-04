@@ -31,7 +31,11 @@ public partial class User
 
     public virtual ICollection<Friendship> FriendshipUser2s { get; set; } = new List<Friendship>();
 
+    public virtual ICollection<Match> Matches { get; set; } = new List<Match>();
+
     public virtual ICollection<Message> Messages { get; set; } = new List<Message>();
+
+    public virtual ICollection<Team> Teams { get; set; } = new List<Team>();
 
     public virtual ICollection<UserMatch> UserMatches { get; set; } = new List<UserMatch>();
 

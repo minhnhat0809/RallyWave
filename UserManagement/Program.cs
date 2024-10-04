@@ -1,5 +1,10 @@
 using Entity;
 using Microsoft.EntityFrameworkCore;
+using UserManagement.Repository;
+using UserManagement.Repository.Impl;
+using UserManagement.Service;
+using UserManagement.Service.Impl;
+using UserManagement.Ultility;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,10 +14,20 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
 
+//service
+builder.Services.AddScoped<IUserService, UserService>();
+
+//repo
+builder.Services.AddScoped<IUserRepo, UserRepo>();
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+//validate
+builder.Services.AddScoped(typeof(Validate));
+
 //cors
 builder.Services.AddCors(opts =>
 {
-    opts.AddPolicy("CORSPolicy", builder => builder.AllowAnyHeader().WithOrigins()
+    opts.AddPolicy("CORSPolicy", corsPolicyBuilder => corsPolicyBuilder.AllowAnyHeader().WithOrigins()
         .AllowAnyMethod().AllowCredentials().SetIsOriginAllowed((host) => true));
 });
 
