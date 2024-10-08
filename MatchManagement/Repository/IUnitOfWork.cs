@@ -2,5 +2,7 @@
 
 public interface IUnitOfWork
 {
-    IMatchRepo matchRepo { get; }
+    IMatchRepo MatchRepo { get; }
+    
+    ISportRepo SportRepo { get; }
 }

@@ -21,11 +21,11 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
             
             if (validate.IsEmptyOrWhiteSpace(filterField) || validate.IsEmptyOrWhiteSpace(filterValue))
             {
-                bookings = await unitOfWork.bookingRepo.FindAllAsync(b => new BookingsViewDto(b.BookingId, b.Date, b.TimeStart, b.TimeEnd, b.Status, b.PaymentDetail), null);
+                bookings = await unitOfWork.BookingRepo.FindAllAsync(b => new BookingsViewDto(b.BookingId, b.Date, b.TimeStart, b.TimeEnd, b.Status, b.PaymentDetail), null);
             }
             else
             {
-                bookings = await unitOfWork.bookingRepo.GetBookings(filterField, filterValue);
+                bookings = await unitOfWork.BookingRepo.GetBookings(filterField, filterValue);
             }
             
             
@@ -50,7 +50,7 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
         var responseDto = new ResponseDto(null, "", true, StatusCodes.Status200OK);
         try
         {
-            var booking = await unitOfWork.bookingRepo.GetBookingById(bookingId);
+            var booking = await unitOfWork.BookingRepo.GetBookingById(bookingId);
             if (booking == null)
             {
                 responseDto.Message = "There are no bookings with this id";
@@ -86,7 +86,7 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
             var booking = mapper.Map<Booking>(bookingCreateDto);
             booking.CreateAt = DateTime.Now;
             
-            await unitOfWork.bookingRepo.CreateBooking(booking);
+            await unitOfWork.BookingRepo.CreateBooking(booking);
             
             responseDto.Message = "Create successfully!";
         }
@@ -105,7 +105,7 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
         var responseDto = new ResponseDto(null, "", true, 200);
         try
         {
-            var booking = await unitOfWork.bookingRepo.GetBookingById(id);
+            var booking = await unitOfWork.BookingRepo.GetBookingById(id);
             if (booking == null)
             {
                 responseDto.IsSucceed = false;
@@ -123,7 +123,7 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
             
             booking = mapper.Map<Booking>(bookingUpdateDto);
             
-            await unitOfWork.bookingRepo.UpdateBooking(booking);
+            await unitOfWork.BookingRepo.UpdateBooking(booking);
             responseDto.Message = "Update successfully!";
             
         }
@@ -142,7 +142,7 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
         var responseDto = new ResponseDto(null, "", true, 200);
         try
         {
-            var booking = await unitOfWork.bookingRepo.GetBookingById(id);
+            var booking = await unitOfWork.BookingRepo.GetBookingById(id);
             if (booking == null)
             {
                 responseDto.IsSucceed = false;
@@ -151,7 +151,7 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
             }
             else
             {
-                await unitOfWork.bookingRepo.DeleteBooking(booking);
+                await unitOfWork.BookingRepo.DeleteBooking(booking);
                 responseDto.Message = "Delete successfully!";
             }
         }
@@ -185,7 +185,7 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
         // validate match
         if (bookingCreateDto.MatchId.HasValue)
         {
-            var match = await unitOfWork.matchRepo.GetByIdAsync(bookingCreateDto.MatchId.Value, m => new {m.MatchId, m.MatchName});
+            var match = await unitOfWork.MatchRepo.GetByIdAsync(bookingCreateDto.MatchId.Value, m => new {m.MatchId, m.MatchName});
             if (match == null)
             {
                 response.IsSucceed = false;
@@ -198,7 +198,7 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
         // validate user
         if (bookingCreateDto.UserId.HasValue)
         {
-            var match = await unitOfWork.userRepo.GetByIdAsync(bookingCreateDto.UserId.Value, u => new {u.UserId, u.UserName});
+            var match = await unitOfWork.UserRepo.GetByIdAsync(bookingCreateDto.UserId.Value, u => new {u.UserId, u.UserName});
             if (match == null)
             {
                 response.IsSucceed = false;
@@ -217,7 +217,7 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
             return response;
         }
         
-        var court = await unitOfWork.courtRepo.GetCourtById(bookingCreateDto.CourtId.Value);
+        var court = await unitOfWork.CourtRepo.GetCourtById(bookingCreateDto.CourtId.Value);
         if (court == null)
         {
             response.IsSucceed = false;
@@ -235,7 +235,7 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
             return response;
         }
 
-        var slot = await unitOfWork.slotRepo.GetByIdAsync(bookingCreateDto.SlotId, s => s);
+        var slot = await unitOfWork.SlotRepo.GetByIdAsync(bookingCreateDto.SlotId, s => s);
         if (slot == null)
         {
             response.IsSucceed = false;
@@ -299,7 +299,7 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
         // validate match
         if (bookingUpdateDto.MatchId.HasValue)
         {
-            var match = await unitOfWork.matchRepo.GetByIdAsync(bookingUpdateDto.MatchId.Value, m => new {m.MatchId, m.MatchName}, null);
+            var match = await unitOfWork.MatchRepo.GetByIdAsync(bookingUpdateDto.MatchId.Value, m => new {m.MatchId, m.MatchName}, null);
             if (match == null)
             {
                 response.IsSucceed = false;
@@ -312,7 +312,7 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
         // validate user
         if (bookingUpdateDto.UserId.HasValue)
         {
-            var match = await unitOfWork.userRepo.GetByIdAsync(bookingUpdateDto.UserId.Value, u => new {u.UserId});
+            var match = await unitOfWork.UserRepo.GetByIdAsync(bookingUpdateDto.UserId.Value, u => new {u.UserId});
             if (match == null)
             {
                 response.IsSucceed = false;
@@ -331,7 +331,7 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
             return response;
         }
         
-        var court = await unitOfWork.courtRepo.GetCourtById(bookingUpdateDto.CourtId.Value);
+        var court = await unitOfWork.CourtRepo.GetCourtById(bookingUpdateDto.CourtId.Value);
         if (court == null)
         {
             response.IsSucceed = false;
@@ -349,7 +349,7 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
             return response;
         }
 
-        var slot = await unitOfWork.slotRepo.GetByIdAsync(bookingUpdateDto.SlotId, s => s);
+        var slot = await unitOfWork.SlotRepo.GetByIdAsync(bookingUpdateDto.SlotId, s => s);
         if (slot == null)
         {
             response.IsSucceed = false;
@@ -406,7 +406,7 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
             return response;
         }
 
-        var bookings = await unitOfWork.bookingRepo.FindByConditionAsync(b => b.SlotId != null && 
+        var bookings = await unitOfWork.BookingRepo.FindByConditionAsync(b => b.SlotId != null && 
                                                                               b.Date.Equals(date) && 
                                                                               b.SlotId.Value.Equals(slot.SlotId),
                                                                               b => new
@@ -436,7 +436,7 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
             return response;
         }
 
-        var bookings = await unitOfWork.bookingRepo.FindByConditionAsync(b => b.SlotId != null && b.Date.Equals(date) && 
+        var bookings = await unitOfWork.BookingRepo.FindByConditionAsync(b => b.SlotId != null && b.Date.Equals(date) && 
                                                                               b.SlotId.Value.Equals(slot.SlotId) &&
                                                                               b.BookingId != id, b => b);
         

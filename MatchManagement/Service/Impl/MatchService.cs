@@ -8,7 +8,7 @@ using MatchManagement.Ultility;
 
 namespace MatchManagement.Service.Impl;
 
-public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate validate) : IMatchService
+public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate validate, ListExtensions listExtensions) : IMatchService
 {
     public async Task<ResponseDto> GetMatches(string? filterField, string? filterValue, string? sortField, string sortValue, int pageNumber,
         int pageSize)
@@ -16,21 +16,36 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
         var responseDto = new ResponseDto(null, "Get successfully", true, StatusCodes.Status200OK);
         try
         {
-            List<Match>? matches;
+            List<MatchViewsDto>? matches;
             if (validate.IsEmptyOrWhiteSpace(filterField) || validate.IsEmptyOrWhiteSpace(filterValue))
             {
-                matches = await unitOfWork.matchRepo.FindAllAsync(m => m.Booking, m => m.UserMatches, m => m.Conservation, m => m.Sport!);
+                matches = await unitOfWork.MatchRepo.FindAllAsync(m => 
+                        new MatchViewsDto(
+                            m.MatchId, 
+                            m.Sport!.SportName, 
+                            m.MatchName, 
+                            m.MatchType,
+                            m.TeamSize,
+                            m.MinLevel,
+                            m.MaxLevel,
+                            m.Date,
+                            m.TimeStart,
+                            m.TimeEnd,
+                            m.Location!,
+                            m.Status ?? 0
+                        ),
+                    m => m.Sport!);
             }
             else
             {
-                matches = await unitOfWork.matchRepo.GetMatches(filterField, filterValue);
+                matches = await unitOfWork.MatchRepo.GetMatches(filterField, filterValue);
             }
             
             matches = Sort(matches, sortField, sortValue);
 
-            matches = Paging(matches, pageNumber, pageSize);
+            matches = listExtensions.Paging(matches, pageNumber, pageSize);
 
-            responseDto.Result = mapper.Map<List<MatchViewDto>>(matches);
+            responseDto.Result = matches;
         }
         catch (Exception e)
         {
@@ -47,7 +62,7 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
         var responseDto = new ResponseDto(null, "Get successfully", true, StatusCodes.Status302Found);
         try
         {
-            var match = await unitOfWork.matchRepo.GetByIdAsync(id, m => m.Booking, m => m.UserMatches, m => m.Conservation, m => m.Sport!);
+            var match = await unitOfWork.MatchRepo.GetByIdAsync(id, m => m, m => m.Sport!);
             if (match == null)
             {
                 responseDto.Message = "There are no matches with this id";
@@ -78,7 +93,7 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
 
             var match = mapper.Map<Match>(matchCreateDto);
 
-            await unitOfWork.matchRepo.CreateAsync(match);
+            await unitOfWork.MatchRepo.CreateAsync(match);
         }
         catch (Exception e)
         {
@@ -96,7 +111,7 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
         try
         {
             //check match
-            var match = await unitOfWork.matchRepo.GetByIdAsync(id);
+            var match = await unitOfWork.MatchRepo.GetByIdAsync(id, m => m);
             if (match == null)
             {
                 responseDto.Message = "There are no matches with this id";
@@ -114,7 +129,7 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
 
             match = mapper.Map<Match>(matchUpdateDto);
 
-            await unitOfWork.matchRepo.CreateAsync(match);
+            await unitOfWork.MatchRepo.CreateAsync(match);
         }
         catch (Exception e)
         {
@@ -131,7 +146,7 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
         var responseDto = new ResponseDto(null, "Delete successfully", true, StatusCodes.Status200OK);
         try
         {
-            var match = await unitOfWork.matchRepo.GetByIdAsync(id);
+            var match = await unitOfWork.MatchRepo.GetByIdAsync(id, m => m);
             if (match == null)
             {
                 responseDto.Message = "There are no matches with this id";
@@ -140,7 +155,7 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
             }
             else
             {
-                await unitOfWork.matchRepo.DeleteAsync(match);
+                await unitOfWork.MatchRepo.DeleteAsync(match);
             }
         }
         catch (Exception e)
@@ -155,9 +170,19 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
 
     private async Task<ResponseDto> ValidateForCreating(MatchCreateDto matchCreateDto)
     {
-        var responseDto = new ResponseDto(null, "Get successfully", true, StatusCodes.Status201Created);
+        var responseDto = new ResponseDto(null, "Validate successfully", true, StatusCodes.Status201Created);
         try
         {
+            var sport = await unitOfWork.SportRepo.GetByIdAsync(matchCreateDto.SportId, s => s.SportId);
+            if (sport <= 0)
+            {
+                responseDto.Message = "There are no sports with this id";
+                responseDto.StatusCode = StatusCodes.Status404NotFound;
+                responseDto.IsSucceed = false;
+                return responseDto;
+            }
+            
+            
             
         }
         catch (Exception e)
@@ -172,10 +197,17 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
     
     private async Task<ResponseDto> ValidateForUpdating(MatchUpdateDto matchUpdateDto)
     {
-        var responseDto = new ResponseDto(null, "Get successfully", true, StatusCodes.Status201Created);
+        var responseDto = new ResponseDto(null, "Validate successfully", true, StatusCodes.Status201Created);
         try
         {
-            
+            var sport = await unitOfWork.SportRepo.GetByIdAsync(matchUpdateDto.SportId, s => s.SportId);
+            if (sport <= 0)
+            {
+                responseDto.Message = "There are no sports with this id";
+                responseDto.StatusCode = StatusCodes.Status404NotFound;
+                responseDto.IsSucceed = false;
+                return responseDto;
+            }
         }
         catch (Exception e)
         {
@@ -186,23 +218,8 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
 
         return responseDto;
     }
-    
-    private static List<Match>? Paging(List<Match>? matches, int pageNumber, int pageSize)
-    {
-        if (matches == null || matches.Count == 0)
-        {
-            return matches;
-        }
 
-        matches = matches
-            .Skip((pageNumber - 1) * pageSize)
-            .Take(pageSize)
-            .ToList();
-        
-        return matches;
-    }
-
-   private static List<Match>? Sort(List<Match>? matches, string? sortField, string? sortValue)
+   private List<MatchViewsDto>? Sort(List<MatchViewsDto>? matches, string? sortField, string? sortValue)
 {
     if (matches == null || matches.Count == 0 || string.IsNullOrEmpty(sortField) || 
         string.IsNullOrEmpty(sortValue) || string.IsNullOrWhiteSpace(sortField) || string.IsNullOrWhiteSpace(sortValue))
@@ -213,44 +230,29 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
     matches = sortField.ToLower() switch
     {
         "date" => sortValue.Equals("asc")
-            ? matches.OrderBy(b => b.Date).ToList()
-            : matches.OrderByDescending(b => b.Date).ToList(),
+            ? listExtensions.Sort(matches, m => m.Date, true)
+            : listExtensions.Sort(matches, m => m.Date, false),
         "timestart" => sortValue.Equals("asc")
-            ? matches.OrderBy(b => b.TimeStart).ToList()
-            : matches.OrderByDescending(b => b.TimeStart).ToList(),
+            ? listExtensions.Sort(matches, m => m.TimeStart, true)
+            : listExtensions.Sort(matches, m => m.TimeStart, true),
         "timeend" => sortValue.Equals("asc")
-            ? matches.OrderBy(b => b.TimeEnd).ToList()
-            : matches.OrderByDescending(b => b.TimeEnd).ToList(),
+            ? listExtensions.Sort(matches, m => m.TimeEnd, true)
+            : listExtensions.Sort(matches, m => m.TimeEnd, true),
         "status" => sortValue.Equals("asc")
-            ? matches.OrderBy(b => b.Status).ToList()
-            : matches.OrderByDescending(b => b.Status).ToList(),
+            ? listExtensions.Sort(matches, m => m.Status, true)
+            : listExtensions.Sort(matches, m => m.Status, true),
         "matchtype" => sortValue.Equals("asc")
-            ? matches.OrderBy(b => b.MatchType).ToList()
-            : matches.OrderByDescending(b => b.MatchType).ToList(),
+            ? listExtensions.Sort(matches, m => m.MatchType, true)
+            : listExtensions.Sort(matches, m => m.MatchType, true),
         "teamsize" => sortValue.Equals("asc")
-            ? matches.OrderBy(b => b.TeamSize).ToList()
-            : matches.OrderByDescending(b => b.TeamSize).ToList(),
+            ? listExtensions.Sort(matches, m => m.TeamSize, true)
+            : listExtensions.Sort(matches, m => m.TeamSize, true),
         "minlevel" => sortValue.Equals("asc")
-            ? matches.OrderBy(b => b.MinLevel).ToList()
-            : matches.OrderByDescending(b => b.MinLevel).ToList(),
+            ? listExtensions.Sort(matches, m => m.MinLevel, true)
+            : listExtensions.Sort(matches, m => m.MinLevel, true),
         "maxlevel" => sortValue.Equals("asc")
-            ? matches.OrderBy(b => b.MaxLevel).ToList()
-            : matches.OrderByDescending(b => b.MaxLevel).ToList(),
-        "gender" => sortValue.Equals("asc")
-            ? matches.OrderBy(b => b.Gender).ToList()
-            : matches.OrderByDescending(b => b.Gender).ToList(),
-        "minage" => sortValue.Equals("asc")
-            ? matches.OrderBy(b => b.MinAge).ToList()
-            : matches.OrderByDescending(b => b.MinAge).ToList(),
-        "maxage" => sortValue.Equals("asc")
-            ? matches.OrderBy(b => b.MaxAge).ToList()
-            : matches.OrderByDescending(b => b.MaxAge).ToList(),
-        "blockingoff" => sortValue.Equals("asc")
-            ? matches.OrderBy(b => b.BlockingOff).ToList()
-            : matches.OrderByDescending(b => b.BlockingOff).ToList(),
-        "mode" => sortValue.Equals("asc")
-            ? matches.OrderBy(b => b.Mode).ToList()
-            : matches.OrderByDescending(b => b.Mode).ToList(),
+            ? listExtensions.Sort(matches, m => m.MaxLevel, true)
+            : listExtensions.Sort(matches, m => m.MaxLevel, true),
         _ => matches 
     };
 

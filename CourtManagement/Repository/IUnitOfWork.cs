@@ -4,5 +4,9 @@ namespace CourtManagement.Repository;
 
 public interface IUnitOfWork
 {
-    ICourtRepo courtRepo { get; }
+    ICourtRepo CourtRepo { get; }
+    
+    ICourtOwnerRepo CourtOwnerRepo { get; }
+    
+    ISportRepo SportRepo { get; }
 }
