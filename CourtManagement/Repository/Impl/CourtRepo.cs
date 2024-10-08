@@ -1,5 +1,4 @@
 ﻿using CourtManagement.DTOs.CourtDto.ViewDto;
-using CourtManagement.Enum;
 using Entity;
 
 namespace CourtManagement.Repository.Impl;
@@ -13,29 +12,44 @@ public class CourtRepo(RallywaveContext repositoryContext) : RepositoryBase<Cour
         {
             if (string.IsNullOrEmpty(filterField) || string.IsNullOrEmpty(filterValue))
             {
-                courts =  await FindAllAsync(c => new CourtsViewDto(c.CourtId, c.CourtName, c.Address, c.Province, c.Status, c.Sport!.SportName));
+                courts =  await FindAllAsync(c => new CourtsViewDto(c.CourtId, c.CourtName, c.Address, c.Province, c.MaxPlayers, c.Status, c.Sport!.SportName));
             }
             else
             {
                 switch (filterValue.ToLower())
                 {
+                    case "courtname":
+                        courts =  await FindByConditionAsync(c => c.CourtName.Contains(filterValue),
+                            c => new CourtsViewDto(c.CourtId, c.CourtName, c.Address, c.Province, c.MaxPlayers, c.Status, c.Sport!.SportName));
+                        break;
+                    case "address":
+                        courts =  await FindByConditionAsync(c => c.Address.Contains(filterValue),
+                            c => new CourtsViewDto(c.CourtId, c.CourtName, c.Address, c.Province, c.MaxPlayers, c.Status, c.Sport!.SportName));
+                        break;
+                    case "province":
+                        courts =  await FindByConditionAsync(c => c.Province.Contains(filterValue),
+                            c => new CourtsViewDto(c.CourtId, c.CourtName, c.Address, c.Province, c.MaxPlayers, c.Status, c.Sport!.SportName));
+                        break;
                     case "sport":
-                        courts =  await FindByConditionAsync(c => c.Sport!.SportId.Equals(int.Parse(filterValue)),
-                            c => new CourtsViewDto(c.CourtId, c.CourtName, c.Address, c.Province, c.Status, c.Sport!.SportName));
+                        if (sbyte.TryParse(filterValue, out var sport))
+                        {
+                            courts = await FindByConditionAsync(c => c.Sport!.SportId == sport,
+                                c => new CourtsViewDto(c.CourtId, c.CourtName, c.Address, c.Province, c.MaxPlayers,
+                                    c.Status, c.Sport!.SportName));
+                        }
                         break;
                     case "status":
-                        if (System.Enum.TryParse<CourtStatus>(filterValue, true, out var status))
+                        if (sbyte.TryParse(filterValue, out var status))
                         {
                             courts =  await FindByConditionAsync(c => c.Status.Equals(status),
-                                c => new CourtsViewDto(c.CourtId, c.CourtName, c.Address, c.Province, c.Status, c.Sport!.SportName));
+                                c => new CourtsViewDto(c.CourtId, c.CourtName, c.Address, c.Province, c.MaxPlayers, c.Status, c.Sport!.SportName));
                         }
                         break;
                     case "maxplayers":
                         var number = sbyte.Parse(filterValue);
                         courts =  await FindByConditionAsync(c => c.MaxPlayers.Equals(number),
-                            c => new CourtsViewDto(c.CourtId, c.CourtName, c.Address, c.Province, c.Status, c.Sport!.SportName));
+                            c => new CourtsViewDto(c.CourtId, c.CourtName, c.Address, c.Province, c.MaxPlayers, c.Status, c.Sport!.SportName));
                         break;
-                    
                 }
             }
             
@@ -51,39 +65,6 @@ public class CourtRepo(RallywaveContext repositoryContext) : RepositoryBase<Cour
         try
         {
             return await GetByIdAsync(courtId, c => c);
-        }
-        catch (Exception e)
-        {
-            throw new Exception(e.Message);
-        }
-    }
-    public async Task CreateCourt(Court court)
-    {
-        try
-        {
-            await CreateAsync(court);
-        }
-        catch (Exception e)
-        {
-            throw new Exception(e.Message);
-        }
-    }
-    public async Task UpdateCourt(Court court)
-    {
-        try
-        {
-            await UpdateAsync(court);
-        }
-        catch (Exception e)
-        {
-            throw new Exception(e.Message);
-        }
-    }
-    public async Task DeleteCourt(Court court)
-    {
-        try
-        {
-            await DeleteAsync(court);
         }
         catch (Exception e)
         {

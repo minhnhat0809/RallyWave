@@ -4,7 +4,6 @@ using CourtManagement.DTOs.CourtDto;
 using CourtManagement.DTOs.CourtDto.ViewDto;
 using CourtManagement.Repository;
 using CourtManagement.Ultility;
-using Entity;
 
 namespace CourtManagement.Service.Impl;
 
@@ -62,6 +61,7 @@ public class CourtService(IUnitOfWork unitOfWork, IMapper mapper, ListExtensions
         try
         {
             
+            
             responseDto.Message = "Create successfully!";
         }
         catch (Exception e)
@@ -108,7 +108,9 @@ public class CourtService(IUnitOfWork unitOfWork, IMapper mapper, ListExtensions
                 return responseDto;
             }
 
-            await unitOfWork.courtRepo.DeleteCourt(court);
+            court.Status = 3;
+            
+            await unitOfWork.courtRepo.DeleteAsync(court);
 
             responseDto.Message = "Delete successfully!";
         }
@@ -121,6 +123,8 @@ public class CourtService(IUnitOfWork unitOfWork, IMapper mapper, ListExtensions
 
         return responseDto;
     }
+    
+    
 
     private List<CourtsViewDto>? Sort(List<CourtsViewDto>? courts, string? sortField, string? sortValue)
     {
@@ -144,6 +148,12 @@ public class CourtService(IUnitOfWork unitOfWork, IMapper mapper, ListExtensions
             "status" => sortValue.Equals("asc")
                 ? listExtensions.Sort(courts, c => c.Status, true)
                 : listExtensions.Sort(courts, c => c.Status, false),
+            "maxplayers" => sortValue.Equals("asc")
+                ? listExtensions.Sort(courts, c => c.MaxPlayers, true)
+                : listExtensions.Sort(courts, c => c.MaxPlayers, false),
+            "sport" => sortValue.Equals("asc")
+                ? listExtensions.Sort(courts, c => c.SportName, true)
+                : listExtensions.Sort(courts, c => c.SportName, false),
             _ => courts
         };
 

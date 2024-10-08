@@ -3,7 +3,6 @@ using Entity;
 using MatchManagement.DTOs;
 using MatchManagement.DTOs.MatchDto;
 using MatchManagement.DTOs.MatchDto.ViewDto;
-using MatchManagement.Enum;
 using MatchManagement.Repository;
 using MatchManagement.Ultility;
 
@@ -78,7 +77,6 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
             }
 
             var match = mapper.Map<Match>(matchCreateDto);
-            match.Status = (sbyte) MatchStatus.Available;
 
             await unitOfWork.matchRepo.CreateAsync(match);
         }

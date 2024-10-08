@@ -5,17 +5,16 @@ public class CourtsViewDto(
     string courtName,
     string address,
     string province,
+    sbyte? maxPlayers,
     sbyte status,
     string sportName)
 {
     public int CourtId { get; set; } = courtId;
-
     public string CourtName { get; set; } = courtName;
-
     public string Address { get; set; } = address;
-
     public string Province { get; set; } = province;
-
+    
+    public sbyte? MaxPlayers { get; set; } = maxPlayers;
     public sbyte Status { get; set; } = status;
 
     public string SportName { get; set; } = sportName;

@@ -3,7 +3,6 @@ using Entity;
 using BookingManagement.DTOs;
 using BookingManagement.DTOs.BookingDto;
 using BookingManagement.DTOs.BookingDto.ViewDto;
-using BookingManagement.Enum;
 using BookingManagement.Repository;
 using BookingManagement.Ultility;
 
@@ -86,7 +85,6 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
 
             var booking = mapper.Map<Booking>(bookingCreateDto);
             booking.CreateAt = DateTime.Now;
-            booking.Status = (sbyte) BookingStatus.Pending;
             
             await unitOfWork.bookingRepo.CreateBooking(booking);
             
@@ -153,7 +151,6 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
             }
             else
             {
-                booking.Status = (sbyte) BookingStatus.Canceled;
                 await unitOfWork.bookingRepo.DeleteBooking(booking);
                 responseDto.Message = "Delete successfully!";
             }

@@ -24,6 +24,8 @@ public partial class RallywaveContext : DbContext
 
     public virtual DbSet<CourtOwner> CourtOwners { get; set; }
 
+    public virtual DbSet<Courtimage> Courtimages { get; set; }
+
     public virtual DbSet<Friendship> Friendships { get; set; }
 
     public virtual DbSet<Match> Matches { get; set; }
@@ -146,9 +148,6 @@ public partial class RallywaveContext : DbContext
                 .HasMaxLength(100)
                 .HasColumnName("court_name");
             entity.Property(e => e.CourtOwnerId).HasColumnName("court_owner_id");
-            entity.Property(e => e.Image)
-                .HasMaxLength(255)
-                .HasColumnName("image");
             entity.Property(e => e.MaxPlayers).HasColumnName("max_players");
             entity.Property(e => e.Province)
                 .HasMaxLength(255)
@@ -194,6 +193,25 @@ public partial class RallywaveContext : DbContext
                 .HasMaxLength(255)
                 .HasColumnName("province");
             entity.Property(e => e.Status).HasColumnName("status");
+        });
+
+        modelBuilder.Entity<Courtimage>(entity =>
+        {
+            entity.HasKey(e => e.ImageId).HasName("PRIMARY");
+
+            entity.ToTable("courtimages");
+
+            entity.HasIndex(e => e.CourtId, "FK_CourtImages_Court");
+
+            entity.Property(e => e.ImageId).HasColumnName("image_id");
+            entity.Property(e => e.CourtId).HasColumnName("court_id");
+            entity.Property(e => e.ImageUrl)
+                .HasMaxLength(2083)
+                .HasColumnName("image_url");
+
+            entity.HasOne(d => d.Court).WithMany(p => p.Courtimages)
+                .HasForeignKey(d => d.CourtId)
+                .HasConstraintName("FK_CourtImages_Court");
         });
 
         modelBuilder.Entity<Friendship>(entity =>
