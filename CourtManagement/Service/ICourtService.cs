@@ -1,6 +1,5 @@
 ﻿using CourtManagement.DTOs;
 using CourtManagement.DTOs.CourtDto;
-using CourtManagement.DTOs.CourtDto.ViewDto;
 
 namespace CourtManagement.Service;
 
