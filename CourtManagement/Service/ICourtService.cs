@@ -14,4 +14,6 @@ public interface ICourtService
     Task<ResponseDto> UpdateCourt(int id, CourtUpdateDto courtUpdateDto);
 
     Task<ResponseDto> DeleteCourt(int id);
+
+    Task<ResponseDto> DeleteCourtImages(int imageId);
 }

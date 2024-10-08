@@ -1,20 +1,34 @@
-﻿namespace CourtManagement.DTOs.CourtDto.ViewDto;
+﻿using CourtManagement.DTOs.CourtImageDto.ViewDto;
 
-public class CourtViewDto
+namespace CourtManagement.DTOs.CourtDto.ViewDto;
+
+public class CourtViewDto(
+    int courtId,
+    string ownerName,
+    string sportName,
+    string courtName,
+    sbyte? maxPlayers,
+    string address,
+    string province,
+    sbyte status,
+    List<CourtImageViewDto>? courtImages
+    )
 {
-    public int CourtId { get; set; }
+    public int CourtId { get; set; } = courtId;
 
-    public int? CourtOwnerId { get; set; }
+    public string OwnerName { get; set; } = ownerName;
 
-    public int? SportId { get; set; }
+    public string SportName { get; set; } = sportName;
 
-    public string CourtName { get; set; } = null!;
+    public string CourtName { get; set; } = courtName!;
 
-    public sbyte? MaxPlayers { get; set; }
+    public sbyte? MaxPlayers { get; set; } = maxPlayers;
 
-    public string Address { get; set; } = null!;
+    public string Address { get; set; } = address;
 
-    public string Province { get; set; } = null!;
+    public string Province { get; set; } = province;
 
-    public sbyte Status { get; set; }
+    public sbyte Status { get; set; } = status;
+
+    public List<CourtImageViewDto>? Images { get; set; } = courtImages;
 }

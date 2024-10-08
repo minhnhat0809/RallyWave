@@ -2,6 +2,7 @@
 using CourtManagement.DTOs;
 using CourtManagement.DTOs.CourtDto;
 using CourtManagement.DTOs.CourtDto.ViewDto;
+using CourtManagement.DTOs.CourtImageDto.ViewDto;
 using CourtManagement.Repository;
 using CourtManagement.Ultility;
 using Entity;
@@ -14,6 +15,7 @@ public class CourtService(IUnitOfWork unitOfWork, IMapper mapper, IImageService 
     private readonly IMapper _mapper = mapper;
     private readonly IImageService _imageService = imageService;
     private const string BucketName = "rallywave";
+    
     public async Task<ResponseDto> GetCourts(string? filterField, string? filterValue, string? sortField, string sortValue, int pageNumber,
         int pageSize)
     {
@@ -26,7 +28,7 @@ public class CourtService(IUnitOfWork unitOfWork, IMapper mapper, IImageService 
 
             courts = listExtensions.Paging(courts, pageNumber, pageSize);
 
-            responseDto.Result = _mapper.Map<List<CourtViewDto>>(courts);
+            responseDto.Result = courts;
             responseDto.Message = "Get successfully!";
         }
         catch (Exception e)
@@ -44,9 +46,20 @@ public class CourtService(IUnitOfWork unitOfWork, IMapper mapper, IImageService 
         var responseDto= new ResponseDto(null, "", true, 200);
         try
         {
-            var court = await _unitOfWork.CourtRepo.GetCourtById(id);
+            var courtViewDto = await _unitOfWork.CourtRepo.GetByIdAsync(id, c => new CourtViewDto(
+                c.CourtId, 
+                c.CourtOwner!.Name!,
+                c.Sport!.SportName,
+                c.CourtName, 
+                c.MaxPlayers, 
+                c.Address, 
+                c.Province, 
+                c.Status,
+                c.CourtImages.Select(ci => new CourtImageViewDto(ci.ImageId, ci.ImageUrl)).ToList()
+                ));
+            
 
-            responseDto.Result = _mapper.Map<CourtViewDto>(court);
+            responseDto.Result = courtViewDto;
             responseDto.Message = "Get successfully";
         }
         catch (Exception e)
@@ -71,6 +84,9 @@ public class CourtService(IUnitOfWork unitOfWork, IMapper mapper, IImageService 
             {
                 return responseDto;
             }
+            
+            //map to court 
+            var court = _mapper.Map<Court>(courtCreateDto);
 
             var imagesUrl = new List<string>();
 
@@ -79,10 +95,17 @@ public class CourtService(IUnitOfWork unitOfWork, IMapper mapper, IImageService 
             {
                 imagesUrl = await _imageService.UploadImages(courtCreateDto.Images, BucketName, null);
             }
-            
-            //map to court 
-            var court = _mapper.Map<Court>(courtCreateDto);
 
+            //add court images
+            foreach (var courtImage in imagesUrl.Select(url => new CourtImage
+                     {
+                         ImageUrl = url,
+                         Court = court
+                     }))
+            {
+                court.CourtImages.Add(courtImage);
+            }
+            
             //create court
             await _unitOfWork.CourtRepo.CreateAsync(court);
             
@@ -94,7 +117,6 @@ public class CourtService(IUnitOfWork unitOfWork, IMapper mapper, IImageService 
             responseDto.StatusCode = 500;
             responseDto.IsSucceed = false;
         }
-
         return responseDto;
     }
 
@@ -105,7 +127,7 @@ public class CourtService(IUnitOfWork unitOfWork, IMapper mapper, IImageService 
         try
         {
             //check court in database
-            var court = await _unitOfWork.CourtRepo.GetCourtById(id);
+            var court = await _unitOfWork.CourtRepo.GetByIdAsync(id, c => c);
             if (court == null)
             {
                 responseDto.Message = "There are no courts with this id";
@@ -123,6 +145,31 @@ public class CourtService(IUnitOfWork unitOfWork, IMapper mapper, IImageService 
 
             //map to court
             court = _mapper.Map<Court>(courtUpdateDto);
+            
+            var imagesUrl = new List<string>();
+
+            switch (courtUpdateDto.Images)
+            {
+                //check if user uploads images
+                case { Count: > 0 and < 6 }:
+                    imagesUrl = await _imageService.UploadImages(courtUpdateDto.Images, BucketName, null);
+                    break;
+                case { Count: > 5}:
+                    responseDto.Message = "5 images is max";
+                    responseDto.StatusCode = StatusCodes.Status400BadRequest;
+                    responseDto.IsSucceed = false;
+                    return responseDto;
+            }
+
+            //add court images
+            foreach (var courtImage in imagesUrl.Select(url => new CourtImage
+                     {
+                         ImageUrl = url,
+                         Court = court
+                     }))
+            {
+                court.CourtImages.Add(courtImage);
+            }
             
             //update court
             await _unitOfWork.CourtRepo.UpdateAsync(court);
@@ -146,7 +193,7 @@ public class CourtService(IUnitOfWork unitOfWork, IMapper mapper, IImageService 
         try
         {
             //check court in database
-            var court = await _unitOfWork.CourtRepo.GetCourtById(id);
+            var court = await _unitOfWork.CourtRepo.GetByIdAsync(id, c => c);
             if (court == null)
             {
                 responseDto.Message = "There are no courts with this id";
@@ -155,7 +202,54 @@ public class CourtService(IUnitOfWork unitOfWork, IMapper mapper, IImageService 
                 return responseDto;
             }
 
-            await _unitOfWork.CourtRepo.DeleteCourt(court);
+            await _unitOfWork.CourtRepo.DeleteAsync(court);
+        }
+        catch (Exception e)
+        {
+            responseDto.Message = e.Message;
+            responseDto.StatusCode = StatusCodes.Status500InternalServerError;
+            responseDto.IsSucceed = false;
+        }
+
+        return responseDto;
+    }
+
+    public async Task<ResponseDto> DeleteCourtImages(int imageId) 
+    {
+        var responseDto = new ResponseDto(null, "Delete successfully", true, StatusCodes.Status200OK);
+        
+        try
+        {
+            //check court in database
+            var courtImage = await _unitOfWork.CourtImageRepo.GetByIdAsync(imageId, ci => ci);
+            if (courtImage == null)
+            {
+                responseDto.Message = "There are no court images with this id";
+                responseDto.StatusCode = StatusCodes.Status404NotFound;
+                responseDto.IsSucceed = false;
+                return responseDto;
+            }
+
+            if (Uri.TryCreate(courtImage.ImageUrl, UriKind.Absolute, out var uri))
+            {
+                // Check if the URL contains the expected bucket name
+                if (uri.Host.Contains(BucketName))
+                {
+                    // Get the part after the bucket URL
+                    var path = uri.AbsolutePath;
+
+                    // The S3 key will be everything after the '/' following the bucket name
+                    var s3Key = path.StartsWith($"/") ? path.Substring(1) : path;
+                    
+                    var decodedKey = Uri.UnescapeDataString(s3Key);
+                    
+                    await _imageService.DeleteImage(BucketName, decodedKey);
+                }
+            }
+
+
+
+            await _unitOfWork.CourtImageRepo.DeleteCourtImage(courtImage);
         }
         catch (Exception e)
         {
@@ -172,9 +266,9 @@ public class CourtService(IUnitOfWork unitOfWork, IMapper mapper, IImageService 
         var response = new ResponseDto(null, "", true, StatusCodes.Status200OK);
 
         //check court owner in database
-        var courtOwnerId = await _unitOfWork.CourtOwnerRepo.GetByIdAsync(courtCreateDto.CourtOwnerId, co => co.CourtOwnerId);
+        var existedCourtOwner = await _unitOfWork.CourtOwnerRepo.AnyAsync(co => co.CourtOwnerId == courtCreateDto.CourtOwnerId);
 
-        if (courtOwnerId <= 0)
+        if (!existedCourtOwner)
         {
             response.IsSucceed = false;
             response.Message = "There are no court owner with this id";
@@ -183,9 +277,9 @@ public class CourtService(IUnitOfWork unitOfWork, IMapper mapper, IImageService 
         }
 
         //check sport in database
-        var sportId = await _unitOfWork.SportRepo.GetByIdAsync(courtCreateDto.SportId, s => s.SportId);
+        var existedSport = await _unitOfWork.SportRepo.AnyAsync(s => s.SportId == courtCreateDto.SportId);
 
-        if (sportId <= 0)
+        if (!existedSport)
         {
             response.IsSucceed = false;
             response.Message = "There are no sports with this id";
@@ -200,16 +294,15 @@ public class CourtService(IUnitOfWork unitOfWork, IMapper mapper, IImageService 
         var response = new ResponseDto(null, "", true, StatusCodes.Status200OK);
         
         //check sport in database
-        var sportId = await _unitOfWork.SportRepo.GetByIdAsync(courtUpdateDto.SportId, s => s.SportId);
+        var existedSport = await _unitOfWork.SportRepo.AnyAsync(s => s.SportId == courtUpdateDto.SportId);
 
-        if (sportId <= 0)
+        if (!existedSport)
         {
             response.IsSucceed = false;
             response.Message = "There are no sports with this id";
             response.StatusCode = StatusCodes.Status400BadRequest;
             return response;
         }
-        
         
         return response;
     }

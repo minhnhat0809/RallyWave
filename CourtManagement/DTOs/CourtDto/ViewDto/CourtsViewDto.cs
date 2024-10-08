@@ -7,7 +7,8 @@ public class CourtsViewDto(
     string province,
     sbyte? maxPlayers,
     sbyte status,
-    string sportName)
+    string sportName,
+    string? imageUrl)
 {
     public int CourtId { get; set; } = courtId;
     public string CourtName { get; set; } = courtName;
@@ -18,4 +19,6 @@ public class CourtsViewDto(
     public sbyte Status { get; set; } = status;
 
     public string SportName { get; set; } = sportName;
+
+    public string? ImageUrl { get; set; } = imageUrl;
 }

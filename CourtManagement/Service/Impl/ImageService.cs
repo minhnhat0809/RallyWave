@@ -6,8 +6,7 @@ namespace CourtManagement.Service.Impl;
 public class ImageService(IAmazonS3 s3Client) : IImageService
 {
     private readonly IAmazonS3 _s3Client = s3Client;
-
-
+    
     public async Task<bool> CreateBucket(string bucketName)
     {
         var bucketExist = await Amazon.S3.Util.AmazonS3Util.
@@ -55,8 +54,7 @@ public class ImageService(IAmazonS3 s3Client) : IImageService
                     BucketName = bucketName,
                     Key = s3Key,
                     InputStream = image.OpenReadStream(),
-                    ContentType = image.ContentType,  // Directly set the content type
-                    CannedACL = S3CannedACL.PublicRead  // Make it publicly readable if needed
+                    ContentType = image.ContentType
                 };
 
                 // Upload the image to S3
@@ -83,6 +81,7 @@ public class ImageService(IAmazonS3 s3Client) : IImageService
             var bucketExist = await Amazon.S3.Util.AmazonS3Util.DoesS3BucketExistV2Async(_s3Client, bucketName);
             if (!bucketExist) throw new Exception("There are no buckets with this name");
             
+            //define delete object
             var deleteObjectRequest = new DeleteObjectRequest
             {
                 BucketName = bucketName,

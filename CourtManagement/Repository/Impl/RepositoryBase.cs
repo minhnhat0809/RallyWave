@@ -41,8 +41,8 @@ public class RepositoryBase<T>(RallywaveContext repositoryContext) : IRepository
 
     
     public async Task<TResult?> GetByIdAsync<TResult>(
-        object id, 
-        Expression<Func<T, TResult>> selector, 
+        object id,
+        Expression<Func<T, TResult>> selector,
         params Expression<Func<T, object>>[]? includes)
     {
         IQueryable<T> query = repositoryContext.Set<T>();
@@ -51,13 +51,22 @@ public class RepositoryBase<T>(RallywaveContext repositoryContext) : IRepository
         {
             query = includes.Aggregate(query, (current, include) => current.Include(include)).AsSplitQuery();
         }
-
-        return await query.Where(e => EF.Property<object>(e, "Id") == id)
+        
+        var entityType = repositoryContext.Model.FindEntityType(typeof(T));
+        
+        var primaryKey = entityType.FindPrimaryKey().Properties.First().Name;
+        
+        return await query
+            .Where(e => EF.Property<object>(e, primaryKey) == id)
             .Select(selector)
             .FirstOrDefaultAsync();
     }
-
-
+    
+    public async Task<bool> AnyAsync(Expression<Func<T, bool>> predicate)
+    {
+        return await repositoryContext.Set<T>().AnyAsync(predicate);
+    }
+    
     public async Task<bool> CreateAsync(T entity)
     {
         try

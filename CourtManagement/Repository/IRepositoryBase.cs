@@ -17,6 +17,9 @@ public interface IRepositoryBase<T>
         object id,
         Expression<Func<T, TResult>> selector,
         params Expression<Func<T, object>>[]? includes);
+
+    Task<bool> AnyAsync(Expression<Func<T, bool>> predicate);
+    
     Task<bool> CreateAsync(T entity);
     Task<bool> DeleteAsync(T entity);
     Task<bool> UpdateAsync(T entity);

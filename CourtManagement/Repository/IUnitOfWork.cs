@@ -9,4 +9,6 @@ public interface IUnitOfWork
     ICourtOwnerRepo CourtOwnerRepo { get; }
     
     ISportRepo SportRepo { get; }
+    
+    ICourtImageRepo CourtImageRepo { get; }
 }
