@@ -2,11 +2,13 @@
 
 public interface IUnitOfWork
 { 
-    IBookingRepo bookingRepo { get; }
+    IBookingRepo BookingRepo { get; }
     
-    ICourtRepo courtRepo { get; }
+    ICourtRepo CourtRepo { get; }
     
-    ISlotRepo slotRepo { get; }
+    ISlotRepo SlotRepo { get; }
     
-    IMatchRepo matchRepo { get; }
+    IMatchRepo MatchRepo { get; }
+    
+    IUserRepo UserRepo { get; }
 }

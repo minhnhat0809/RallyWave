@@ -8,7 +8,7 @@ public class CourtRepo(RallywaveContext repositoryContext) : RepositoryBase<Cour
     {
         try
         {
-            return await GetByIdAsync(id);
+            return await GetByIdAsync(id, c => c, null);
         }
         catch (Exception e)
         {

@@ -1,10 +1,11 @@
-﻿using Entity;
+﻿using BookingManagement.DTOs.BookingDto.ViewDto;
+using Entity;
 
 namespace BookingManagement.Repository;
 
 public interface IBookingRepo : IRepositoryBase<Booking>
 {
-    Task<List<Booking>> GetBookings(string? filterField, string? filterValue);
+    Task<List<BookingsViewDto>> GetBookings(string? filterField, string? filterValue);
 
     Task<Booking?> GetBookingById(int bookingId);
 

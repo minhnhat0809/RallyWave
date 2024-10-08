@@ -22,6 +22,10 @@ builder.Services.AddScoped<IMatchService, MatchService>();
 builder.Services.AddScoped<IMatchRepo, MatchRepo>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
+//utilities
+builder.Services.AddScoped(typeof(Validate));
+builder.Services.AddScoped(typeof(ListExtensions));
+
 //db context
 builder.Services.AddDbContext<RallywaveContext>(options =>
 {
@@ -32,13 +36,10 @@ builder.Services.AddDbContext<RallywaveContext>(options =>
 //mapper 
 builder.Services.AddAutoMapper(typeof(MapperConfig).Assembly);
 
-//ultility
-builder.Services.AddScoped(typeof(Validate));
-
 //cors
 builder.Services.AddCors(opts =>
 {
-    opts.AddPolicy("CORSPolicy", builder => builder.AllowAnyHeader().WithOrigins()
+    opts.AddPolicy("CORSPolicy", corsPolicyBuilder => corsPolicyBuilder.AllowAnyHeader().WithOrigins()
         .AllowAnyMethod().AllowCredentials().SetIsOriginAllowed((host) => true));
 });
 

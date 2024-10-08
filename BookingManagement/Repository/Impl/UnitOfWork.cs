@@ -4,11 +4,13 @@ namespace BookingManagement.Repository.Impl;
 
 public class UnitOfWork(RallywaveContext context) : IUnitOfWork
 {
-    public IBookingRepo bookingRepo { get; } = new BookingRepo(context);
+    public IBookingRepo BookingRepo { get; } = new BookingRepo(context);
 
-    public ICourtRepo courtRepo { get; } = new CourtRepo(context);
+    public ICourtRepo CourtRepo { get; } = new CourtRepo(context);
 
-    public ISlotRepo slotRepo { get; } = new SlotRepo(context);
+    public ISlotRepo SlotRepo { get; } = new SlotRepo(context);
 
-    public IMatchRepo matchRepo { get; } = new MatchRepo(context);
+    public IMatchRepo MatchRepo { get; } = new MatchRepo(context);
+
+    public IUserRepo UserRepo { get; } = new UserRepo(context);
 }

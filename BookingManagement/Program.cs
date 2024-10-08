@@ -33,12 +33,13 @@ builder.Services.AddScoped<IBookingRepo, BookingRepo>();
 //cors
 builder.Services.AddCors(opts =>
 {
-    opts.AddPolicy("CORSPolicy", builder => builder.AllowAnyHeader().WithOrigins()
+    opts.AddPolicy("CORSPolicy", corsPolicyBuilder => corsPolicyBuilder.AllowAnyHeader().WithOrigins()
         .AllowAnyMethod().AllowCredentials().SetIsOriginAllowed((host) => true));
 });
 
 //ultility
 builder.Services.AddScoped(typeof(Validate));
+builder.Services.AddScoped(typeof(ListExtensions));
 
 
 //mapper 

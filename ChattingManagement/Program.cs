@@ -23,8 +23,9 @@ builder.Services.AddScoped<IConservationRepo, ConservationRepo>();
 builder.Services.AddScoped<IMessageRepo, MessageRepo>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
-//validate
+//utilities
 builder.Services.AddScoped(typeof(Validate));
+builder.Services.AddScoped(typeof(ListExtensions));
 
 //db context
 builder.Services.AddDbContext<RallywaveContext>(options =>
@@ -36,7 +37,7 @@ builder.Services.AddDbContext<RallywaveContext>(options =>
 //cors
 builder.Services.AddCors(opts =>
 {
-    opts.AddPolicy("CORSPolicy", builder => builder.AllowAnyHeader().WithOrigins()
+    opts.AddPolicy("CORSPolicy", corsPolicyBuilder => corsPolicyBuilder.AllowAnyHeader().WithOrigins()
         .AllowAnyMethod().AllowCredentials().SetIsOriginAllowed((host) => true));
 });
 

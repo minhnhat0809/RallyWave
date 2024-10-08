@@ -10,9 +10,9 @@ public class MapperConfig : Profile
     public MapperConfig()
     {
         CreateMap<Match, MatchViewDto>();
+        
+        CreateMap<MatchCreateDto, Match>();
 
-        CreateMap<Match, MatchCreateDto>();
-
-        CreateMap<Match, MatchUpdateDto>();
+        CreateMap<MatchUpdateDto, Match>();
     }
 }

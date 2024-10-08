@@ -21,13 +21,14 @@ builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<INotificationRepo, NotificationRepo>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
-//validate
+//utilities
 builder.Services.AddScoped(typeof(Validate));
+builder.Services.AddScoped(typeof(ListExtensions));
 
 //cors
 builder.Services.AddCors(opts =>
 {
-    opts.AddPolicy("CORSPolicy", builder => builder.AllowAnyHeader().WithOrigins()
+    opts.AddPolicy("CORSPolicy", corsPolicyBuilder => corsPolicyBuilder.AllowAnyHeader().WithOrigins()
         .AllowAnyMethod().AllowCredentials().SetIsOriginAllowed((host) => true));
 });
 

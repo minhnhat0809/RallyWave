@@ -9,6 +9,8 @@ public partial class Team
 
     public int? SportId { get; set; }
 
+    public int? CreateBy { get; set; }
+
     public string TeamName { get; set; } = null!;
 
     public sbyte? TeamSize { get; set; }
@@ -16,6 +18,8 @@ public partial class Team
     public sbyte Status { get; set; }
 
     public virtual Conservation? Conservation { get; set; }
+
+    public virtual User? CreateByNavigation { get; set; }
 
     public virtual Sport? Sport { get; set; }
 

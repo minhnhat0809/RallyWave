@@ -3,13 +3,12 @@ using Entity;
 using BookingManagement.DTOs;
 using BookingManagement.DTOs.BookingDto;
 using BookingManagement.DTOs.BookingDto.ViewDto;
-using BookingManagement.Enum;
 using BookingManagement.Repository;
 using BookingManagement.Ultility;
 
 namespace BookingManagement.Service.Impl;
 
-public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate validate) : IBookingService
+public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate validate, ListExtensions listExtensions) : IBookingService
 {
     
     public async Task<ResponseDto> GetBookings(string? filterField, string? filterValue, string? sortField, string sortValue, int pageNumber,
@@ -18,24 +17,23 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
         var responseDto = new ResponseDto(null, "", true, 200);
         try
         {
-            List<Booking>? bookings;
+            List<BookingsViewDto>? bookings;
             
             if (validate.IsEmptyOrWhiteSpace(filterField) || validate.IsEmptyOrWhiteSpace(filterValue))
             {
-                bookings = await unitOfWork.bookingRepo.FindAllAsync(b => b.Court,
-                    b => b.Match, b => b.User, b => b.PaymentDetail);
+                bookings = await unitOfWork.BookingRepo.FindAllAsync(b => new BookingsViewDto(b.BookingId, b.Date, b.TimeStart, b.TimeEnd, b.Status, b.PaymentDetail), null);
             }
             else
             {
-                bookings = await unitOfWork.bookingRepo.GetBookings(filterField, filterValue);
+                bookings = await unitOfWork.BookingRepo.GetBookings(filterField, filterValue);
             }
             
             
             bookings = Sort(bookings, sortField, sortValue);
 
-            bookings = Paging(bookings, pageNumber, pageSize);
+            bookings = listExtensions.Paging(bookings, pageNumber, pageSize);
             
-            responseDto.Result = mapper.Map<List<BookingViewDto>>(bookings);
+            responseDto.Result = bookings;
             responseDto.Message = "Get successfully!";
         }
         catch (Exception e)
@@ -52,7 +50,7 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
         var responseDto = new ResponseDto(null, "", true, StatusCodes.Status200OK);
         try
         {
-            var booking = await unitOfWork.bookingRepo.GetBookingById(bookingId);
+            var booking = await unitOfWork.BookingRepo.GetBookingById(bookingId);
             if (booking == null)
             {
                 responseDto.Message = "There are no bookings with this id";
@@ -87,9 +85,8 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
 
             var booking = mapper.Map<Booking>(bookingCreateDto);
             booking.CreateAt = DateTime.Now;
-            booking.Status = (sbyte) BookingStatus.Pending;
             
-            await unitOfWork.bookingRepo.CreateBooking(booking);
+            await unitOfWork.BookingRepo.CreateBooking(booking);
             
             responseDto.Message = "Create successfully!";
         }
@@ -108,7 +105,7 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
         var responseDto = new ResponseDto(null, "", true, 200);
         try
         {
-            var booking = await unitOfWork.bookingRepo.GetBookingById(id);
+            var booking = await unitOfWork.BookingRepo.GetBookingById(id);
             if (booking == null)
             {
                 responseDto.IsSucceed = false;
@@ -126,7 +123,7 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
             
             booking = mapper.Map<Booking>(bookingUpdateDto);
             
-            await unitOfWork.bookingRepo.UpdateBooking(booking);
+            await unitOfWork.BookingRepo.UpdateBooking(booking);
             responseDto.Message = "Update successfully!";
             
         }
@@ -145,7 +142,7 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
         var responseDto = new ResponseDto(null, "", true, 200);
         try
         {
-            var booking = await unitOfWork.bookingRepo.GetBookingById(id);
+            var booking = await unitOfWork.BookingRepo.GetBookingById(id);
             if (booking == null)
             {
                 responseDto.IsSucceed = false;
@@ -154,8 +151,7 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
             }
             else
             {
-                booking.Status = (sbyte) BookingStatus.Canceled;
-                await unitOfWork.bookingRepo.DeleteBooking(booking);
+                await unitOfWork.BookingRepo.DeleteBooking(booking);
                 responseDto.Message = "Delete successfully!";
             }
         }
@@ -189,7 +185,7 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
         // validate match
         if (bookingCreateDto.MatchId.HasValue)
         {
-            var match = await unitOfWork.matchRepo.GetByIdAsync(bookingCreateDto.MatchId.Value);
+            var match = await unitOfWork.MatchRepo.GetByIdAsync(bookingCreateDto.MatchId.Value, m => new {m.MatchId, m.MatchName});
             if (match == null)
             {
                 response.IsSucceed = false;
@@ -202,7 +198,7 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
         // validate user
         if (bookingCreateDto.UserId.HasValue)
         {
-            var match = await unitOfWork.matchRepo.GetByIdAsync(bookingCreateDto.UserId.Value);
+            var match = await unitOfWork.UserRepo.GetByIdAsync(bookingCreateDto.UserId.Value, u => new {u.UserId, u.UserName});
             if (match == null)
             {
                 response.IsSucceed = false;
@@ -221,7 +217,7 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
             return response;
         }
         
-        var court = await unitOfWork.courtRepo.GetCourtById(bookingCreateDto.CourtId.Value);
+        var court = await unitOfWork.CourtRepo.GetCourtById(bookingCreateDto.CourtId.Value);
         if (court == null)
         {
             response.IsSucceed = false;
@@ -239,7 +235,7 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
             return response;
         }
 
-        var slot = await unitOfWork.slotRepo.GetByIdAsync(bookingCreateDto.SlotId);
+        var slot = await unitOfWork.SlotRepo.GetByIdAsync(bookingCreateDto.SlotId, s => s);
         if (slot == null)
         {
             response.IsSucceed = false;
@@ -303,7 +299,7 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
         // validate match
         if (bookingUpdateDto.MatchId.HasValue)
         {
-            var match = await unitOfWork.matchRepo.GetByIdAsync(bookingUpdateDto.MatchId.Value);
+            var match = await unitOfWork.MatchRepo.GetByIdAsync(bookingUpdateDto.MatchId.Value, m => new {m.MatchId, m.MatchName}, null);
             if (match == null)
             {
                 response.IsSucceed = false;
@@ -316,7 +312,7 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
         // validate user
         if (bookingUpdateDto.UserId.HasValue)
         {
-            var match = await unitOfWork.matchRepo.GetByIdAsync(bookingUpdateDto.UserId.Value);
+            var match = await unitOfWork.UserRepo.GetByIdAsync(bookingUpdateDto.UserId.Value, u => new {u.UserId});
             if (match == null)
             {
                 response.IsSucceed = false;
@@ -335,7 +331,7 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
             return response;
         }
         
-        var court = await unitOfWork.courtRepo.GetCourtById(bookingUpdateDto.CourtId.Value);
+        var court = await unitOfWork.CourtRepo.GetCourtById(bookingUpdateDto.CourtId.Value);
         if (court == null)
         {
             response.IsSucceed = false;
@@ -353,7 +349,7 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
             return response;
         }
 
-        var slot = await unitOfWork.slotRepo.GetByIdAsync(bookingUpdateDto.SlotId);
+        var slot = await unitOfWork.SlotRepo.GetByIdAsync(bookingUpdateDto.SlotId, s => s);
         if (slot == null)
         {
             response.IsSucceed = false;
@@ -410,7 +406,13 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
             return response;
         }
 
-        var bookings = await unitOfWork.bookingRepo.FindByConditionAsync(b => b.SlotId != null && b.Date.Equals(date) && b.SlotId.Value.Equals(slot.SlotId));
+        var bookings = await unitOfWork.BookingRepo.FindByConditionAsync(b => b.SlotId != null && 
+                                                                              b.Date.Equals(date) && 
+                                                                              b.SlotId.Value.Equals(slot.SlotId),
+                                                                              b => new
+                                                                              {
+                                                                                  b.TimeEnd, b.TimeStart
+                                                                              });
         
         // Check if there is any time conflict with existing bookings
         if (!bookings.Any(b => timeStart < b.TimeEnd && timeEnd > b.TimeStart)) return response;
@@ -434,9 +436,9 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
             return response;
         }
 
-        var bookings = await unitOfWork.bookingRepo.FindByConditionAsync(b => b.SlotId != null && b.Date.Equals(date) && 
+        var bookings = await unitOfWork.BookingRepo.FindByConditionAsync(b => b.SlotId != null && b.Date.Equals(date) && 
                                                                               b.SlotId.Value.Equals(slot.SlotId) &&
-                                                                              b.BookingId != id);
+                                                                              b.BookingId != id, b => b);
         
         // Check if there is any time conflict with existing bookings
         if (!bookings.Any(booking => timeStart < booking.TimeEnd && timeEnd > booking.TimeStart)) return response;
@@ -447,22 +449,7 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
         return response;
     }
 
-    private static List<Booking>? Paging(List<Booking>? bookings, int pageNumber, int pageSize)
-    {
-        if (bookings == null || bookings.Count == 0)
-        {
-            return bookings;
-        }
-
-        bookings = bookings
-                .Skip((pageNumber - 1) * pageSize)
-                .Take(pageSize)
-                .ToList();
-        
-        return bookings;
-    }
-
-    private static List<Booking>? Sort(List<Booking>? bookings, string? sortField, string? sortValue)
+    private List<BookingsViewDto>? Sort(List<BookingsViewDto>? bookings, string? sortField, string? sortValue)
     {
         if (bookings == null || bookings.Count == 0 || string.IsNullOrEmpty(sortField) || 
             string.IsNullOrEmpty(sortValue) || string.IsNullOrWhiteSpace(sortField) || string.IsNullOrWhiteSpace(sortValue))
@@ -473,20 +460,17 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
         bookings = sortField.ToLower() switch
         {
             "date" => sortValue.Equals("asc")
-                ? bookings.OrderBy(b => b.Date).ToList()
-                : bookings.OrderByDescending(b => b.Date).ToList(),
+                ? listExtensions.Sort(bookings, b => b.Date, true)
+                : listExtensions.Sort(bookings, b => b.Date, false),
             "timestart" => sortValue.Equals("asc")
-                ? bookings.OrderBy(b => b.TimeStart).ToList()
-                : bookings.OrderByDescending(b => b.TimeStart).ToList(),
+                ? listExtensions.Sort(bookings, b => b.TimeStart, true)
+                : listExtensions.Sort(bookings, b => b.TimeStart, false),
             "timeend" => sortValue.Equals("asc")
-                ? bookings.OrderBy(b => b.TimeEnd).ToList()
-                : bookings.OrderByDescending(b => b.TimeEnd).ToList(),
+                ? listExtensions.Sort(bookings, b => b.TimeEnd, true)
+                : listExtensions.Sort(bookings, b => b.TimeEnd, false),
             "status" => sortValue.Equals("asc")
-                ? bookings.OrderBy(b => b.Status).ToList()
-                : bookings.OrderByDescending(b => b.Status).ToList(),
-            "createat" => sortValue.Equals("asc")
-                ? bookings.OrderBy(b => b.CreateAt).ToList()
-                : bookings.OrderByDescending(b => b.CreateAt).ToList(),
+                ? listExtensions.Sort(bookings, b => b.Status, true)
+                : listExtensions.Sort(bookings, b => b.Status, false),
             _ => bookings
         };
 

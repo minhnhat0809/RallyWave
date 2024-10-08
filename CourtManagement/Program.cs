@@ -1,8 +1,10 @@
+using Amazon.S3;
 using CourtManagement;
 using CourtManagement.Repository;
 using CourtManagement.Repository.Impl;
 using CourtManagement.Service;
 using CourtManagement.Service.Impl;
+using CourtManagement.Ultility;
 using Entity;
 using Microsoft.EntityFrameworkCore;
 
@@ -16,15 +18,24 @@ builder.Services.AddControllers();
 
 //service
 builder.Services.AddScoped<ICourtService, CourtService>();
+builder.Services.AddScoped<IImageService, ImageService>();
 
 //repository
 builder.Services.AddScoped<ICourtRepo, CourtRepo>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
+//utilities
+builder.Services.AddScoped(typeof(Validate));
+builder.Services.AddScoped(typeof(ListExtensions));
+
+//aws
+builder.Services.AddDefaultAWSOptions(builder.Configuration.GetAWSOptions());
+builder.Services.AddAWSService<IAmazonS3>();
+
 //cors
 builder.Services.AddCors(opts =>
 {
-    opts.AddPolicy("CORSPolicy", builder => builder.AllowAnyHeader().WithOrigins()
+    opts.AddPolicy("CORSPolicy", corsPolicyBuilder => corsPolicyBuilder.AllowAnyHeader().WithOrigins()
         .AllowAnyMethod().AllowCredentials().SetIsOriginAllowed((host) => true));
 });
 

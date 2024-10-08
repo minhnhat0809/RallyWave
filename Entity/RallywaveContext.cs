@@ -49,7 +49,7 @@ public partial class RallywaveContext : DbContext
     public virtual DbSet<UserSport> UserSports { get; set; }
 
     public virtual DbSet<UserTeam> UserTeams { get; set; }
-
+    
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder
@@ -229,6 +229,8 @@ public partial class RallywaveContext : DbContext
 
             entity.HasIndex(e => e.SportId, "FK_Match_Sport");
 
+            entity.HasIndex(e => e.CreateBy, "FK_Match_User");
+
             entity.Property(e => e.MatchId).HasColumnName("match_id");
             entity.Property(e => e.AddByOthers)
                 .HasColumnType("bit(1)")
@@ -237,6 +239,7 @@ public partial class RallywaveContext : DbContext
                 .HasColumnType("bit(1)")
                 .HasColumnName("auto_approve");
             entity.Property(e => e.BlockingOff).HasColumnName("blocking_off");
+            entity.Property(e => e.CreateBy).HasColumnName("create_by");
             entity.Property(e => e.Date).HasColumnName("date");
             entity.Property(e => e.Gender)
                 .HasMaxLength(10)
@@ -270,6 +273,10 @@ public partial class RallywaveContext : DbContext
             entity.Property(e => e.TimeStart)
                 .HasColumnType("time")
                 .HasColumnName("time_start");
+
+            entity.HasOne(d => d.CreateByNavigation).WithMany(p => p.Matches)
+                .HasForeignKey(d => d.CreateBy)
+                .HasConstraintName("FK_Match_User");
 
             entity.HasOne(d => d.Sport).WithMany(p => p.Matches)
                 .HasForeignKey(d => d.SportId)
@@ -401,13 +408,20 @@ public partial class RallywaveContext : DbContext
 
             entity.HasIndex(e => e.SportId, "FK_Team_Sport");
 
+            entity.HasIndex(e => e.CreateBy, "FK_Team_User");
+
             entity.Property(e => e.TeamId).HasColumnName("team_id");
+            entity.Property(e => e.CreateBy).HasColumnName("create_by");
             entity.Property(e => e.SportId).HasColumnName("sport_id");
             entity.Property(e => e.Status).HasColumnName("status");
             entity.Property(e => e.TeamName)
                 .HasMaxLength(100)
                 .HasColumnName("team_name");
             entity.Property(e => e.TeamSize).HasColumnName("team_size");
+
+            entity.HasOne(d => d.CreateByNavigation).WithMany(p => p.Teams)
+                .HasForeignKey(d => d.CreateBy)
+                .HasConstraintName("FK_Team_User");
 
             entity.HasOne(d => d.Sport).WithMany(p => p.Teams)
                 .HasForeignKey(d => d.SportId)

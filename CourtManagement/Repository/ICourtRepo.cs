@@ -1,10 +1,11 @@
-﻿using Entity;
+﻿using CourtManagement.DTOs.CourtDto.ViewDto;
+using Entity;
 
 namespace CourtManagement.Repository;
 
 public interface ICourtRepo : IRepositoryBase<Court>
 {
-    Task<List<Court>> GetCourts(string? filterField, string? filterValue);
+    Task<List<CourtsViewDto>> GetCourts(string? filterField, string? filterValue);
 
     Task<Court?> GetCourtById(int courtId);
 
