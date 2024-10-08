@@ -1,6 +1,4 @@
 ﻿using BookingManagement.DTOs.BookingDto.ViewDto;
-using BookingManagement.Enum;
-using BookingManagement.Ultility;
 using Entity;
 
 namespace BookingManagement.Repository.Impl;
@@ -38,11 +36,14 @@ public class BookingRepo(RallywaveContext repositoryContext) : RepositoryBase<Bo
                             b => b.PaymentDetail);
                         break;
                     case "status":
-                        if (System.Enum.TryParse<BookingStatus>(filterValue, true, out var status))
+                        if (sbyte.TryParse(filterValue, out var status))
                         {
-                            bookings = await FindByConditionAsync(b => b.Status.Equals(status), b => new BookingsViewDto(b.BookingId, b.Date, b.TimeStart, b.TimeEnd, b.Status, b.PaymentDetail),
+                            bookings = await FindByConditionAsync(b => b.Status.Equals(status),
+                                b => new BookingsViewDto(b.BookingId, b.Date, b.TimeStart, b.TimeEnd, b.Status,
+                                    b.PaymentDetail),
                                 b => b.PaymentDetail);
                         }
+
                         break;
                 }
 
@@ -58,7 +59,7 @@ public class BookingRepo(RallywaveContext repositoryContext) : RepositoryBase<Bo
     {
         try
         {
-            return await GetByIdAsync(bookingId, b => b,  b => b.Court,
+            return await GetByIdAsync(bookingId, b => b,  b => b.Court!,
                 b => b.Match, b => b.User, b => b.PaymentDetail);
         }
         catch (Exception e)

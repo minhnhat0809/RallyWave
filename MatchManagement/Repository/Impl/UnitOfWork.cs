@@ -5,5 +5,7 @@ namespace MatchManagement.Repository.Impl;
 
 public class UnitOfWork(RallywaveContext context) : IUnitOfWork
 {
-    public IMatchRepo matchRepo { get; } = new MatchRepo(context);
+    public IMatchRepo MatchRepo { get; } = new MatchRepo(context);
+
+    public ISportRepo SportRepo { get; } = new SportRepo(context);
 }

@@ -1,3 +1,4 @@
+using Amazon.S3;
 using CourtManagement;
 using CourtManagement.Repository;
 using CourtManagement.Repository.Impl;
@@ -17,6 +18,7 @@ builder.Services.AddControllers();
 
 //service
 builder.Services.AddScoped<ICourtService, CourtService>();
+builder.Services.AddScoped<IImageService, ImageService>();
 
 //repository
 builder.Services.AddScoped<ICourtRepo, CourtRepo>();
@@ -25,6 +27,10 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 //utilities
 builder.Services.AddScoped(typeof(Validate));
 builder.Services.AddScoped(typeof(ListExtensions));
+
+//aws
+builder.Services.AddDefaultAWSOptions(builder.Configuration.GetAWSOptions());
+builder.Services.AddAWSService<IAmazonS3>();
 
 //cors
 builder.Services.AddCors(opts =>

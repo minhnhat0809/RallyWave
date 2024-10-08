@@ -1,5 +1,4 @@
 ﻿using CourtManagement.DTOs.CourtDto.ViewDto;
-using CourtManagement.Enum;
 using Entity;
 
 namespace CourtManagement.Repository.Impl;
@@ -24,7 +23,7 @@ public class CourtRepo(RallywaveContext repositoryContext) : RepositoryBase<Cour
                             c => new CourtsViewDto(c.CourtId, c.CourtName, c.Address, c.Province, c.Status, c.Sport!.SportName));
                         break;
                     case "status":
-                        if (System.Enum.TryParse<CourtStatus>(filterValue, true, out var status))
+                        if (sbyte.TryParse(filterValue, out var status))
                         {
                             courts =  await FindByConditionAsync(c => c.Status.Equals(status),
                                 c => new CourtsViewDto(c.CourtId, c.CourtName, c.Address, c.Province, c.Status, c.Sport!.SportName));

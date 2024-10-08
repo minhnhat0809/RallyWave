@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using CourtManagement.DTOs.CourtDto;
 using CourtManagement.DTOs.CourtDto.ViewDto;
 using Entity;
 
@@ -9,5 +10,11 @@ public class MapperConfig : Profile
     public MapperConfig()
     {
         CreateMap<Court, CourtViewDto>();
+
+        CreateMap<Court, CourtsViewDto>();
+
+        CreateMap<CourtCreateDto, Court>();
+
+        CreateMap<CourtUpdateDto, Court>();
     }
 }

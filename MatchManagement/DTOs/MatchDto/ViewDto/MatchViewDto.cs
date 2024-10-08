@@ -9,13 +9,10 @@ public class MatchViewDto
     public string MatchName { get; set; } = null!;
 
     public string? Note { get; set; }
-
     public String MatchType { get; set; } = "";
 
     public sbyte TeamSize { get; set; }
-
     public String? MinLevel { get; set; }
-
     public String? MaxLevel { get; set; }
 
     public DateOnly Date { get; set; }
@@ -42,6 +39,5 @@ public class MatchViewDto
 
     public ulong? Notification { get; set; }
     public String Mode { get; set; } = "";
-
     public String? Status { get; set; } = "";
 }
