@@ -1,32 +1,39 @@
-using Entity; // Ensure this namespace is correct for your context
+using Entity; 
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.Google;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // CORS configuration
-builder.Services.AddCors(opts =>
+builder.Services.AddCors(options =>
 {
-    opts.AddPolicy("CORSPolicy", builder => builder.AllowAnyHeader().WithOrigins()
-        .AllowAnyMethod().AllowCredentials().SetIsOriginAllowed((host) => true));
+    options.AddPolicy("CORSPolicy", builder =>
+    {
+        builder.WithOrigins("https://localhost:7152") // Adjust the origin to match your frontend
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
+    });
 });
-
 
 // Add services to the container
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddAuthorization();
 builder.Services.AddControllers();
 
 // Configure Google authentication
 builder.Services.AddAuthentication(options =>
     {
-        options.DefaultScheme = "Cookies"; // Set default scheme if necessary
+        options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme; // Set default scheme
     })
-    .AddCookie() // Ensure you have a cookie scheme for local authentication
+    .AddCookie() // Cookie authentication for local handling
     .AddGoogle(options =>
     {
         options.ClientId = builder.Configuration["Authentication:Google:ClientId"] ?? string.Empty;
         options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"] ?? string.Empty;
-        options.CallbackPath = "/signin-google";  // This should match Google Developer Console
+        options.CallbackPath = "/google-login";  // Match the CallbackPath with Google Developer Console
     });
 
 // Configure the database context
@@ -47,11 +54,10 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseAuthentication(); // Use authentication
-app.UseAuthorization();
+app.UseCors("CORSPolicy"); // Apply CORS policy
+app.UseAuthentication(); // Enable authentication
+app.UseAuthorization(); // Enable authorization
 
-
-app.UseCors("CORSPolicy");
 // Map controllers
 app.MapControllers();
 

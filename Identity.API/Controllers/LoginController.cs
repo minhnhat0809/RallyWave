@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -25,7 +26,7 @@ namespace Identity.API.Controllers
         [Authorize] // Ensure the user is authenticated
         public async Task<IActionResult> GoogleResponse()
         {
-            var info = await HttpContext.AuthenticateAsync(GoogleDefaults.AuthenticationScheme);
+            var info = await HttpContext.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             
             if (info?.Principal == null)
             {
@@ -37,19 +38,21 @@ namespace Identity.API.Controllers
             var name = info.Principal.FindFirst(ClaimTypes.Name)?.Value;
 
             // Here, you can create or update the user in your database
-            // For example:
             // await _userService.CreateOrUpdateUserAsync(email, name);
-
-            // Optionally, generate a JWT token for the user if you need to authenticate them in your API
-            // var token = GenerateJwtToken(email); // Implement your JWT generation logic
 
             return Ok(new
             {
                 Message = "Successfully authenticated with Google.",
                 Email = email,
-                Name = name,
-                // Token = token // Include token if necessary
+                Name = name
             });
+        }
+
+        [HttpGet("logout")]
+        public async Task<IActionResult> Logout()
+        {
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            return Ok("Logged out");
         }
     }
 }
