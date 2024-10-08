@@ -10,6 +10,10 @@ namespace MatchManagement.Service.Impl;
 
 public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate validate, ListExtensions listExtensions) : IMatchService
 {
+    private readonly IUnitOfWork _unitOfWork = unitOfWork;
+    private readonly IMapper _mapper = mapper;
+    private readonly Validate _validate = validate;
+    private readonly ListExtensions _listExtensions = listExtensions;
     public async Task<ResponseDto> GetMatches(string? filterField, string? filterValue, string? sortField, string sortValue, int pageNumber,
         int pageSize)
     {
@@ -17,33 +21,33 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
         try
         {
             List<MatchViewsDto>? matches;
-            if (validate.IsEmptyOrWhiteSpace(filterField) || validate.IsEmptyOrWhiteSpace(filterValue))
+            if (_validate.IsEmptyOrWhiteSpace(filterField) || _validate.IsEmptyOrWhiteSpace(filterValue))
             {
-                matches = await unitOfWork.MatchRepo.FindAllAsync(m => 
-                        new MatchViewsDto(
-                            m.MatchId, 
-                            m.Sport!.SportName, 
-                            m.MatchName, 
-                            m.MatchType,
-                            m.TeamSize,
-                            m.MinLevel,
-                            m.MaxLevel,
-                            m.Date,
-                            m.TimeStart,
-                            m.TimeEnd,
-                            m.Location!,
-                            m.Status ?? 0
-                        ),
-                    m => m.Sport!);
+                matches = await _unitOfWork.MatchRepo.FindAllAsync(m => 
+                    new MatchViewsDto(
+                        m.MatchId, 
+                        m.Sport!.SportName, 
+                        m.MatchName, 
+                        m.CreateByNavigation!.UserName,
+                        m.MatchType,
+                        m.TeamSize,
+                        m.MinLevel,
+                        m.MaxLevel,
+                        m.Date,
+                        m.TimeStart,
+                        m.TimeEnd,
+                        m.Location!,
+                        m.Status ?? 0
+                    ));
             }
             else
             {
-                matches = await unitOfWork.MatchRepo.GetMatches(filterField, filterValue);
+                matches = await _unitOfWork.MatchRepo.GetMatches(filterField, filterValue);
             }
             
             matches = Sort(matches, sortField, sortValue);
 
-            matches = listExtensions.Paging(matches, pageNumber, pageSize);
+            matches = _listExtensions.Paging(matches, pageNumber, pageSize);
 
             responseDto.Result = matches;
         }
@@ -62,7 +66,7 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
         var responseDto = new ResponseDto(null, "Get successfully", true, StatusCodes.Status302Found);
         try
         {
-            var match = await unitOfWork.MatchRepo.GetByIdAsync(id, m => m, m => m.Sport!);
+            var match = await _unitOfWork.MatchRepo.GetByIdAsync(id, m => m, m => m.Sport!);
             if (match == null)
             {
                 responseDto.Message = "There are no matches with this id";
@@ -91,9 +95,9 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
                 return responseDto;
             }
 
-            var match = mapper.Map<Match>(matchCreateDto);
+            var match = _mapper.Map<Match>(matchCreateDto);
 
-            await unitOfWork.MatchRepo.CreateAsync(match);
+            await _unitOfWork.MatchRepo.CreateAsync(match);
         }
         catch (Exception e)
         {
@@ -111,7 +115,7 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
         try
         {
             //check match
-            var match = await unitOfWork.MatchRepo.GetByIdAsync(id, m => m);
+            var match = await _unitOfWork.MatchRepo.GetByIdAsync(id, m => m);
             if (match == null)
             {
                 responseDto.Message = "There are no matches with this id";
@@ -121,15 +125,15 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
             }
             
             //overall validation
-            responseDto = await ValidateForUpdating(matchUpdateDto);
+            responseDto = await ValidateForUpdating(id, matchUpdateDto);
             if (responseDto.IsSucceed == false)
             {
                 return responseDto;
             }
 
-            match = mapper.Map<Match>(matchUpdateDto);
+            match = _mapper.Map<Match>(matchUpdateDto);
 
-            await unitOfWork.MatchRepo.CreateAsync(match);
+            await _unitOfWork.MatchRepo.CreateAsync(match);
         }
         catch (Exception e)
         {
@@ -146,7 +150,7 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
         var responseDto = new ResponseDto(null, "Delete successfully", true, StatusCodes.Status200OK);
         try
         {
-            var match = await unitOfWork.MatchRepo.GetByIdAsync(id, m => m);
+            var match = await _unitOfWork.MatchRepo.GetByIdAsync(id, m => m);
             if (match == null)
             {
                 responseDto.Message = "There are no matches with this id";
@@ -155,7 +159,7 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
             }
             else
             {
-                await unitOfWork.MatchRepo.DeleteAsync(match);
+                await _unitOfWork.MatchRepo.DeleteAsync(match);
             }
         }
         catch (Exception e)
@@ -173,8 +177,51 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
         var responseDto = new ResponseDto(null, "Validate successfully", true, StatusCodes.Status201Created);
         try
         {
-            var sport = await unitOfWork.SportRepo.GetByIdAsync(matchCreateDto.SportId, s => s.SportId);
-            if (sport <= 0)
+            var existedSport = await _unitOfWork.SportRepo.AnyAsync(s => s.SportId == matchCreateDto.SportId);
+            if (!existedSport)
+            {
+                responseDto.Message = "There are no sports with this id";
+                responseDto.StatusCode = StatusCodes.Status404NotFound;
+                responseDto.IsSucceed = false;
+                return responseDto;
+            }
+
+
+            var matches = await _unitOfWork.MatchRepo.FindByConditionAsync(m => m.Date.Equals(matchCreateDto.Date), 
+                m => new
+                    {
+                        m.TimeStart,
+                        m.TimeEnd
+                    });
+            
+            if (matches.Any(match => IsOverlap(match.TimeStart, match.TimeEnd, matchCreateDto.TimeStart,
+                    matchCreateDto.TimeEnd)))
+            {
+                responseDto.Message = "The new match time overlaps with an existing match.";
+                responseDto.StatusCode = StatusCodes.Status400BadRequest;
+                responseDto.IsSucceed = false;
+                return responseDto;
+            }
+            
+
+        }
+        catch (Exception e)
+        {
+            responseDto.Message = e.Message;
+            responseDto.StatusCode = StatusCodes.Status500InternalServerError;
+            responseDto.IsSucceed = false;
+        }
+
+        return responseDto;
+    }
+    
+    private async Task<ResponseDto> ValidateForUpdating(int id, MatchUpdateDto matchUpdateDto)
+    {
+        var responseDto = new ResponseDto(null, "Validate successfully", true, StatusCodes.Status201Created);
+        try
+        {
+            var existedSport = await _unitOfWork.SportRepo.AnyAsync(s => s.SportId == matchUpdateDto.SportId);
+            if (!existedSport)
             {
                 responseDto.Message = "There are no sports with this id";
                 responseDto.StatusCode = StatusCodes.Status404NotFound;
@@ -182,7 +229,24 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
                 return responseDto;
             }
             
+            var matches = await _unitOfWork.MatchRepo.FindByConditionAsync(m => m.Date.Equals(matchUpdateDto.Date), 
+                m => new
+                {
+                    m.MatchId,
+                    m.TimeStart,
+                    m.TimeEnd
+                });
+
+            var filteredMatches = matches.Where(m => m.MatchId != id).ToList();
             
+            if (filteredMatches.Any(match => IsOverlap(match.TimeStart, match.TimeEnd, matchUpdateDto.TimeStart,
+                    matchUpdateDto.TimeEnd)))
+            {
+                responseDto.Message = "The new match time overlaps with an existing match.";
+                responseDto.StatusCode = StatusCodes.Status400BadRequest;
+                responseDto.IsSucceed = false;
+                return responseDto;
+            }
             
         }
         catch (Exception e)
@@ -195,28 +259,9 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
         return responseDto;
     }
     
-    private async Task<ResponseDto> ValidateForUpdating(MatchUpdateDto matchUpdateDto)
+    private static bool IsOverlap(TimeOnly existingStart, TimeOnly existingEnd, TimeOnly newStart, TimeOnly newEnd)
     {
-        var responseDto = new ResponseDto(null, "Validate successfully", true, StatusCodes.Status201Created);
-        try
-        {
-            var sport = await unitOfWork.SportRepo.GetByIdAsync(matchUpdateDto.SportId, s => s.SportId);
-            if (sport <= 0)
-            {
-                responseDto.Message = "There are no sports with this id";
-                responseDto.StatusCode = StatusCodes.Status404NotFound;
-                responseDto.IsSucceed = false;
-                return responseDto;
-            }
-        }
-        catch (Exception e)
-        {
-            responseDto.Message = e.Message;
-            responseDto.StatusCode = StatusCodes.Status500InternalServerError;
-            responseDto.IsSucceed = false;
-        }
-
-        return responseDto;
+        return newStart < existingEnd && newEnd > existingStart;
     }
 
    private List<MatchViewsDto>? Sort(List<MatchViewsDto>? matches, string? sortField, string? sortValue)
@@ -230,29 +275,29 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
     matches = sortField.ToLower() switch
     {
         "date" => sortValue.Equals("asc")
-            ? listExtensions.Sort(matches, m => m.Date, true)
-            : listExtensions.Sort(matches, m => m.Date, false),
+            ? _listExtensions.Sort(matches, m => m.Date, true)
+            : _listExtensions.Sort(matches, m => m.Date, false),
         "timestart" => sortValue.Equals("asc")
-            ? listExtensions.Sort(matches, m => m.TimeStart, true)
-            : listExtensions.Sort(matches, m => m.TimeStart, true),
+            ? _listExtensions.Sort(matches, m => m.TimeStart, true)
+            : _listExtensions.Sort(matches, m => m.TimeStart, true),
         "timeend" => sortValue.Equals("asc")
-            ? listExtensions.Sort(matches, m => m.TimeEnd, true)
-            : listExtensions.Sort(matches, m => m.TimeEnd, true),
+            ? _listExtensions.Sort(matches, m => m.TimeEnd, true)
+            : _listExtensions.Sort(matches, m => m.TimeEnd, true),
         "status" => sortValue.Equals("asc")
-            ? listExtensions.Sort(matches, m => m.Status, true)
-            : listExtensions.Sort(matches, m => m.Status, true),
+            ? _listExtensions.Sort(matches, m => m.Status, true)
+            : _listExtensions.Sort(matches, m => m.Status, true),
         "matchtype" => sortValue.Equals("asc")
-            ? listExtensions.Sort(matches, m => m.MatchType, true)
-            : listExtensions.Sort(matches, m => m.MatchType, true),
+            ? _listExtensions.Sort(matches, m => m.MatchType, true)
+            : _listExtensions.Sort(matches, m => m.MatchType, true),
         "teamsize" => sortValue.Equals("asc")
-            ? listExtensions.Sort(matches, m => m.TeamSize, true)
-            : listExtensions.Sort(matches, m => m.TeamSize, true),
+            ? _listExtensions.Sort(matches, m => m.TeamSize, true)
+            : _listExtensions.Sort(matches, m => m.TeamSize, true),
         "minlevel" => sortValue.Equals("asc")
-            ? listExtensions.Sort(matches, m => m.MinLevel, true)
-            : listExtensions.Sort(matches, m => m.MinLevel, true),
+            ? _listExtensions.Sort(matches, m => m.MinLevel, true)
+            : _listExtensions.Sort(matches, m => m.MinLevel, true),
         "maxlevel" => sortValue.Equals("asc")
-            ? listExtensions.Sort(matches, m => m.MaxLevel, true)
-            : listExtensions.Sort(matches, m => m.MaxLevel, true),
+            ? _listExtensions.Sort(matches, m => m.MaxLevel, true)
+            : _listExtensions.Sort(matches, m => m.MaxLevel, true),
         _ => matches 
     };
 

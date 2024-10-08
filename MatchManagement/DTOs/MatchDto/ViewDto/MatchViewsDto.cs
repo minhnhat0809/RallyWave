@@ -4,6 +4,7 @@ public class MatchViewsDto(
     int matchId,
     string sportName,
     string matchName,
+    string createBy,
     sbyte matchType,
     sbyte teamSize,
     sbyte? minLevel,
@@ -20,6 +21,7 @@ public class MatchViewsDto(
 
     public string MatchName { get; set; } = matchName;
 
+    public string CreateBy { get; set; } = createBy;
     public sbyte MatchType { get; set; } = matchType;
 
     public sbyte TeamSize { get; set; } = teamSize;

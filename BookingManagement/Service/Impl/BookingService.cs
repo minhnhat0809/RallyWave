@@ -3,6 +3,7 @@ using Entity;
 using BookingManagement.DTOs;
 using BookingManagement.DTOs.BookingDto;
 using BookingManagement.DTOs.BookingDto.ViewDto;
+using BookingManagement.DTOs.CourtSlotDto.CourtSlotViewDto;
 using BookingManagement.Repository;
 using BookingManagement.Ultility;
 
@@ -167,114 +168,80 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
 
     private async Task<ResponseDto> ValidateForCreating(BookingCreateDto bookingCreateDto)
     {
-        var response = new ResponseDto(null, "", true, 200);
-
+        var response = new ResponseDto(null, "Validated successfully", true, StatusCodes.Status200OK);
         var today = DateOnly.FromDateTime(DateTime.Now.Date);
-
         var timeNow = TimeOnly.FromDateTime(DateTime.Now);
-        
-        // validate user and court
-        if (bookingCreateDto is { MatchId: not null, UserId: not null })
+
+        // Validate that both MatchId and UserId are not provided at the same time
+        if (bookingCreateDto.MatchId.HasValue && bookingCreateDto.UserId.HasValue)
         {
-            response.IsSucceed = false;
-            response.Message = "Match and user cannot be existed parallel";
-            response.StatusCode = StatusCodes.Status400BadRequest;
-            return response;
+            return new ResponseDto(null, "Match and user cannot be specified simultaneously.", false, StatusCodes.Status400BadRequest);
         }
-        
-        // validate match
+
+        // Validate MatchId
         if (bookingCreateDto.MatchId.HasValue)
         {
-            var match = await unitOfWork.MatchRepo.GetByIdAsync(bookingCreateDto.MatchId.Value, m => new {m.MatchId, m.MatchName});
+            var match = await unitOfWork.MatchRepo.GetByIdAsync(bookingCreateDto.MatchId.Value, m => new { m.MatchId, m.MatchName });
             if (match == null)
             {
-                response.IsSucceed = false;
-                response.Message = "There are no matches with this id";
-                response.StatusCode = StatusCodes.Status400BadRequest;
-                return response;
+             return new ResponseDto(null, "Match not found.", false, StatusCodes.Status404NotFound);
             }
         }
-        
-        // validate user
+
+        // Validate UserId
         if (bookingCreateDto.UserId.HasValue)
         {
-            var match = await unitOfWork.UserRepo.GetByIdAsync(bookingCreateDto.UserId.Value, u => new {u.UserId, u.UserName});
-            if (match == null)
+            var user = await unitOfWork.UserRepo.GetByIdAsync(bookingCreateDto.UserId.Value, u => new { u.UserId, u.UserName });
+            if (user == null)
             {
-                response.IsSucceed = false;
-                response.Message = "There are no users with this id";
-                response.StatusCode = StatusCodes.Status400BadRequest;
-                return response;
+                return new ResponseDto(null, "User not found.", false, StatusCodes.Status404NotFound);
             }
         }
-        
-        // validate court
+
+        // Validate CourtId
         if (!bookingCreateDto.CourtId.HasValue)
         {
-            response.IsSucceed = false;
-            response.Message = "Court Id cannot be null.";
-            response.StatusCode = StatusCodes.Status400BadRequest;
-            return response;
+            return new ResponseDto(null, "Court Id cannot be null.", false, StatusCodes.Status400BadRequest);
         }
-        
+
         var court = await unitOfWork.CourtRepo.GetCourtById(bookingCreateDto.CourtId.Value);
         if (court == null)
         {
-            response.IsSucceed = false;
-            response.Message = "There are no courts with this id";
-            response.StatusCode = StatusCodes.Status400BadRequest;
-            return response;
+            return new ResponseDto(null, "Court not found.", false, StatusCodes.Status404NotFound);
         }
-        
-        // validate slot
+
+        // Validate SlotId
         if (!bookingCreateDto.SlotId.HasValue)
         {
-            response.IsSucceed = false;
-            response.Message = "Slot Id cannot be null.";
-            response.StatusCode = StatusCodes.Status400BadRequest;
-            return response;
+            return new ResponseDto(null, "Slot Id cannot be null.", false, StatusCodes.Status400BadRequest);
         }
 
-        var slot = await unitOfWork.SlotRepo.GetByIdAsync(bookingCreateDto.SlotId, s => s);
+        var slot = await unitOfWork.SlotRepo.GetByIdAsync(bookingCreateDto.SlotId.Value,
+            s => new SlotValidateDto(s.SlotId, s.TimeStart, s.TimeEnd));
+
         if (slot == null)
         {
-            response.IsSucceed = false;
-            response.Message = "There are no slots with this id";
-            response.StatusCode = StatusCodes.Status400BadRequest;
-            return response;
+            return new ResponseDto(null, "Slot not found.", false, StatusCodes.Status404NotFound);
         }
 
-        // validate date and time start
-        switch (bookingCreateDto.Date.CompareTo(today))
+        // Validate booking date and time
+        var dateComparison = bookingCreateDto.Date.CompareTo(today);
+        switch (dateComparison)
         {
             case < 0:
-                response.IsSucceed = false;
-                response.Message = "Reserved date is in the past.";
-                response.StatusCode = StatusCodes.Status400BadRequest;
-                return response;
-            case 0:
-                if (bookingCreateDto.TimeStart.CompareTo(timeNow) < 0.5)
-                {
-                    response.IsSucceed = false;
-                    response.Message = "Reserved time is too closed.";
-                    response.StatusCode = StatusCodes.Status400BadRequest;
-                    return response;
-                }
-                break;
+                return new ResponseDto(null, "Reserved date is in the past.", false, StatusCodes.Status400BadRequest);
+            case 0 when bookingCreateDto.TimeStart.CompareTo(timeNow) <= 0:
+                return new ResponseDto(null, "Reserved time is too close.", false, StatusCodes.Status400BadRequest);
         }
 
-        // validate time start and time end
+        // Validate time range (TimeStart < TimeEnd)
         if (bookingCreateDto.TimeStart >= bookingCreateDto.TimeEnd)
-        {
-            response.IsSucceed = false;
-            response.Message = "Time start is bigger than time end.";
-            response.StatusCode = StatusCodes.Status400BadRequest;
-            return response;
-        }
-        
-        // validate overlap time
-        response = await CheckCourtAvailableForCreating(slot, bookingCreateDto.Date, bookingCreateDto.TimeStart,
-            bookingCreateDto.TimeEnd);
+    {
+        return new ResponseDto(null, "Start time must be earlier than end time.", false, StatusCodes.Status400BadRequest);
+    }
+
+        // Validate time overlap with existing slots
+        response = await CheckCourtAvailableForCreating(slot, bookingCreateDto.Date, bookingCreateDto.TimeStart, bookingCreateDto.TimeEnd);
 
         return response;
     }
@@ -349,7 +316,14 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
             return response;
         }
 
-        var slot = await unitOfWork.SlotRepo.GetByIdAsync(bookingUpdateDto.SlotId, s => s);
+        var slot = await unitOfWork.SlotRepo.GetByIdAsync(bookingUpdateDto.SlotId, 
+            s => new SlotValidateDto
+            (
+                s.SlotId,
+                s.TimeStart,
+                s.TimeEnd
+            ));
+        
         if (slot == null)
         {
             response.IsSucceed = false;
@@ -393,7 +367,7 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
         return response;
     }
 
-    private async Task<ResponseDto> CheckCourtAvailableForCreating(Slot slot, DateOnly date, TimeOnly timeStart, TimeOnly timeEnd )
+    private async Task<ResponseDto> CheckCourtAvailableForCreating(SlotValidateDto slot, DateOnly date, TimeOnly timeStart, TimeOnly timeEnd )
     {
         var response = new ResponseDto(null, "", true, 200);
         
@@ -405,7 +379,8 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
             response.StatusCode = StatusCodes.Status400BadRequest;
             return response;
         }
-
+        
+        //get bookings with same date and same slot
         var bookings = await unitOfWork.BookingRepo.FindByConditionAsync(b => b.SlotId != null && 
                                                                               b.Date.Equals(date) && 
                                                                               b.SlotId.Value.Equals(slot.SlotId),
@@ -423,7 +398,7 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
         return response;
     }
     
-    private async Task<ResponseDto> CheckCourtAvailableForUpdating(int id, Slot slot, DateOnly date, TimeOnly timeStart, TimeOnly timeEnd )
+    private async Task<ResponseDto> CheckCourtAvailableForUpdating(int id, SlotValidateDto slot, DateOnly date, TimeOnly timeStart, TimeOnly timeEnd )
     {
         var response = new ResponseDto(null, "", true, 200);
         
@@ -436,9 +411,19 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
             return response;
         }
 
-        var bookings = await unitOfWork.BookingRepo.FindByConditionAsync(b => b.SlotId != null && b.Date.Equals(date) && 
-                                                                              b.SlotId.Value.Equals(slot.SlotId) &&
-                                                                              b.BookingId != id, b => b);
+        //get bookings with same date and same slot
+        var bookings = await unitOfWork.BookingRepo.FindByConditionAsync(b => b.SlotId != null && 
+                                                                              b.Date.Equals(date) && 
+                                                                              b.SlotId.Value.Equals(slot.SlotId), 
+                                                                              b => new
+                                                                                {
+                                                                                    b.BookingId, 
+                                                                                    b.TimeStart, 
+                                                                                    b.TimeEnd
+                                                                                });
+
+        //exclude itself
+        bookings = bookings.Where(b => b.BookingId != id).ToList();
         
         // Check if there is any time conflict with existing bookings
         if (!bookings.Any(booking => timeStart < booking.TimeEnd && timeEnd > booking.TimeStart)) return response;

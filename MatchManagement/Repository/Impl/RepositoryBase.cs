@@ -56,6 +56,11 @@ public class RepositoryBase<T>(RallywaveContext repositoryContext) : IRepository
             .Select(selector)
             .FirstOrDefaultAsync();
     }
+    
+    public async Task<bool> AnyAsync(Expression<Func<T, bool>> predicate)
+    {
+        return await repositoryContext.Set<T>().AnyAsync(predicate);
+    }
 
 
     public async Task<bool> CreateAsync(T entity)
