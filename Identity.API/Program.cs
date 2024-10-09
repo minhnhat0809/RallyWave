@@ -1,31 +1,25 @@
-using System.Text;
+using System.Security.Claims;
 using Entity;
-using Identity.API.DependencyInjections;
+using Identity.API.DIs;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models;
+using Microsoft.AspNetCore.Authentication.OAuth;
+using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// CORS configuration from appsettings
-var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>();
-
+// CORS configuration
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("CORSPolicy", builder =>
     {
-        builder.WithOrigins(allowedOrigins)
+        builder.WithOrigins("https://localhost:7152") // Adjust the origin to match your frontend
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials();
     });
 });
-
-// Customer Service Registration (Services and Repositories)
-builder.Services.AddServices();
 
 // Add services to the container
 builder.Services.AddEndpointsApiExplorer();
@@ -33,70 +27,37 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddAuthorization();
 builder.Services.AddControllers();
 
-// Configure Google authentication
-/*// Configure Google authentication
-builder.Services.AddAuthentication(options =>
-    {
-        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-    })
-    .AddJwtBearer(options =>
-    {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer = builder.Configuration["Authentication:Jwt:Issuer"] ?? string.Empty,
-            ValidAudience = builder.Configuration["Authentication:Jwt:Audience"] ?? string.Empty,
-            IssuerSigningKey =
-                new SymmetricSecurityKey(
-                    Encoding.UTF8.GetBytes(builder.Configuration["Authentication:Jwt:SecretKey"] ?? string.Empty))
-        };
-    })
-    .AddGoogle(options =>
-    {
-        options.ClientId = builder.Configuration["Authentication:Google:ClientId"] ?? string.Empty;
-        options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"] ?? string.Empty;
-        options.CallbackPath = "/google-login";
-    });*/
+// Add Services
+builder.Services.AddServices();
 
+// Configure Google authentication
 builder.Services.AddAuthentication(options =>
     {
-        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-        options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-    }).AddJwtBearer(options =>
-    {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer = builder.Configuration["Authentication:Jwt:Issuer"] ?? string.Empty,
-            ValidAudience = builder.Configuration["Authentication:Jwt:Audience"] ?? string.Empty,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Authentication:Jwt:SecretKey"] ?? string.Empty))
-        };
+        options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = GoogleDefaults.AuthenticationScheme;
     })
-    .AddCookie(options =>
+    .AddCookie()
+    .AddOpenIdConnect(GoogleDefaults.AuthenticationScheme, GoogleDefaults.DisplayName, options =>
     {
-        options.LoginPath = "/google-login";
-        // Optional: Configure cookie settings if needed
-        options.Cookie.SecurePolicy = CookieSecurePolicy.Always; // Always use secure cookies
-    })
-    .AddGoogle(options =>
-    {
-        options.ClientId = builder.Configuration["Authentication:Google:ClientId"] ?? string.Empty;
-        options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"] ?? string.Empty;
         options.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+        options.Authority = "https://accounts.google.com";
+        options.ClientId = builder.Configuration["Authentication:Google:ClientId"];
+        options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
+        options.ResponseType = "id_token"; // Chỉ yêu cầu id_token
+        options.CallbackPath = "/google-login"; // Đảm bảo URI này trùng khớp với Google Developer Console
+        options.SaveTokens = true; // Lưu access và id tokens
+        options.Scope.Add("email");
+        options.Scope.Add("profile"); // Nếu bạn cũng muốn thông tin profile
     });
+
+
 
 // Configure the database context
 builder.Services.AddDbContext<RallywaveContext>(options =>
+{
     options.UseMySql(builder.Configuration.GetConnectionString("RallyWave"),
-        new MySqlServerVersion(new Version(8, 0, 39))));
+        new MySqlServerVersion(new Version(8, 0, 39)));
+});
 
 var app = builder.Build();
 
@@ -109,9 +70,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseCors("CORSPolicy");
-app.UseAuthentication();
-app.UseAuthorization();
+app.UseCors("CORSPolicy"); // Apply CORS policy
+app.UseAuthentication(); // Enable authentication
+app.UseAuthorization(); // Enable authorization
 
 // Map controllers
 app.MapControllers();
