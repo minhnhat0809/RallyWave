@@ -1,107 +1,92 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Entity;
+﻿using Microsoft.AspNetCore.Mvc;
+using UserManagement.DTOs;
+using UserManagement.DTOs.UserDto;
+using UserManagement.DTOs.UserDto.ViewDto;
+using UserManagement.Service;
 
 namespace UserManagement.Controllers
 {
-    [Route("api/user")]
+    [Route("api/[controller]")]
     [ApiController]
     public class UserController : ControllerBase
     {
-        private readonly RallywaveContext _context;
+        private readonly IUserService _userService;
 
-        public UserController(RallywaveContext context)
+        public UserController(IUserService userService)
         {
-            _context = context;
+            _userService = userService;
         }
 
-        // GET: api/User
+        /// <summary>
+        /// Gets a list of users with optional filtering and sorting.
+        /// </summary>
+        /// <param name="filterField">Field to filter by.</param>
+        /// <param name="filterValue">Value to filter by.</param>
+        /// <param name="sortField">Field to sort by.</param>
+        /// <param name="sortValue">Sort order (asc or desc).</param>
+        /// <param name="pageNumber">Page number for pagination.</param>
+        /// <param name="pageSize">Number of users per page.</param>
+        /// <returns>A ResponseDto containing the list of users.</returns>
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<User>>> GetUsers()
+        public async Task<ActionResult<ResponseDto>> GetUsers(
+            [FromQuery] string? filterField,
+            [FromQuery] string? filterValue,
+            [FromQuery] string? sortField,
+            [FromQuery] string sortValue = "asc",
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 10)
         {
-            return await _context.Users.ToListAsync();
+            var response = await _userService.GetUser(filterField, filterValue, sortField, sortValue, pageNumber, pageSize);
+            return Ok(response);
         }
 
-        // GET: api/User/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<User>> GetUser(int id)
+        /// <summary>
+        /// Gets a user by their ID.
+        /// </summary>
+        /// <param name="userId">The ID of the user.</param>
+        /// <returns>A ResponseDto containing the user data.</returns>
+        [HttpGet("{userId:int}")]
+        public async Task<ActionResult<ResponseDto>> GetUserById(int userId)
         {
-            var user = await _context.Users.FindAsync(id);
-
-            if (user == null)
-            {
-                return NotFound();
-            }
-
-            return user;
+            var response = await _userService.GetUserById(userId);
+            return response.IsSucceed ? Ok(response) : BadRequest(response);
         }
 
-        // PUT: api/User/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutUser(int id, User user)
-        {
-            if (id != user.UserId)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(user).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!UserExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return NoContent();
-        }
-
-        // POST: api/User
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        /// <summary>
+        /// Creates a new user.
+        /// </summary>
+        /// <param name="userCreateDto">The user data to create.</param>
+        /// <returns>A ResponseDto indicating the result of the operation.</returns>
         [HttpPost]
-        public async Task<ActionResult<User>> PostUser(User user)
+        public async Task<ActionResult<ResponseDto>> CreateUser([FromBody] UserCreateDto userCreateDto)
         {
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetUser", new { id = user.UserId }, user);
+            var response = await _userService.CreateUser(userCreateDto);
+            return response.IsSucceed ? CreatedAtAction(nameof(GetUserById), new { userId = response.Result?.ToString() }, response) : BadRequest(response);
         }
 
-        // DELETE: api/User/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteUser(int id)
+        /// <summary>
+        /// Updates an existing user.
+        /// </summary>
+        /// <param name="id">The ID of the user to update.</param>
+        /// <param name="userUpdateDto">The updated user data.</param>
+        /// <returns>A ResponseDto indicating the result of the operation.</returns>
+        [HttpPut("{id:int}")]
+        public async Task<ActionResult<ResponseDto>> UpdateUser(int id, [FromBody] UserUpdateDto userUpdateDto)
         {
-            var user = await _context.Users.FindAsync(id);
-            if (user == null)
-            {
-                return NotFound();
-            }
-
-            _context.Users.Remove(user);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
+            var response = await _userService.UpdateUser(id, userUpdateDto);
+            return response.IsSucceed ? Ok(response) : BadRequest(response);
         }
 
-        private bool UserExists(int id)
+        /// <summary>
+        /// Deletes a user by their ID.
+        /// </summary>
+        /// <param name="id">The ID of the user to delete.</param>
+        /// <returns>A ResponseDto indicating the result of the operation.</returns>
+        [HttpDelete("{id:int}")]
+        public async Task<ActionResult<ResponseDto>> DeleteUser(int id)
         {
-            return _context.Users.Any(e => e.UserId == id);
+            var response = await _userService.DeleteUser(id);
+            return response.IsSucceed ? Ok(response) : BadRequest(response);
         }
     }
 }

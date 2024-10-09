@@ -45,11 +45,11 @@ builder.Services.AddAuthentication(options =>
         options.Authority = "https://accounts.google.com";
         options.ClientId = builder.Configuration["Authentication:Google:ClientId"];
         options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
-        options.ResponseType = "id_token"; // Chỉ yêu cầu id_token
-        options.CallbackPath = "/google-login"; // Đảm bảo URI này trùng khớp với Google Developer Console
-        options.SaveTokens = true; // Lưu access và id tokens
+        options.ResponseType = "id_token"; 
+        options.CallbackPath = "/google-login"; 
+        options.SaveTokens = true; 
         options.Scope.Add("email");
-        options.Scope.Add("profile"); // Nếu bạn cũng muốn thông tin profile
+        options.Scope.Add("profile"); 
     });
 
 

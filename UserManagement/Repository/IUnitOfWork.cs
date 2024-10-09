@@ -2,5 +2,5 @@
 
 public interface IUnitOfWork
 { 
-    
+    IUserRepo UserRepo { get; }
 }

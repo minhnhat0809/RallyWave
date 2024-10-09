@@ -52,7 +52,7 @@ public class RepositoryBase<T>(RallywaveContext repositoryContext) : IRepository
             query = includes.Aggregate(query, (current, include) => current.Include(include)).AsSplitQuery();
         }
 
-        return await query.Where(e => EF.Property<object>(e, "Id") == id)
+        return await query.Where(e => EF.Property<object>(e, "UserId") == id)
             .Select(selector)
             .FirstOrDefaultAsync();
     }
