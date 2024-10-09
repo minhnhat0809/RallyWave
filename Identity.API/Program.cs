@@ -32,11 +32,7 @@ builder.Services.AddControllers();
 // Add Services
 builder.Services.AddServices();
 
-// Configure Google authentication
-FirebaseApp.Create(new AppOptions()
-{
-    Credential = GoogleCredential.FromFile("path-to-your-firebase-service-account.json")
-});
+
 builder.Services.AddAuthentication(options =>
     {
         options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
