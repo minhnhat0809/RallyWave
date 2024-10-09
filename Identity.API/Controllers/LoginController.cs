@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using UserManagement.DTOs.UserDto;
 
 namespace Identity.API.Controllers
 {
@@ -24,11 +25,7 @@ namespace Identity.API.Controllers
             _userService = userService;
             _authService = authService;
         }
-         
-        
-        
-        
-        
+
         // Action to redirect user to Google for authentication
         [HttpGet("google-login")]
         public IActionResult GoogleLogin()
@@ -42,39 +39,43 @@ namespace Identity.API.Controllers
         // Action to handle the response from Google after authentication
         [HttpGet("google-response")]
         [Authorize]
-        public async Task<ActionResult<ResponseModel>?> GoogleResponse()
+        public async Task<ActionResult<ResponseDto>> GoogleResponse()
         {
             var result = await HttpContext.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-            var responseModel = new ResponseModel();
+            var responseDto = new ResponseDto(null, null, false, StatusCodes.Status400BadRequest);
 
             if (result?.Principal == null)
             {
-                responseModel.IsSuccessful = false;
-                responseModel.Error = "Unable to authenticate with Google.";
-                return BadRequest(responseModel);
+                responseDto.Message = "Unable to authenticate with Google.";
+                return BadRequest(responseDto);
             }
 
-            // Lấy access token và id token
-            responseModel.AccessToken = result.Properties?.GetTokenValue("access_token");
-            responseModel.IdToken = result.Properties?.GetTokenValue("id_token");
+            // Get access token and id token
+            var accessToken = result.Properties?.GetTokenValue("access_token");
+            var idToken = result.Properties?.GetTokenValue("id_token");
 
-            if (string.IsNullOrEmpty(responseModel.IdToken))
+            if (string.IsNullOrEmpty(idToken))
             {
-                responseModel.IsSuccessful = false;
-                responseModel.Error = "ID Token is missing.";
-                return BadRequest(responseModel);
+                responseDto.Message = "ID Token is missing.";
+                return BadRequest(responseDto);
             }
-            return Ok(responseModel);
+
+            responseDto.Result = new { AccessToken = accessToken, IdToken = idToken };
+            responseDto.IsSucceed = true;
+            responseDto.StatusCode = StatusCodes.Status200OK;
+
+            return Ok(responseDto);
         }
 
-        [HttpGet("google-response-uncensored")]
-        public async Task<IActionResult> GoogleResponse([FromQuery] string idToken)
+        [HttpPost("google-response-uncensored")]
+        public async Task<ActionResult<ResponseDto>> GoogleResponse([FromBody] GoogleLoginRequest request)
         {
-            var payload = await _authService.VerifyGoogleToken(idToken);
-            var responseModel = new ResponseModel();
+            var payload = await _authService.VerifyGoogleToken(request.Token);
+            var responseDto = new ResponseDto(null, null, false, StatusCodes.Status400BadRequest);
             if (payload == null)
             {
-                return BadRequest("Invalid Google token.");
+                responseDto.Message = "Invalid Google token.";
+                return BadRequest(responseDto);
             }
 
             // Use payload information to authenticate or create a user
@@ -82,34 +83,33 @@ namespace Identity.API.Controllers
             var name = payload.Name;
             var picture = payload.Picture; // Optional
 
-            var user = await _userService.GetUserByEmailAsync(email);
-            if (user == null)
+            var emailExist = await _userService.GetUserByEmailAsync(email);
+            if (emailExist.Result == null)
             {
-                user = new User
+                UserCreateDto user = new UserCreateDto()
                 {
                     UserName = name,
                     Email = email,
                     PhoneNumber = 0, // Placeholder
                     Gender = "N/A",
-                    Dob = new DateOnly(2000, 1, 1) ,
-                    Address =  "N/A",
-                    Province =  "N/A",
+                    Dob = new DateOnly(2000, 1, 1),
+                    Address = "N/A",
+                    Province = "N/A",
                     Avatar = picture,
                     Status = 1,
-                    
                 };
-                responseModel.User = await _userService.AddUserAsync(user);
+                responseDto = await _userService.CreateUser(user);
             }
-
-
-            return Ok(responseModel);
+            
+            return Ok(responseDto);
         }
+
         [HttpGet("logout")]
         public async Task<IActionResult> Logout()
         {
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             return Ok("Logged out");
         }
-        
     }
+
 }

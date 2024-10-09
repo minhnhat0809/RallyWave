@@ -1,12 +1,10 @@
 namespace Identity.API.BusinessObjects;
 
-public class ResponseModel
+
+public class ResponseDto(object? result, string? message, bool isSucceed, int statusCode)
 {
-    public Object? User { get; set; }
-    public string? AccessToken { get; set; }
-    public string? IdToken { get; set; }
-    public DateTime Expiration { get; set; }  // Expiration time for the tokens
-    public string Message { get; set; } = "Login successful";  // Optional message
-    public bool IsSuccessful { get; set; } = true;  // Indicates if the operation was successful
-    public string? Error { get; set; }  // Error message if there is an issue
+    public object? Result { get; set; } = result;
+    public string? Message { get; set; } = message;
+    public bool IsSucceed { get; set; } = isSucceed;
+    public int StatusCode { get; set; } = statusCode;
 }
