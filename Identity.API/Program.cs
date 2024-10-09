@@ -1,5 +1,7 @@
 using System.Security.Claims;
 using Entity;
+using FirebaseAdmin;
+using Google.Apis.Auth.OAuth2;
 using Identity.API.DIs;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -31,6 +33,10 @@ builder.Services.AddControllers();
 builder.Services.AddServices();
 
 // Configure Google authentication
+FirebaseApp.Create(new AppOptions()
+{
+    Credential = GoogleCredential.FromFile("path-to-your-firebase-service-account.json")
+});
 builder.Services.AddAuthentication(options =>
     {
         options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;

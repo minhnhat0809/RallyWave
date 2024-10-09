@@ -1,6 +1,8 @@
 using System.Security.Claims;
 using Entity;
+using FirebaseAdmin.Auth;
 using Identity.API.BusinessObjects;
+using Identity.API.BusinessObjects.RequestObject;
 using Identity.API.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -16,11 +18,17 @@ namespace Identity.API.Controllers
     {
         private readonly IUserService _userService;
         private readonly IAuthService _authService; 
+        
         public LoginController(IUserService userService, IAuthService authService)
         {
             _userService = userService;
             _authService = authService;
         }
+         
+        
+        
+        
+        
         // Action to redirect user to Google for authentication
         [HttpGet("google-login")]
         public IActionResult GoogleLogin()
@@ -102,5 +110,6 @@ namespace Identity.API.Controllers
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             return Ok("Logged out");
         }
+        
     }
 }
