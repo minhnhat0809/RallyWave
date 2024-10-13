@@ -168,12 +168,11 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
 
     private async Task<ResponseDto> ValidateForCreating(BookingCreateDto bookingCreateDto)
     {
-        var response = new ResponseDto(null, "Validated successfully", true, StatusCodes.Status200OK);
         var today = DateOnly.FromDateTime(DateTime.Now.Date);
         var timeNow = TimeOnly.FromDateTime(DateTime.Now);
 
         // Validate that both MatchId and UserId are not provided at the same time
-        if (bookingCreateDto.MatchId.HasValue && bookingCreateDto.UserId.HasValue)
+        if (bookingCreateDto is { MatchId: not null, UserId: not null })
         {
             return new ResponseDto(null, "Match and user cannot be specified simultaneously.", false, StatusCodes.Status400BadRequest);
         }
@@ -236,12 +235,12 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
 
         // Validate time range (TimeStart < TimeEnd)
         if (bookingCreateDto.TimeStart >= bookingCreateDto.TimeEnd)
-    {
-        return new ResponseDto(null, "Start time must be earlier than end time.", false, StatusCodes.Status400BadRequest);
-    }
+        {
+            return new ResponseDto(null, "Start time must be earlier than end time.", false, StatusCodes.Status400BadRequest);
+        }
 
         // Validate time overlap with existing slots
-        response = await CheckCourtAvailableForCreating(slot, bookingCreateDto.Date, bookingCreateDto.TimeStart, bookingCreateDto.TimeEnd);
+        var response = await CheckCourtAvailableForCreating(slot, bookingCreateDto.Date, bookingCreateDto.TimeStart, bookingCreateDto.TimeEnd);
 
         return response;
     }
@@ -380,17 +379,16 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
             return response;
         }
         
-        //get bookings with same date and same slot
-        var bookings = await unitOfWork.BookingRepo.FindByConditionAsync(b => b.SlotId != null && 
-                                                                              b.Date.Equals(date) && 
-                                                                              b.SlotId.Value.Equals(slot.SlotId),
-                                                                              b => new
-                                                                              {
-                                                                                  b.TimeEnd, b.TimeStart
-                                                                              });
+        //get booking that overlaps
+        var overlapBooking = await unitOfWork.BookingRepo
+            .AnyAsync(b => b.SlotId != null &&
+                           b.Date.Equals(date) &&
+                           b.SlotId.Value.Equals(slot.SlotId) &&
+                           b.TimeStart < timeEnd &&
+                           b.TimeEnd > timeStart);
         
         // Check if there is any time conflict with existing bookings
-        if (!bookings.Any(b => timeStart < b.TimeEnd && timeEnd > b.TimeStart)) return response;
+        if (overlapBooking) return response;
         
         response.IsSucceed = false;
         response.Message = "The requested time overlaps with an existing booking.";
@@ -411,22 +409,17 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
             return response;
         }
 
-        //get bookings with same date and same slot
-        var bookings = await unitOfWork.BookingRepo.FindByConditionAsync(b => b.SlotId != null && 
-                                                                              b.Date.Equals(date) && 
-                                                                              b.SlotId.Value.Equals(slot.SlotId), 
-                                                                              b => new
-                                                                                {
-                                                                                    b.BookingId, 
-                                                                                    b.TimeStart, 
-                                                                                    b.TimeEnd
-                                                                                });
-
-        //exclude itself
-        bookings = bookings.Where(b => b.BookingId != id).ToList();
+        //get booking that overlaps
+        var overlapBooking = await unitOfWork.BookingRepo
+            .AnyAsync(b => b.SlotId != null &&
+                           b.BookingId !=  id &&
+                           b.Date.Equals(date) &&
+                           b.SlotId.Value.Equals(slot.SlotId) &&
+                           b.TimeStart < timeEnd &&
+                           b.TimeEnd > timeStart);
         
         // Check if there is any time conflict with existing bookings
-        if (!bookings.Any(booking => timeStart < booking.TimeEnd && timeEnd > booking.TimeStart)) return response;
+        if (overlapBooking) return response;
         
         response.IsSucceed = false;
         response.Message = "The requested time overlaps with an existing booking.";

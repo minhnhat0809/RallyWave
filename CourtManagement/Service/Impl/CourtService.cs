@@ -146,7 +146,7 @@ public class CourtService(IUnitOfWork unitOfWork, IMapper mapper, IImageService 
             //map to court
             court = _mapper.Map<Court>(courtUpdateDto);
             
-            var imagesUrl = new List<string>();
+            List<string> imagesUrl;
 
             switch (courtUpdateDto.Images)
             {
@@ -154,7 +154,7 @@ public class CourtService(IUnitOfWork unitOfWork, IMapper mapper, IImageService 
                 case { Count: > 0 and < 6 }:
                     imagesUrl = await _imageService.UploadImages(courtUpdateDto.Images, BucketName, null);
                     break;
-                case { Count: > 5}:
+                default:
                     responseDto.Message = "5 images is max";
                     responseDto.StatusCode = StatusCodes.Status400BadRequest;
                     responseDto.IsSucceed = false;

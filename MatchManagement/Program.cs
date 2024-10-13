@@ -40,7 +40,7 @@ builder.Services.AddAutoMapper(typeof(MapperConfig).Assembly);
 builder.Services.AddCors(opts =>
 {
     opts.AddPolicy("CORSPolicy", corsPolicyBuilder => corsPolicyBuilder.AllowAnyHeader().WithOrigins()
-        .AllowAnyMethod().AllowCredentials().SetIsOriginAllowed((host) => true));
+        .AllowAnyMethod().AllowCredentials().SetIsOriginAllowed((_) => true));
 });
 
 var app = builder.Build();
