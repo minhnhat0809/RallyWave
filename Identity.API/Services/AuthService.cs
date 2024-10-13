@@ -81,6 +81,7 @@ public class AuthService : IAuthService
                 _responseLoginModel.AccessToken = token;
                 _responseLoginModel.User = _mapper.Map<UserViewDto>(userExist);
             }
+            
             return _responseLoginModel;
         }
 
