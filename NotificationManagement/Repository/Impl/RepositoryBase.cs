@@ -40,21 +40,27 @@ public class RepositoryBase<T>(RallywaveContext repositoryContext) : IRepository
 
 
     
-    public async Task<TResult?> GetByIdAsync<TResult>(
-        object id, 
+    public async Task<TResult?> GetByConditionAsync<TResult>(
+        Expression<Func<T, bool>> condition,
         Expression<Func<T, TResult>> selector, 
-        params Expression<Func<T, object>>[]? includes)
+        params Expression<Func<T, object>>[]? includes) 
     {
         IQueryable<T> query = repositoryContext.Set<T>();
-
+        
         if (includes is { Length: > 0 })
         {
             query = includes.Aggregate(query, (current, include) => current.Include(include)).AsSplitQuery();
         }
-
-        return await query.Where(e => EF.Property<object>(e, "Id") == id)
+        
+        return await query.Where(condition)
             .Select(selector)
             .FirstOrDefaultAsync();
+    }
+
+    
+    public async Task<bool> AnyAsync(Expression<Func<T, bool>> predicate)
+    {
+        return await repositoryContext.Set<T>().AnyAsync(predicate);
     }
 
 

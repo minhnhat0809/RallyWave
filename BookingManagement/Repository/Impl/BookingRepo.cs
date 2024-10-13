@@ -59,7 +59,7 @@ public class BookingRepo(RallywaveContext repositoryContext) : RepositoryBase<Bo
     {
         try
         {
-            return await GetByIdAsync(bookingId, b => b,  b => b.Court!,
+            return await GetByConditionAsync(b => b.BookingId == bookingId, b => b,  b => b.Court!,
                 b => b.Match, b => b.User, b => b.PaymentDetail);
         }
         catch (Exception e)

@@ -70,6 +70,8 @@ public partial class RallywaveContext : DbContext
 
             entity.HasIndex(e => e.CourtId, "FK_Booking_Court");
 
+            entity.HasIndex(e => e.SlotId, "FK_Booking_Slot");
+
             entity.HasIndex(e => e.UserId, "FK_Booking_User");
 
             entity.HasIndex(e => e.MatchId, "match_id").IsUnique();
@@ -101,6 +103,10 @@ public partial class RallywaveContext : DbContext
             entity.HasOne(d => d.Match).WithOne(p => p.Booking)
                 .HasForeignKey<Booking>(d => d.MatchId)
                 .HasConstraintName("FK_Booking_Match");
+
+            entity.HasOne(d => d.Slot).WithMany(p => p.Bookings)
+                .HasForeignKey(d => d.SlotId)
+                .HasConstraintName("FK_Booking_Slot");
 
             entity.HasOne(d => d.User).WithMany(p => p.Bookings)
                 .HasForeignKey(d => d.UserId)

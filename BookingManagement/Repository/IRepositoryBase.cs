@@ -13,8 +13,8 @@ public interface IRepositoryBase<T>
         Expression<Func<T, TResult>> selector,
         params Expression<Func<T, object>>[]? includes);
 
-    Task<TResult?> GetByIdAsync<TResult>(
-        object id,
+    Task<TResult?> GetByConditionAsync<TResult>(
+        Expression<Func<T, bool>> condition,
         Expression<Func<T, TResult>> selector,
         params Expression<Func<T, object>>[]? includes);
     

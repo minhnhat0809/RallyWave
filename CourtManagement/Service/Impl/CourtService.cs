@@ -46,7 +46,7 @@ public class CourtService(IUnitOfWork unitOfWork, IMapper mapper, IImageService 
         var responseDto= new ResponseDto(null, "", true, 200);
         try
         {
-            var courtViewDto = await _unitOfWork.CourtRepo.GetByIdAsync(id, c => new CourtViewDto(
+            var courtViewDto = await _unitOfWork.CourtRepo.GetByConditionAsync(c => c.CourtId == id, c => new CourtViewDto(
                 c.CourtId, 
                 c.CourtOwner!.Name!,
                 c.Sport!.SportName,
@@ -127,7 +127,7 @@ public class CourtService(IUnitOfWork unitOfWork, IMapper mapper, IImageService 
         try
         {
             //check court in database
-            var court = await _unitOfWork.CourtRepo.GetByIdAsync(id, c => c);
+            var court = await _unitOfWork.CourtRepo.GetByConditionAsync(c => c.CourtId == id, c => c);
             if (court == null)
             {
                 responseDto.Message = "There are no courts with this id";
@@ -193,7 +193,7 @@ public class CourtService(IUnitOfWork unitOfWork, IMapper mapper, IImageService 
         try
         {
             //check court in database
-            var court = await _unitOfWork.CourtRepo.GetByIdAsync(id, c => c);
+            var court = await _unitOfWork.CourtRepo.GetByConditionAsync(c => c.CourtId == id, c => c);
             if (court == null)
             {
                 responseDto.Message = "There are no courts with this id";
@@ -221,7 +221,7 @@ public class CourtService(IUnitOfWork unitOfWork, IMapper mapper, IImageService 
         try
         {
             //check court in database
-            var courtImage = await _unitOfWork.CourtImageRepo.GetByIdAsync(imageId, ci => ci);
+            var courtImage = await _unitOfWork.CourtImageRepo.GetByConditionAsync( ci => ci.ImageId == imageId, ci => ci);
             if (courtImage == null)
             {
                 responseDto.Message = "There are no court images with this id";

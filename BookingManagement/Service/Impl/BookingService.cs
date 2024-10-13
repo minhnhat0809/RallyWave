@@ -180,7 +180,9 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
         // Validate MatchId
         if (bookingCreateDto.MatchId.HasValue)
         {
-            var match = await unitOfWork.MatchRepo.GetByIdAsync(bookingCreateDto.MatchId.Value, m => new { m.MatchId, m.MatchName });
+            var match = await unitOfWork.MatchRepo.GetByConditionAsync(m => m.MatchId == bookingCreateDto.MatchId.Value, 
+                m => new { m.MatchId, m.MatchName });
+            
             if (match == null)
             {
              return new ResponseDto(null, "Match not found.", false, StatusCodes.Status404NotFound);
@@ -190,7 +192,9 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
         // Validate UserId
         if (bookingCreateDto.UserId.HasValue)
         {
-            var user = await unitOfWork.UserRepo.GetByIdAsync(bookingCreateDto.UserId.Value, u => new { u.UserId, u.UserName });
+            var user = await unitOfWork.UserRepo.GetByConditionAsync(u => u.UserId == bookingCreateDto.UserId.Value, 
+                u => new { u.UserId, u.UserName });
+            
             if (user == null)
             {
                 return new ResponseDto(null, "User not found.", false, StatusCodes.Status404NotFound);
@@ -215,7 +219,7 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
             return new ResponseDto(null, "Slot Id cannot be null.", false, StatusCodes.Status400BadRequest);
         }
 
-        var slot = await unitOfWork.SlotRepo.GetByIdAsync(bookingCreateDto.SlotId.Value,
+        var slot = await unitOfWork.SlotRepo.GetByConditionAsync(s => s.SlotId == bookingCreateDto.SlotId.Value,
             s => new SlotValidateDto(s.SlotId, s.TimeStart, s.TimeEnd));
 
         if (slot == null)
@@ -265,7 +269,9 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
         // validate match
         if (bookingUpdateDto.MatchId.HasValue)
         {
-            var match = await unitOfWork.MatchRepo.GetByIdAsync(bookingUpdateDto.MatchId.Value, m => new {m.MatchId, m.MatchName}, null);
+            var match = await unitOfWork.MatchRepo.GetByConditionAsync(m => m.MatchId == bookingUpdateDto.MatchId.Value, 
+                m => new {m.MatchId, m.MatchName}, null);
+            
             if (match == null)
             {
                 response.IsSucceed = false;
@@ -278,7 +284,7 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
         // validate user
         if (bookingUpdateDto.UserId.HasValue)
         {
-            var match = await unitOfWork.UserRepo.GetByIdAsync(bookingUpdateDto.UserId.Value, u => new {u.UserId});
+            var match = await unitOfWork.UserRepo.GetByConditionAsync(u => u.UserId == bookingUpdateDto.UserId.Value, u => new {u.UserId});
             if (match == null)
             {
                 response.IsSucceed = false;
@@ -315,7 +321,7 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
             return response;
         }
 
-        var slot = await unitOfWork.SlotRepo.GetByIdAsync(bookingUpdateDto.SlotId, 
+        var slot = await unitOfWork.SlotRepo.GetByConditionAsync(s => s.SlotId == bookingUpdateDto.SlotId, 
             s => new SlotValidateDto
             (
                 s.SlotId,
