@@ -1,9 +1,7 @@
 ﻿using Entity;
-using UserManagement.DTOs;
-using UserManagement.DTOs.UserDto;
-using UserManagement.DTOs.UserDto.ViewDto;
+using Identity.API.BusinessObjects.UserViewModel;
 
-namespace UserManagement.Repository;
+namespace Identity.API.Repository;
 
 public interface IUserRepo : IRepositoryBase<User>
 {
@@ -16,4 +14,7 @@ public interface IUserRepo : IRepositoryBase<User>
     Task<UserViewDto> UpdateUser(User user);
 
     Task<UserViewDto> DeleteUser(User user);
+
+    public Task<User?> GetUserByEmail(string email);
+
 }

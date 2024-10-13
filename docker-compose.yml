@@ -46,7 +46,13 @@
       dockerfile: BookingManagement/Dockerfile
     networks:
       - rallywave
-        
+  identity.api:
+    image: identity.api
+    build:
+      context: .
+      dockerfile: Identity.API/Dockerfile
+    networks:
+      - rallywave
   rabbitmq:
     container_name: rabbitmq
     image: rabbitmq
@@ -61,3 +67,4 @@
 networks:
   rallywave: 
     driver: bridge
+  

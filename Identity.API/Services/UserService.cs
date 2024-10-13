@@ -1,13 +1,34 @@
-﻿using AutoMapper;
+using AutoMapper;
 using Entity;
-using UserManagement.DTOs;
+using Identity.API.BusinessObjects;
+using Identity.API.BusinessObjects.UserViewModel;
+using Identity.API.Ultility;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using UserManagement.DTOs.UserDto;
 using UserManagement.DTOs.UserDto.ViewDto;
 using UserManagement.Repository;
-using UserManagement.Ultility;
 
-namespace UserManagement.Service.Impl;
+namespace Identity.API.Services;
 
+public interface IUserService
+{
+    Task<ResponseDto> GetUser(string? filterField,
+        string? filterValue,
+        string? sortField,
+        string sortValue,
+        int pageNumber,
+        int pageSize);
+
+    Task<ResponseDto> GetUserById(int userId);
+
+    Task<ResponseDto> CreateUser(UserCreateDto userCreateDto);
+
+    Task<ResponseDto> UpdateUser(int id, UserUpdateDto userCreateDto);
+
+    Task<ResponseDto> DeleteUser(int id);
+    Task<ResponseDto> GetUserByEmailAsync(string email);
+}
 public class UserService : IUserService
     {
         private readonly IUnitOfWork unitOfWork;
@@ -141,7 +162,7 @@ public class UserService : IUserService
 
                 var user = mapper.Map<User>(userCreateDto);
 
-                await unitOfWork.UserRepo.CreateUser(user);
+                responseDto.Result = await unitOfWork.UserRepo.CreateUser(user);
 
                 responseDto.Message = "Create successfully!";
             }
@@ -223,6 +244,33 @@ public class UserService : IUserService
             return responseDto;
         }
 
+        public async Task<ResponseDto> GetUserByEmailAsync(string email)
+        {
+            var responseDto = new ResponseDto(null, "", true, StatusCodes.Status200OK);
+            try
+            {
+                var userList = await unitOfWork.UserRepo.GetUsers("email", email) ;
+                if (userList == null || userList.Count == 0 )
+                {
+                    responseDto.Message = "There are no users with this mail";
+                    responseDto.StatusCode = StatusCodes.Status400BadRequest;
+                }
+                else
+                {
+                    responseDto.Result = userList;
+                    responseDto.Message = "Get successfully!";
+                }
+            }
+            catch (Exception e)
+            {
+                responseDto.IsSucceed = false;
+                responseDto.StatusCode = StatusCodes.Status500InternalServerError;
+                responseDto.Message = e.Message;
+            }
+
+            return responseDto;
+        }
+
         private async Task<ResponseDto> ValidateForCreating(UserCreateDto userCreateDto)
         {
             var response = new ResponseDto(null, "", true, 200);
@@ -230,7 +278,7 @@ public class UserService : IUserService
             // Add your validation logic here
             // Example: Check if user already exists
             var existingUser = await unitOfWork.UserRepo.GetUsers("email",userCreateDto.Email);
-            if (existingUser != null)
+            if (existingUser.Count != 0 || !existingUser.IsNullOrEmpty() )
             {
                 response.IsSucceed = false;
                 response.Message = "A user with this email already exists.";

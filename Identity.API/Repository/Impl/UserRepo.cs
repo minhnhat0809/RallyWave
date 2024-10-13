@@ -1,22 +1,13 @@
-﻿using AutoMapper;
-using Entity;
-using UserManagement.DTOs;
-using UserManagement.DTOs.UserDto;
-using UserManagement.DTOs.UserDto.ViewDto;
+﻿using Entity;
+using Identity.API.BusinessObjects.UserViewModel;
+using Microsoft.EntityFrameworkCore;
 
-namespace UserManagement.Repository.Impl;
-
-using Entity;
-using UserManagement.Repository;
-using UserManagement.Repository.Impl;
-
-using Entity;
-using UserManagement.DTOs.UserDto.ViewDto;
-using UserManagement.Repository;
-using UserManagement.Repository.Impl;
+namespace Identity.API.Repository.Impl;
 
 public class UserRepo(RallywaveContext repositoryContext) : RepositoryBase<User>(repositoryContext), IUserRepo
 {
+    private readonly RallywaveContext _repositoryContext = repositoryContext;
+
     public async Task<List<UserViewDto>> GetUsers(string? filterField, string? filterValue)
     {
         try
@@ -42,7 +33,7 @@ public class UserRepo(RallywaveContext repositoryContext) : RepositoryBase<User>
 
                 case "email":
                     users = await FindByConditionAsync(
-                        u => u.Email.Equals(filterValue!),
+                        u => u.Email != null && u.Email.Equals(filterValue!),
                         u => new UserViewDto(
                             u.UserId,
                             u.UserName,
@@ -194,6 +185,24 @@ public class UserRepo(RallywaveContext repositoryContext) : RepositoryBase<User>
         {
             throw new Exception(e.Message);
         }
+    }
+
+    public async Task<User?> GetUserByEmail(string email)
+    {
+        try
+        {
+            var exist = await _repositoryContext.Users.FirstOrDefaultAsync(x => x.Email == email);
+            if (exist!=null)
+            {
+                return exist;
+            }
+        }
+        catch (Exception e)
+        {
+            throw new Exception(e.Message);
+        }
+
+        return null;
     }
 }
 

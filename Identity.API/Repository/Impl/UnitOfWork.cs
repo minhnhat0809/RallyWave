@@ -1,6 +1,7 @@
 ﻿using Entity;
+using UserManagement.Repository;
 
-namespace UserManagement.Repository.Impl;
+namespace Identity.API.Repository.Impl;
 
 public class UnitOfWork(RallywaveContext context) : IUnitOfWork
 {

@@ -1,5 +1,6 @@
 using Entity;
 using Microsoft.EntityFrameworkCore;
+using UserManagement;
 using UserManagement.Repository;
 using UserManagement.Repository.Impl;
 using UserManagement.Service;
@@ -13,6 +14,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
+
+//mapper 
+builder.Services.AddAutoMapper(typeof(MapperConfig).Assembly);
 
 //service
 builder.Services.AddScoped<IUserService, UserService>();
