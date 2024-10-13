@@ -21,7 +21,6 @@ public static class ServiceCollectionExtension
         services.AddScoped<IUserRepo, UserRepo>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         
-        services.AddSingleton<CustomFirebaseHandler>();
         //mapper 
         services.AddAutoMapper(typeof(MapperConfig).Assembly);
         
