@@ -20,7 +20,7 @@ public interface IAuthService
     
     
     // Including Role, else return role not exist
-    public Task<ResponseLoginModel> Authenticate(LoginModel loginDto);
+    public Task<ResponseGoogleLoginModel> Authenticate(GoogleLoginModel googleLoginDto);
 
 }
 public class AuthService : IAuthService
@@ -28,16 +28,16 @@ public class AuthService : IAuthService
     private readonly IConfiguration _configuration;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
-    private readonly ResponseLoginModel _responseLoginModel;
+    private readonly ResponseGoogleLoginModel _responseGoogleLoginModel;
     public AuthService(IConfiguration configuration, IUnitOfWork unitOfWork, IMapper mapper)
     {
         _configuration = configuration;
         _unitOfWork = unitOfWork;
         _mapper = mapper;
-        _responseLoginModel = new ResponseLoginModel(false, null, null, null);
+        _responseGoogleLoginModel = new ResponseGoogleLoginModel(false, null, null, null);
     }
     
-    public async Task<ResponseLoginModel> Authenticate(LoginModel request)
+    public async Task<ResponseGoogleLoginModel> Authenticate(GoogleLoginModel request)
     {
         if (request.IdToken != null)
         {
@@ -67,25 +67,25 @@ public class AuthService : IAuthService
                 if (request.Role != null)
                 {
                     var token = GenerateJwtToken(user, request.Role);
-                    _responseLoginModel.Message = "Login successfully";
-                    _responseLoginModel.IsSuccess = true;
-                    _responseLoginModel.AccessToken = token;
-                    _responseLoginModel.User = newUser;
+                    _responseGoogleLoginModel.Message = "Login successfully";
+                    _responseGoogleLoginModel.IsSuccess = true;
+                    _responseGoogleLoginModel.AccessToken = token;
+                    _responseGoogleLoginModel.User = newUser;
                 }
             }
             else // Existed - Go get the Token
             {
                 var token = GenerateJwtToken(userExist, "User");
-                _responseLoginModel.Message = "Login successfully";
-                _responseLoginModel.IsSuccess = true;
-                _responseLoginModel.AccessToken = token;
-                _responseLoginModel.User = _mapper.Map<UserViewDto>(userExist);
+                _responseGoogleLoginModel.Message = "Login successfully";
+                _responseGoogleLoginModel.IsSuccess = true;
+                _responseGoogleLoginModel.AccessToken = token;
+                _responseGoogleLoginModel.User = _mapper.Map<UserViewDto>(userExist);
             }
             
-            return _responseLoginModel;
+            return _responseGoogleLoginModel;
         }
 
-        return _responseLoginModel;
+        return _responseGoogleLoginModel;
     }
     
     

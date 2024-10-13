@@ -27,7 +27,7 @@ namespace Identity.API.Controllers
             _authService = authService;
         }
         [HttpPost("google")]
-        public async Task<ActionResult<ResponseDto>> GoogleResponse([FromBody] LoginModel request)
+        public async Task<ActionResult<ResponseDto>> GoogleResponse([FromBody] GoogleLoginModel request)
         {
             
             var responseDto = new ResponseDto(null, null, false, StatusCodes.Status400BadRequest);
