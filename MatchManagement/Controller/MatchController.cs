@@ -1,15 +1,15 @@
 using MatchManagement.DTOs;
+using MatchManagement.DTOs.MatchDto;
 using MatchManagement.Service;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MatchManagement.Controller
 {
-    [Route("api/[controller]")]
+    [Route("api/matches")]
     [ApiController]
     public class MatchController(IMatchService matchService) : ControllerBase
     {
-        [HttpGet("matches")]
+        [HttpGet]
         public async Task<ResponseDto> GetMatches(
             [FromQuery] string? filterField,
             [FromQuery] string? filterValue,
@@ -21,6 +21,54 @@ namespace MatchManagement.Controller
         {
             var response = await matchService.GetMatches(filterField, filterValue, sortField, sortValue, pageNumber, pageSize);
             
+            return response;
+        }
+
+        [HttpGet("{id:int}")]
+        public async Task<ResponseDto> GetMatch(int id)
+        {
+            var response = await matchService.GetMatchById(id);
+
+            return response;
+        }
+
+        [HttpPost("user/{userId:int}")]
+        public async Task<ResponseDto> CreateMatch(int userId, [FromBody] MatchCreateDto matchCreateDto)
+        {
+            var response = await matchService.CreateMatch(userId, matchCreateDto);
+
+            return response;
+        }
+
+        [HttpPost("match/{matchId:int}/user/{userId:int}")]
+        public async Task<ResponseDto> EnrollUser(int matchId, int userId)
+        {
+            var response = await matchService.EnrollInMatch(userId, matchId);
+
+            return response;
+        }
+        
+        [HttpPut("match/{matchId:int}/user/{userId:int}")]
+        public async Task<ResponseDto> UnEnrollUser(int matchId, int userId)
+        {
+            var response = await matchService.UnEnrollFromMatch(userId, matchId);
+
+            return response;
+        }
+        
+        [HttpPut("{id:int}")]
+        public async Task<ResponseDto> UpdateMatch(int id, [FromBody] MatchUpdateDto matchUpdateDto)
+        {
+            var response = await matchService.UpdateMatch(id, matchUpdateDto);
+
+            return response;
+        }
+
+        [HttpDelete("{id:int}")]
+        public async Task<ResponseDto> DeleteMatch(int id)
+        {
+            var response = await matchService.DeleteMatch(id);
+
             return response;
         }
     }

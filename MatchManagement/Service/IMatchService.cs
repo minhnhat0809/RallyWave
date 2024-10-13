@@ -7,9 +7,13 @@ public interface IMatchService
 {
     Task<ResponseDto> GetMatches(string? filterField, string? filterValue, string? sortField, string sortValue , int pageNumber, int pageSize);
 
+    Task<ResponseDto> EnrollInMatch(int userId, int matchId);
+
+    Task<ResponseDto> UnEnrollFromMatch(int userId, int matchId);
+
     Task<ResponseDto> GetMatchById(int id);
 
-    Task<ResponseDto> CreateMatch(MatchCreateDto matchCreateDto);
+    Task<ResponseDto> CreateMatch(int userId, MatchCreateDto matchCreateDto);
 
     Task<ResponseDto> UpdateMatch(int id, MatchUpdateDto matchUpdateDto);
 

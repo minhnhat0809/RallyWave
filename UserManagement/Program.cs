@@ -33,7 +33,7 @@ builder.Services.AddScoped(typeof(ListExtensions));
 builder.Services.AddCors(opts =>
 {
     opts.AddPolicy("CORSPolicy", corsPolicyBuilder => corsPolicyBuilder.AllowAnyHeader().WithOrigins()
-        .AllowAnyMethod().AllowCredentials().SetIsOriginAllowed((host) => true));
+        .AllowAnyMethod().AllowCredentials().SetIsOriginAllowed((_) => true));
 });
 
 //db context

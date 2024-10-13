@@ -11,6 +11,8 @@ public class CourtUpdateDto
     public string CourtName { get; set; } = null!;
 
     public sbyte? MaxPlayers { get; set; }
+    
+    public IFormFileCollection? Images { get; set; }
 
     [Required(ErrorMessage = "Address is required.")]
     [MinLength(1, ErrorMessage = "Address cannot be empty.")]
