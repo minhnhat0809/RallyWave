@@ -105,7 +105,7 @@ public class AuthService : IAuthService
         TwilioClient.Init(accountSid, authToken);
         var phone = "+84" + int.Parse(request.PhoneNumber);
         var verification = await VerificationResource.CreateAsync(
-            to: "+840399448325",
+            to: "0399448325",
             channel: "sms",
             pathServiceSid: serviceSid
         );
