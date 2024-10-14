@@ -84,6 +84,8 @@ builder.Services.AddAuthentication(options =>
         options.Scope.Add("profile");
         options.Scope.Add("openid");
     })
+    
+    //AC9d113f318b5c1facf55782e0d1d161fb
     .AddJwtBearer(options =>
     {
         options.RequireHttpsMetadata = false;
@@ -163,3 +165,29 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+// appsettings.json
+/*{
+  
+  "AllowedHosts": "*",
+  "ConnectionStrings": {
+    "RallyWave": "server=localhost;database=rallywave;user=root;password=12345"
+  },
+  "Authentication": {
+    "Google": {
+      "ClientId": "973611178039-v62f1d3s05dfj2d8464gviseav4pm27p.apps.googleusercontent.com",
+      "ClientSecret": "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"
+    },
+    "Jwt": {
+      "Issuer": "User",
+      "Audience": "https://localhost:7152",
+      "SecretKey": "eyJhbGciOiJIUzI1NiJ9.eyJSb2xlIjoiQWRtaW4iLCJJc3N1ZXIiOiJJc3N1ZXIiLCJVc2VybmFtZSI6IkphdmFJblVzZSIsImV4cCI6MTcxNzg2NTAxMSwiaWF0IjoxNzE3ODY1MDExfQ.y58dZKPqhlMMYgchzcsf0thT480JnMq5-qeAW12DV1Q"
+    },
+    "Twilio": {
+      "AccountSid": "AC9d113f318b5c1facf55782e0d1d161fb",
+      "AuthToken": "65dce0683e06805dac24663eefc0bcc9",
+      "ServiceSid": "VA4260d732666a94ba3d9cadb84acca8a6"
+    }
+  }
+}
+*/
