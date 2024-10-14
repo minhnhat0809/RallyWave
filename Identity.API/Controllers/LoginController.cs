@@ -30,11 +30,11 @@ namespace Identity.API.Controllers
         [HttpGet("google-login")]
         public IActionResult GoogleLogin()
         {
-            var redirectUrl = Url.Action("GoogleResponse", "Login"); // Define the redirect action after Google login
+            var redirectUrl = Url.Action("GoogleResponse", "Login");
             var properties = new AuthenticationProperties { RedirectUri = redirectUrl };
-            
-            return Challenge(properties, GoogleDefaults.AuthenticationScheme); // Challenge Google authentication
+            return Challenge(properties, GoogleDefaults.AuthenticationScheme);
         }
+
 
         // Action to handle the response from Google after authentication
         [HttpGet("google-response")]
@@ -50,7 +50,7 @@ namespace Identity.API.Controllers
                 return BadRequest(responseDto);
             }
 
-            // Get access token and id token
+            // Retrieve tokens
             var accessToken = result.Properties?.GetTokenValue("access_token");
             var idToken = result.Properties?.GetTokenValue("id_token");
 
@@ -60,6 +60,7 @@ namespace Identity.API.Controllers
                 return BadRequest(responseDto);
             }
 
+            // Return both tokens
             responseDto.Result = new { AccessToken = accessToken, IdToken = idToken };
             responseDto.IsSucceed = true;
             responseDto.StatusCode = StatusCodes.Status200OK;
@@ -72,6 +73,7 @@ namespace Identity.API.Controllers
         {
             var payload = await _authService.VerifyGoogleToken(request.Token);
             var responseDto = new ResponseDto(null, null, false, StatusCodes.Status400BadRequest);
+
             if (payload == null)
             {
                 responseDto.Message = "Invalid Google token.";
@@ -81,8 +83,8 @@ namespace Identity.API.Controllers
             // Use payload information to authenticate or create a user
             var email = payload.Email;
             var name = payload.Name;
-            var picture = payload.Picture; // Optional
 
+            // Find or create user based on Google data
             var emailExist = await _userService.GetUserByEmailAsync(email);
             if (emailExist.Result == null)
             {
@@ -95,12 +97,14 @@ namespace Identity.API.Controllers
                     Dob = new DateOnly(2000, 1, 1),
                     Address = "N/A",
                     Province = "N/A",
-                    Avatar = picture,
+                    Avatar = payload.Picture,
                     Status = 1,
                 };
                 responseDto = await _userService.CreateUser(user);
             }
-            
+
+            // Return success response
+            responseDto = emailExist;
             return Ok(responseDto);
         }
 

@@ -45,12 +45,15 @@ builder.Services.AddAuthentication(options =>
         options.Authority = "https://accounts.google.com";
         options.ClientId = builder.Configuration["Authentication:Google:ClientId"];
         options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
-        options.ResponseType = "id_token"; 
+        options.ResponseType = OpenIdConnectResponseType.CodeIdToken; // This requests both ID token and authorization code
         options.CallbackPath = "/google-login"; 
         options.SaveTokens = true; 
         options.Scope.Add("email");
         options.Scope.Add("profile"); 
+        options.Scope.Add("https://www.googleapis.com/auth/user.phonenumbers.read");
+        options.Scope.Add("https://www.googleapis.com/auth/userinfo.email"); // To get access token for further API calls
     });
+
 
 
 

@@ -249,7 +249,7 @@ public class UserService : IUserService
             var responseDto = new ResponseDto(null, "", true, StatusCodes.Status200OK);
             try
             {
-                var userList = await unitOfWork.UserRepo.GetUsers("email", email) ;
+                var userList = await unitOfWork.UserRepo.FindByConditionAsync(u => u.Email == email,u => u) ;
                 if (userList == null || userList.Count == 0 )
                 {
                     responseDto.Message = "There are no users with this mail";
