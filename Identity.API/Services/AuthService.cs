@@ -8,6 +8,8 @@ using Identity.API.BusinessObjects;
 using Identity.API.BusinessObjects.LoginObjects;
 using Identity.API.BusinessObjects.UserViewModel;
 using Microsoft.IdentityModel.Tokens;
+using Twilio;
+using Twilio.Rest.Verify.V2.Service;
 using UserManagement.DTOs.UserDto;
 using UserManagement.Repository;
 
@@ -21,22 +23,27 @@ public interface IAuthService
     
     // Including Role, else return role not exist
     public Task<ResponseGoogleLoginModel> Authenticate(GoogleLoginModel googleLoginDto);
-
+    public Task<ResponseModel> SendPhoneVerificationAsync(PhoneLoginRequest request);
+    Task<ResponseModel> VerifyPhoneCodeAsync(VerifyCodeRequest request);
 }
+
+
 public class AuthService : IAuthService
 {
     private readonly IConfiguration _configuration;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
     private readonly ResponseGoogleLoginModel _responseGoogleLoginModel;
+    private readonly ResponseModel _responseModel;
     public AuthService(IConfiguration configuration, IUnitOfWork unitOfWork, IMapper mapper)
     {
         _configuration = configuration;
         _unitOfWork = unitOfWork;
         _mapper = mapper;
         _responseGoogleLoginModel = new ResponseGoogleLoginModel(false, null, null, null);
+        _responseModel = new ResponseModel(null, null, false, StatusCodes.Status400BadRequest);
     }
-    
+    // login by GOOGLE
     public async Task<ResponseGoogleLoginModel> Authenticate(GoogleLoginModel request)
     {
         if (request.IdToken != null)
@@ -45,7 +52,7 @@ public class AuthService : IAuthService
             
             // User Role Problem:
             //var userList = await _unitOfWork.UserRepo.GetUsers("email", payload.Email) ;
-            var userExist = await _unitOfWork.UserRepo.GetUserByEmail(payload.Email);
+            var userExist = await _unitOfWork.UserRepo.GetUserByPropertyAndValue("email",payload.Email);
             // Not Exist -> add new one
             if (userExist == null) 
             {
@@ -87,6 +94,76 @@ public class AuthService : IAuthService
 
         return _responseGoogleLoginModel;
     }
+    // login by PHONE (send sms verify)
+    public async Task<ResponseModel> SendPhoneVerificationAsync(PhoneLoginRequest request)
+    {
+        var accountSid = _configuration["Authentication:Twilio:AccountSid"];
+        var authToken = _configuration["Authentication:Twilio:AuthToken"];
+        var serviceSid = _configuration["Authentication:Twilio:ServiceSid"];
+
+        // Initialize the Twilio client with AccountSid and AuthToken
+        TwilioClient.Init(accountSid, authToken);
+        var phone = "+84" + int.Parse(request.PhoneNumber);
+        var verification = await VerificationResource.CreateAsync(
+            to: "+840399448325",
+            channel: "sms",
+            pathServiceSid: serviceSid
+        );
+
+        if (verification.Status == "pending")
+        {
+            _responseModel.IsSucceed = true;
+            _responseModel.Message = "Verification code sent successfully.";
+            return _responseModel;
+        }
+        _responseModel.IsSucceed = false;
+        _responseModel.Message ="Failed to send verification code." ;
+        return _responseModel;
+    }   
+    // verify SMS CODE to response Token
+    public async Task<ResponseModel> VerifyPhoneCodeAsync(VerifyCodeRequest phoneVerificationModel)
+    {
+        var serviceSid = _configuration["Authentication:Twilio:ServiceSid"];
+        var verificationCheck = await VerificationCheckResource.CreateAsync(
+            to: "+84" + phoneVerificationModel.PhoneNumber,
+            code: phoneVerificationModel.EnteredCode,
+            pathServiceSid: serviceSid
+        );
+
+        if (verificationCheck.Status == "approved")
+        {
+            // Handle login, token generation, or user creation if needed
+            if (phoneVerificationModel.PhoneNumber != null)
+            {
+                User? user = await _unitOfWork.UserRepo.GetUserByPropertyAndValue("phoneNumber",phoneVerificationModel.PhoneNumber);
+
+                if (user == null)
+                {
+                    // Create a new user if necessary - need to claim User's Name, Email, Role, Phone
+                    User newUser = new User()
+                    {
+                        PhoneNumber = int.Parse(phoneVerificationModel.PhoneNumber),
+                        UserName = "NewUser", // Placeholder
+                        Email = "user@example.com" // Placeholder
+                    };
+                    await _unitOfWork.UserRepo.CreateUser(newUser);
+                    user = await _unitOfWork.UserRepo.GetUserByPropertyAndValue("phoneNumber", phoneVerificationModel.PhoneNumber);
+                }
+
+                // Generate a JWT token for the user
+                var token = GenerateJwtToken(user, "User");
+                
+                _responseModel.IsSucceed = true;
+                _responseModel.Result = token;
+                _responseModel.Message = "Phone verification successful.";
+                return _responseModel;
+            }
+        }
+        _responseModel.IsSucceed = false;
+        _responseModel.Message = "Invalid verification code.";
+        return _responseModel;
+    }
+
     
     
     // generate JWT Token 
@@ -96,10 +173,11 @@ public class AuthService : IAuthService
         {
             var claims = new[]
             {
-                new Claim(JwtRegisteredClaimNames.Sub, user.Email),
+                new Claim(JwtRegisteredClaimNames.Sub, user.Email),             // needed when user register
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
                 new Claim(ClaimTypes.Name, user.UserName),
-                new Claim(ClaimTypes.Role, role) // Role come in Token
+                new Claim(ClaimTypes.Role, role), // Role come in Token
+                new Claim(ClaimTypes.HomePhone, user.PhoneNumber.ToString()),   // needed when court owner register
             };
 
             var key = new SymmetricSecurityKey(
