@@ -15,5 +15,7 @@ public partial class Slot
 
     public double Cost { get; set; }
 
+    public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
+
     public virtual Court? Court { get; set; }
 }

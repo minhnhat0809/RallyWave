@@ -1,6 +1,5 @@
 ﻿using CourtManagement.DTOs;
 using CourtManagement.DTOs.CourtDto;
-using CourtManagement.DTOs.CourtDto.ViewDto;
 
 namespace CourtManagement.Service;
 
@@ -15,4 +14,6 @@ public interface ICourtService
     Task<ResponseDto> UpdateCourt(int id, CourtUpdateDto courtUpdateDto);
 
     Task<ResponseDto> DeleteCourt(int id);
+
+    Task<ResponseDto> DeleteCourtImages(int imageId);
 }

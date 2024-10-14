@@ -10,6 +10,11 @@ namespace MatchManagement.Service.Impl;
 
 public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate validate, ListExtensions listExtensions) : IMatchService
 {
+    private readonly IUnitOfWork _unitOfWork = unitOfWork;
+    private readonly IMapper _mapper = mapper;
+    private readonly Validate _validate = validate;
+    private readonly ListExtensions _listExtensions = listExtensions;
+    
     public async Task<ResponseDto> GetMatches(string? filterField, string? filterValue, string? sortField, string sortValue, int pageNumber,
         int pageSize)
     {
@@ -17,35 +22,190 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
         try
         {
             List<MatchViewsDto>? matches;
-            if (validate.IsEmptyOrWhiteSpace(filterField) || validate.IsEmptyOrWhiteSpace(filterValue))
+            if (_validate.IsEmptyOrWhiteSpace(filterField) || _validate.IsEmptyOrWhiteSpace(filterValue))
             {
-                matches = await unitOfWork.MatchRepo.FindAllAsync(m => 
-                        new MatchViewsDto(
-                            m.MatchId, 
-                            m.Sport!.SportName, 
-                            m.MatchName, 
-                            m.MatchType,
-                            m.TeamSize,
-                            m.MinLevel,
-                            m.MaxLevel,
-                            m.Date,
-                            m.TimeStart,
-                            m.TimeEnd,
-                            m.Location!,
-                            m.Status ?? 0
-                        ),
-                    m => m.Sport!);
+                matches = await _unitOfWork.MatchRepo.FindAllAsync(m => 
+                    new MatchViewsDto(
+                        m.MatchId, 
+                        m.Sport!.SportName, 
+                        m.MatchName, 
+                        m.CreateByNavigation!.UserName,
+                        m.MatchType,
+                        m.TeamSize,
+                        m.MinLevel,
+                        m.MaxLevel,
+                        m.Date,
+                        m.TimeStart,
+                        m.TimeEnd,
+                        m.Location!,
+                        m.Status ?? 0
+                    ));
             }
             else
             {
-                matches = await unitOfWork.MatchRepo.GetMatches(filterField, filterValue);
+                matches = await _unitOfWork.MatchRepo.GetMatches(filterField, filterValue);
             }
             
             matches = Sort(matches, sortField, sortValue);
 
-            matches = listExtensions.Paging(matches, pageNumber, pageSize);
+            matches = _listExtensions.Paging(matches, pageNumber, pageSize);
 
             responseDto.Result = matches;
+        }
+        catch (Exception e)
+        {
+            responseDto.Message = e.Message;
+            responseDto.StatusCode = StatusCodes.Status500InternalServerError;
+            responseDto.IsSucceed = false;
+        }
+
+        return responseDto;
+    }
+
+    public async Task<ResponseDto> EnrollInMatch(int userId, int matchId)
+    {
+        var responseDto = new ResponseDto(null, "Enroll successfully", true, StatusCodes.Status302Found);
+        try
+        {
+            //check user in database
+            var existedUser = await _unitOfWork.UserRepo.AnyAsync(u => u.UserId == userId);
+            if (!existedUser)
+            {
+                responseDto.Message = "There are no users with this id";
+                responseDto.IsSucceed = false;
+                responseDto.StatusCode = StatusCodes.Status404NotFound;
+                return responseDto;
+            }
+            
+            //check match in database
+            var matchEnroll = await _unitOfWork.MatchRepo.GetByConditionAsync(m => m.MatchId == matchId,
+                m => new MatchEnrollDto(m.SportId!.Value,
+                m.TimeStart,
+                m.TimeEnd,
+                m.Date,
+                m.Gender,
+                m.MaxAge,
+                m.MinAge,
+                m.MaxLevel,
+                m.MinLevel
+            ));
+            
+            if (matchEnroll == null)
+            {
+                responseDto.Message = "There are no matches with this id";
+                responseDto.StatusCode = StatusCodes.Status404NotFound;
+                responseDto.IsSucceed = false;
+                return responseDto;
+            }
+
+            //overall validation
+            responseDto = await ValidateForEnrolling(userId, matchEnroll);
+
+            if (responseDto.IsSucceed == false) return responseDto;
+
+            //enroll user into match
+            await _unitOfWork.UserMatchRepo.CreateAsync(new UserMatch(){UserId = userId, MatchId = matchId, Status = 1});
+
+
+
+        }
+        catch (Exception e)
+        {
+            responseDto.Message = e.Message;
+            responseDto.StatusCode = StatusCodes.Status500InternalServerError;
+            responseDto.IsSucceed = false;
+        }
+
+        return responseDto;
+    }
+
+    public async Task<ResponseDto> UnEnrollFromMatch(int userId, int matchId)
+    {
+        var responseDto = new ResponseDto(null, "UnEnroll successfully", true, StatusCodes.Status302Found);
+        try
+        {
+            //check user in database
+            var existedUser = await _unitOfWork.UserRepo.AnyAsync(u => u.UserId == userId);
+
+            if (!existedUser)
+            {
+                responseDto.Message = "There are no users with this id";
+                responseDto.IsSucceed = false;
+                responseDto.StatusCode = StatusCodes.Status404NotFound;
+                return responseDto;
+            }
+            
+            //get match fields in database
+            var match = await _unitOfWork.MatchRepo.GetByConditionAsync(m => m.MatchId == matchId,
+            m => new
+            {
+                m.TimeStart,
+                m.BlockingOff,
+                m.Status
+            });
+
+            //check match is null or not
+            if (match == null)
+            {
+                responseDto.Message = "There are no matches with this id";
+                responseDto.IsSucceed = false;
+                responseDto.StatusCode = StatusCodes.Status404NotFound;
+                return responseDto;
+            }
+
+            //check user is in match or not
+            var userMatch =
+                await _unitOfWork.UserMatchRepo.GetByConditionAsync(um => um.UserId == userId && um.MatchId == matchId, 
+                    um => um);
+
+            if (userMatch == null)
+            {
+                responseDto.Message = "This user does not enroll in the match yet.";
+                responseDto.IsSucceed = false;
+                responseDto.StatusCode = StatusCodes.Status404NotFound;
+                return responseDto;
+            }
+
+            //check if user is an owner of the match
+            if (userMatch.Status == 0)
+            {
+                responseDto.Message = "User is owner of the match. Cannot un-enroll";
+                responseDto.IsSucceed = false;
+                responseDto.StatusCode = StatusCodes.Status400BadRequest;
+                return responseDto;
+            }
+
+            //check match status is available or not
+            if (match.Status!.Value != 0)
+            {
+                responseDto.Message = "Match must be available";
+                responseDto.IsSucceed = false;
+                responseDto.StatusCode = StatusCodes.Status400BadRequest;
+                return responseDto;
+            }
+            
+
+            if (match.BlockingOff.HasValue)
+            {
+                //get the minimum time to un-enroll from the match
+                var minTimeToUnEnroll = match.TimeStart.AddHours(-match.BlockingOff.Value);
+
+                var timeNow = TimeOnly.FromDateTime(DateTime.Now);
+
+                //compare now to the min time for un-enroll from the match
+                if (timeNow >= minTimeToUnEnroll)
+                {
+                    responseDto.Message = "UnEnrollment is disable because user is in blocking off period";
+                    responseDto.IsSucceed = false;
+                    responseDto.StatusCode = StatusCodes.Status400BadRequest;
+                    return responseDto;
+                }
+            }
+
+            userMatch.Status = 2;
+
+            await _unitOfWork.UserMatchRepo.UpdateAsync(userMatch);
+            
         }
         catch (Exception e)
         {
@@ -62,7 +222,9 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
         var responseDto = new ResponseDto(null, "Get successfully", true, StatusCodes.Status302Found);
         try
         {
-            var match = await unitOfWork.MatchRepo.GetByIdAsync(id, m => m, m => m.Sport!);
+            var match = await _unitOfWork.MatchRepo.GetByConditionAsync(m => m.MatchId == id,
+                m => m, m => m.Sport!);
+            
             if (match == null)
             {
                 responseDto.Message = "There are no matches with this id";
@@ -79,21 +241,28 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
         return responseDto;
     }
 
-    public async Task<ResponseDto> CreateMatch(MatchCreateDto matchCreateDto)
+    public async Task<ResponseDto> CreateMatch(int userId, MatchCreateDto matchCreateDto)
     {
         var responseDto = new ResponseDto(null, "Create successfully", true, StatusCodes.Status201Created);
         try
         {
             //overall validation
-            responseDto = await ValidateForCreating(matchCreateDto);
+            responseDto = await ValidateForCreating(userId, matchCreateDto);
             if (responseDto.IsSucceed == false)
             {
                 return responseDto;
             }
 
-            var match = mapper.Map<Match>(matchCreateDto);
+            var match = _mapper.Map<Match>(matchCreateDto);
 
-            await unitOfWork.MatchRepo.CreateAsync(match);
+            await _unitOfWork.MatchRepo.CreateAsync(match);
+
+            await _unitOfWork.UserMatchRepo.CreateAsync(new UserMatch
+            {
+                MatchId = match.MatchId,
+                UserId = userId,
+                Status = 0
+            });
         }
         catch (Exception e)
         {
@@ -110,8 +279,8 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
         var responseDto = new ResponseDto(null, "Update successfully", true, StatusCodes.Status200OK);
         try
         {
-            //check match
-            var match = await unitOfWork.MatchRepo.GetByIdAsync(id, m => m);
+            //check match in database
+            var match = await _unitOfWork.MatchRepo.GetByConditionAsync(m => m.MatchId == id, m => m);
             if (match == null)
             {
                 responseDto.Message = "There are no matches with this id";
@@ -121,15 +290,15 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
             }
             
             //overall validation
-            responseDto = await ValidateForUpdating(matchUpdateDto);
+            responseDto = await ValidateForUpdating(id, matchUpdateDto);
             if (responseDto.IsSucceed == false)
             {
                 return responseDto;
             }
 
-            match = mapper.Map<Match>(matchUpdateDto);
+            match = _mapper.Map<Match>(matchUpdateDto);
 
-            await unitOfWork.MatchRepo.CreateAsync(match);
+            await _unitOfWork.MatchRepo.UpdateAsync(match);
         }
         catch (Exception e)
         {
@@ -146,7 +315,7 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
         var responseDto = new ResponseDto(null, "Delete successfully", true, StatusCodes.Status200OK);
         try
         {
-            var match = await unitOfWork.MatchRepo.GetByIdAsync(id, m => m);
+            var match = await _unitOfWork.MatchRepo.GetByConditionAsync(m => m.MatchId == id, m => m);
             if (match == null)
             {
                 responseDto.Message = "There are no matches with this id";
@@ -155,7 +324,7 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
             }
             else
             {
-                await unitOfWork.MatchRepo.DeleteAsync(match);
+                await _unitOfWork.MatchRepo.DeleteAsync(match);
             }
         }
         catch (Exception e)
@@ -168,13 +337,139 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
         return responseDto;
     }
 
-    private async Task<ResponseDto> ValidateForCreating(MatchCreateDto matchCreateDto)
+    private async Task<ResponseDto> ValidateForEnrolling(int userId, MatchEnrollDto matchEnrollDto)
+    {
+        var response = new ResponseDto(null, "", true, StatusCodes.Status200OK);
+        try
+        {
+            
+            var userEnroll = await _unitOfWork.UserRepo.GetByConditionAsync(u => u.UserId == userId,
+                u => new
+            {
+                u.Gender,
+                u.Dob
+            });
+            
+            //check overlap matches
+            var existedMatches = await _unitOfWork.UserMatchRepo.AnyAsync(
+                um => um.UserId == userId &&
+                      um.Match.Date == matchEnrollDto.Date &&
+                      um.Match.TimeStart < matchEnrollDto.TimeEnd &&
+                      um.Match.TimeEnd > matchEnrollDto.TimeStart);
+
+            if (existedMatches)
+            {
+                response.Message = "There are matches which the user enrolled in overlaps with the new one";
+                response.StatusCode = StatusCodes.Status400BadRequest;
+                response.IsSucceed = false;
+                return response;
+            }
+            
+            sbyte? level;
+
+            //check min level
+            if (matchEnrollDto.MinLevel.HasValue)
+            {
+                level = await _unitOfWork.UserSportRepo.GetByConditionAsync(us => us.SportId == matchEnrollDto.SportId &&
+                                                                             us.UserId == userId, us => us.Level);
+
+                if (level == null)
+                {
+                    response.Message = "User level is not suitable";
+                    response.StatusCode = StatusCodes.Status400BadRequest;
+                    response.IsSucceed = false;
+                    return response;
+                }
+                
+                if (matchEnrollDto.MinLevel > level.Value )
+                {
+                    response.Message = "User level is not suitable";
+                    response.StatusCode = StatusCodes.Status400BadRequest;
+                    response.IsSucceed = false;
+                    return response;
+                }
+            }
+            
+            //check max level
+            if (matchEnrollDto.MaxLevel.HasValue)
+            {
+                level = await _unitOfWork.UserSportRepo.GetByConditionAsync(us => us.SportId == matchEnrollDto.SportId &&
+                    us.UserId == userId, us => us.Level);
+
+                if (level == null)
+                {
+                    response.Message = "User level is not suitable";
+                    response.StatusCode = StatusCodes.Status400BadRequest;
+                    response.IsSucceed = false;
+                    return response;
+                }
+                
+                if (matchEnrollDto.MaxLevel.Value < level.Value )
+                {
+                    response.Message = "User level is not suitable";
+                    response.StatusCode = StatusCodes.Status400BadRequest;
+                    response.IsSucceed = false;
+                    return response;
+                }
+            }
+
+            var age = (sbyte) (DateTime.Now.Year - userEnroll!.Dob.Year);
+            
+            //check min age
+            if (matchEnrollDto.MinAge.HasValue)
+            {
+                if (matchEnrollDto.MinAge > age )
+                {
+                    response.Message = "User age is not suitable";
+                    response.StatusCode = StatusCodes.Status400BadRequest;
+                    response.IsSucceed = false;
+                    return response;
+                }
+            }
+            
+            //check max age
+            if (matchEnrollDto.MaxAge.HasValue)
+            {
+                if (matchEnrollDto.MaxAge < age )
+                {
+                    response.Message = "User age is not suitable";
+                    response.StatusCode = StatusCodes.Status400BadRequest;
+                    response.IsSucceed = false;
+                    return response;
+                }
+            }
+            
+            //check gender
+            if (matchEnrollDto.Gender != null && _validate.IsEmptyOrWhiteSpace(matchEnrollDto.Gender))
+            {
+                if (!userEnroll.Gender.Equals(matchEnrollDto.Gender, StringComparison.OrdinalIgnoreCase))
+                {
+                    response.Message = "User gender is not suitable";
+                    response.StatusCode = StatusCodes.Status400BadRequest;
+                    response.IsSucceed = false;
+                    return response;
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            response.Message = e.Message;
+            response.IsSucceed = false;
+            response.StatusCode = StatusCodes.Status500InternalServerError;
+        }
+
+        return response;
+    }
+
+    private async Task<ResponseDto> ValidateForCreating(int userId, MatchCreateDto matchCreateDto)
     {
         var responseDto = new ResponseDto(null, "Validate successfully", true, StatusCodes.Status201Created);
         try
         {
-            var sport = await unitOfWork.SportRepo.GetByIdAsync(matchCreateDto.SportId, s => s.SportId);
-            if (sport <= 0)
+            
+            //check sport in database
+            var existedSport = await _unitOfWork.SportRepo.AnyAsync(s => s.SportId == matchCreateDto.SportId);
+            if (!existedSport)
             {
                 responseDto.Message = "There are no sports with this id";
                 responseDto.StatusCode = StatusCodes.Status404NotFound;
@@ -182,7 +477,59 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
                 return responseDto;
             }
             
+            //check overlap matches
+            var checkOverlap = await IsOverlap(userId, matchCreateDto.Date, matchCreateDto.TimeStart,
+                matchCreateDto.TimeEnd);
             
+            if (checkOverlap)
+            {
+                responseDto.Message = "The new match time overlaps with an existing match.";
+                responseDto.StatusCode = StatusCodes.Status400BadRequest;
+                responseDto.IsSucceed = false;
+                return responseDto;
+            }
+            
+
+        }
+        catch (Exception e)
+        {
+            responseDto.Message = e.Message;
+            responseDto.StatusCode = StatusCodes.Status500InternalServerError;
+            responseDto.IsSucceed = false;
+        }
+
+        return responseDto;
+    }
+    
+    private async Task<ResponseDto> ValidateForUpdating(int id, MatchUpdateDto matchUpdateDto)
+    {
+        var responseDto = new ResponseDto(null, "Validate successfully", true, StatusCodes.Status201Created);
+        try
+        {
+            var existedSport = await _unitOfWork.SportRepo.AnyAsync(s => s.SportId == matchUpdateDto.SportId);
+            if (!existedSport)
+            {
+                responseDto.Message = "There are no sports with this id";
+                responseDto.StatusCode = StatusCodes.Status404NotFound;
+                responseDto.IsSucceed = false;
+                return responseDto;
+            }
+
+            //get owner of the match
+            var userId = await _unitOfWork.MatchRepo.GetByConditionAsync(m => m.MatchId == id,
+                m => m.CreateBy);
+
+            //check overlap matches
+            var checkOverlap = await IsOverlap(userId!.Value, matchUpdateDto.Date, matchUpdateDto.TimeStart,
+                matchUpdateDto.TimeEnd);
+            
+            if (checkOverlap)
+            {
+                responseDto.Message = "The new match time overlaps with an existing match.";
+                responseDto.StatusCode = StatusCodes.Status400BadRequest;
+                responseDto.IsSucceed = false;
+                return responseDto;
+            }
             
         }
         catch (Exception e)
@@ -195,28 +542,13 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
         return responseDto;
     }
     
-    private async Task<ResponseDto> ValidateForUpdating(MatchUpdateDto matchUpdateDto)
+    private async Task<bool> IsOverlap(int userId, DateOnly date, TimeOnly newTimeStart, TimeOnly newTimeEnd)
     {
-        var responseDto = new ResponseDto(null, "Validate successfully", true, StatusCodes.Status201Created);
-        try
-        {
-            var sport = await unitOfWork.SportRepo.GetByIdAsync(matchUpdateDto.SportId, s => s.SportId);
-            if (sport <= 0)
-            {
-                responseDto.Message = "There are no sports with this id";
-                responseDto.StatusCode = StatusCodes.Status404NotFound;
-                responseDto.IsSucceed = false;
-                return responseDto;
-            }
-        }
-        catch (Exception e)
-        {
-            responseDto.Message = e.Message;
-            responseDto.StatusCode = StatusCodes.Status500InternalServerError;
-            responseDto.IsSucceed = false;
-        }
-
-        return responseDto;
+        return await _unitOfWork.UserMatchRepo.AnyAsync(
+            um => um.UserId == userId &&
+                  um.Match.Date == date &&
+                  um.Match.TimeStart < newTimeEnd &&
+                  um.Match.TimeEnd > newTimeStart);
     }
 
    private List<MatchViewsDto>? Sort(List<MatchViewsDto>? matches, string? sortField, string? sortValue)
@@ -230,29 +562,29 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
     matches = sortField.ToLower() switch
     {
         "date" => sortValue.Equals("asc")
-            ? listExtensions.Sort(matches, m => m.Date, true)
-            : listExtensions.Sort(matches, m => m.Date, false),
+            ? _listExtensions.Sort(matches, m => m.Date, true)
+            : _listExtensions.Sort(matches, m => m.Date, false),
         "timestart" => sortValue.Equals("asc")
-            ? listExtensions.Sort(matches, m => m.TimeStart, true)
-            : listExtensions.Sort(matches, m => m.TimeStart, true),
+            ? _listExtensions.Sort(matches, m => m.TimeStart, true)
+            : _listExtensions.Sort(matches, m => m.TimeStart, true),
         "timeend" => sortValue.Equals("asc")
-            ? listExtensions.Sort(matches, m => m.TimeEnd, true)
-            : listExtensions.Sort(matches, m => m.TimeEnd, true),
+            ? _listExtensions.Sort(matches, m => m.TimeEnd, true)
+            : _listExtensions.Sort(matches, m => m.TimeEnd, true),
         "status" => sortValue.Equals("asc")
-            ? listExtensions.Sort(matches, m => m.Status, true)
-            : listExtensions.Sort(matches, m => m.Status, true),
+            ? _listExtensions.Sort(matches, m => m.Status, true)
+            : _listExtensions.Sort(matches, m => m.Status, true),
         "matchtype" => sortValue.Equals("asc")
-            ? listExtensions.Sort(matches, m => m.MatchType, true)
-            : listExtensions.Sort(matches, m => m.MatchType, true),
+            ? _listExtensions.Sort(matches, m => m.MatchType, true)
+            : _listExtensions.Sort(matches, m => m.MatchType, true),
         "teamsize" => sortValue.Equals("asc")
-            ? listExtensions.Sort(matches, m => m.TeamSize, true)
-            : listExtensions.Sort(matches, m => m.TeamSize, true),
+            ? _listExtensions.Sort(matches, m => m.TeamSize, true)
+            : _listExtensions.Sort(matches, m => m.TeamSize, true),
         "minlevel" => sortValue.Equals("asc")
-            ? listExtensions.Sort(matches, m => m.MinLevel, true)
-            : listExtensions.Sort(matches, m => m.MinLevel, true),
+            ? _listExtensions.Sort(matches, m => m.MinLevel, true)
+            : _listExtensions.Sort(matches, m => m.MinLevel, true),
         "maxlevel" => sortValue.Equals("asc")
-            ? listExtensions.Sort(matches, m => m.MaxLevel, true)
-            : listExtensions.Sort(matches, m => m.MaxLevel, true),
+            ? _listExtensions.Sort(matches, m => m.MaxLevel, true)
+            : _listExtensions.Sort(matches, m => m.MaxLevel, true),
         _ => matches 
     };
 

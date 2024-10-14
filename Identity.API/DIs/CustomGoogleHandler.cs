@@ -39,7 +39,7 @@ public class CustomGoogleHandler : OAuthHandler<GoogleOptions>
             parameters.Add(OAuthConstants.CodeChallengeMethodKey, OAuthConstants.CodeChallengeMethodS256);
         }
 
-        return QueryHelpers.AddQueryString(Options.AuthorizationEndpoint, parameters);
+        return QueryHelpers.AddQueryString(Options.AuthorizationEndpoint, parameters!);
     }
 
 }

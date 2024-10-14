@@ -19,6 +19,7 @@ builder.Services.AddControllers();
 //service
 builder.Services.AddScoped<ICourtService, CourtService>();
 builder.Services.AddScoped<IImageService, ImageService>();
+builder.Services.AddScoped<ISlotService, SlotService>();
 
 //repository
 builder.Services.AddScoped<ICourtRepo, CourtRepo>();
@@ -36,7 +37,7 @@ builder.Services.AddAWSService<IAmazonS3>();
 builder.Services.AddCors(opts =>
 {
     opts.AddPolicy("CORSPolicy", corsPolicyBuilder => corsPolicyBuilder.AllowAnyHeader().WithOrigins()
-        .AllowAnyMethod().AllowCredentials().SetIsOriginAllowed((host) => true));
+        .AllowAnyMethod().AllowCredentials().SetIsOriginAllowed((_) => true));
 });
 
 //mapper 

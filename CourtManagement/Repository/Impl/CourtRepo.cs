@@ -12,77 +12,96 @@ public class CourtRepo(RallywaveContext repositoryContext) : RepositoryBase<Cour
         {
             if (string.IsNullOrEmpty(filterField) || string.IsNullOrEmpty(filterValue))
             {
-                courts =  await FindAllAsync(c => new CourtsViewDto(c.CourtId, c.CourtName, c.Address, c.Province, c.Status, c.Sport!.SportName));
+                courts =  await FindAllAsync(c => new CourtsViewDto(c.CourtId, 
+                    c.CourtName, 
+                    c.Address, 
+                    c.Province, 
+                    c.MaxPlayers, 
+                    c.Status, 
+                    c.Sport!.SportName, 
+                    c.CourtImages.Count > 0 ? c.CourtImages.FirstOrDefault()!.ImageUrl : "No images"));
             }
             else
             {
                 switch (filterValue.ToLower())
                 {
+                    case "courtname":
+                        courts =  await FindByConditionAsync(c => c.CourtName.Contains(filterValue),
+                            c => new CourtsViewDto(c.CourtId, 
+                                c.CourtName, 
+                                c.Address, 
+                                c.Province, 
+                                c.MaxPlayers, 
+                                c.Status, 
+                                c.Sport!.SportName, 
+                                c.CourtImages.Count > 0 ? c.CourtImages.FirstOrDefault()!.ImageUrl : "No images"));
+                        break;
+                    case "address":
+                        courts =  await FindByConditionAsync(c => c.Address.Contains(filterValue),
+                            c => new CourtsViewDto(c.CourtId, 
+                                c.CourtName, 
+                                c.Address, 
+                                c.Province, 
+                                c.MaxPlayers, 
+                                c.Status, 
+                                c.Sport!.SportName, 
+                                c.CourtImages.Count > 0 ? c.CourtImages.FirstOrDefault()!.ImageUrl : "No images"));
+                        break;
+                    case "province":
+                        courts =  await FindByConditionAsync(c => c.Province.Contains(filterValue),
+                            c => new CourtsViewDto(c.CourtId, 
+                                c.CourtName, 
+                                c.Address, 
+                                c.Province, 
+                                c.MaxPlayers, 
+                                c.Status, 
+                                c.Sport!.SportName, 
+                                c.CourtImages.Count > 0 ? c.CourtImages.FirstOrDefault()!.ImageUrl : "No images"));
+                        break;
                     case "sport":
-                        courts =  await FindByConditionAsync(c => c.Sport!.SportId.Equals(int.Parse(filterValue)),
-                            c => new CourtsViewDto(c.CourtId, c.CourtName, c.Address, c.Province, c.Status, c.Sport!.SportName));
+                        if (sbyte.TryParse(filterValue, out var sport))
+                        {
+                            courts = await FindByConditionAsync(c => c.Sport!.SportId == sport,
+                                c => new CourtsViewDto(c.CourtId, 
+                                    c.CourtName, 
+                                    c.Address, 
+                                    c.Province, 
+                                    c.MaxPlayers, 
+                                    c.Status, 
+                                    c.Sport!.SportName, 
+                                    c.CourtImages.Count > 0 ? c.CourtImages.FirstOrDefault()!.ImageUrl : "No images"));
+                        }
                         break;
                     case "status":
                         if (sbyte.TryParse(filterValue, out var status))
                         {
                             courts =  await FindByConditionAsync(c => c.Status.Equals(status),
-                                c => new CourtsViewDto(c.CourtId, c.CourtName, c.Address, c.Province, c.Status, c.Sport!.SportName));
+                                c => new CourtsViewDto(c.CourtId, 
+                                    c.CourtName, 
+                                    c.Address, 
+                                    c.Province, 
+                                    c.MaxPlayers, 
+                                    c.Status, 
+                                    c.Sport!.SportName, 
+                                    c.CourtImages.Count > 0 ? c.CourtImages.FirstOrDefault()!.ImageUrl : "No images"));
                         }
                         break;
                     case "maxplayers":
                         var number = sbyte.Parse(filterValue);
                         courts =  await FindByConditionAsync(c => c.MaxPlayers.Equals(number),
-                            c => new CourtsViewDto(c.CourtId, c.CourtName, c.Address, c.Province, c.Status, c.Sport!.SportName));
+                            c => new CourtsViewDto(c.CourtId, 
+                                c.CourtName, 
+                                c.Address, 
+                                c.Province, 
+                                c.MaxPlayers, 
+                                c.Status, 
+                                c.Sport!.SportName, 
+                                c.CourtImages.Count > 0 ? c.CourtImages.FirstOrDefault()!.ImageUrl : "No images"));
                         break;
-                    
                 }
             }
             
             return courts;
-        }
-        catch (Exception e)
-        {
-            throw new Exception(e.Message);
-        }
-    }
-    public async Task<Court?> GetCourtById(int courtId)
-    {
-        try
-        {
-            return await GetByIdAsync(courtId, c => c);
-        }
-        catch (Exception e)
-        {
-            throw new Exception(e.Message);
-        }
-    }
-    public async Task CreateCourt(Court court)
-    {
-        try
-        {
-            await CreateAsync(court);
-        }
-        catch (Exception e)
-        {
-            throw new Exception(e.Message);
-        }
-    }
-    public async Task UpdateCourt(Court court)
-    {
-        try
-        {
-            await UpdateAsync(court);
-        }
-        catch (Exception e)
-        {
-            throw new Exception(e.Message);
-        }
-    }
-    public async Task DeleteCourt(Court court)
-    {
-        try
-        {
-            await DeleteAsync(court);
         }
         catch (Exception e)
         {

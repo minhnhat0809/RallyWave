@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Entity;
 using FirebaseAdmin.Auth;
 using Identity.API.BusinessObjects;
+using Identity.API.BusinessObjects.LoginObjects;
 using Identity.API.BusinessObjects.RequestObject;
 using Identity.API.Services;
 using Microsoft.AspNetCore.Authentication;
@@ -25,86 +26,23 @@ namespace Identity.API.Controllers
             _userService = userService;
             _authService = authService;
         }
-
-        // Action to redirect user to Google for authentication
-        [HttpGet("google-login")]
-        public IActionResult GoogleLogin()
+        [HttpPost("google")]
+        public async Task<ActionResult<ResponseDto>> GoogleResponse([FromBody] GoogleLoginModel request)
         {
-            var redirectUrl = Url.Action("GoogleResponse", "Login");
-            var properties = new AuthenticationProperties { RedirectUri = redirectUrl };
-            return Challenge(properties, GoogleDefaults.AuthenticationScheme);
-        }
-
-
-        // Action to handle the response from Google after authentication
-        [HttpGet("google-response")]
-        [Authorize]
-        public async Task<ActionResult<ResponseDto>> GoogleResponse()
-        {
-            var result = await HttpContext.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            
             var responseDto = new ResponseDto(null, null, false, StatusCodes.Status400BadRequest);
-
-            if (result?.Principal == null)
+            var result = await _authService.Authenticate(request);
+            
+            responseDto.Message = result.Message;
+            responseDto.StatusCode = StatusCodes.Status202Accepted;
+            responseDto.IsSucceed = result.IsSuccess;
+            responseDto.Result = result;
+            
+            if (!result.IsSuccess)
             {
-                responseDto.Message = "Unable to authenticate with Google.";
                 return BadRequest(responseDto);
             }
 
-            // Retrieve tokens
-            var accessToken = result.Properties?.GetTokenValue("access_token");
-            var idToken = result.Properties?.GetTokenValue("id_token");
-
-            if (string.IsNullOrEmpty(idToken))
-            {
-                responseDto.Message = "ID Token is missing.";
-                return BadRequest(responseDto);
-            }
-
-            // Return both tokens
-            responseDto.Result = new { AccessToken = accessToken, IdToken = idToken };
-            responseDto.IsSucceed = true;
-            responseDto.StatusCode = StatusCodes.Status200OK;
-
-            return Ok(responseDto);
-        }
-
-        [HttpPost("google-response-uncensored")]
-        public async Task<ActionResult<ResponseDto>> GoogleResponse([FromBody] GoogleLoginRequest request)
-        {
-            var payload = await _authService.VerifyGoogleToken(request.Token);
-            var responseDto = new ResponseDto(null, null, false, StatusCodes.Status400BadRequest);
-
-            if (payload == null)
-            {
-                responseDto.Message = "Invalid Google token.";
-                return BadRequest(responseDto);
-            }
-
-            // Use payload information to authenticate or create a user
-            var email = payload.Email;
-            var name = payload.Name;
-
-            // Find or create user based on Google data
-            var emailExist = await _userService.GetUserByEmailAsync(email);
-            if (emailExist.Result == null)
-            {
-                UserCreateDto user = new UserCreateDto()
-                {
-                    UserName = name,
-                    Email = email,
-                    PhoneNumber = 0, // Placeholder
-                    Gender = "N/A",
-                    Dob = new DateOnly(2000, 1, 1),
-                    Address = "N/A",
-                    Province = "N/A",
-                    Avatar = payload.Picture,
-                    Status = 1,
-                };
-                responseDto = await _userService.CreateUser(user);
-            }
-
-            // Return success response
-            responseDto = emailExist;
             return Ok(responseDto);
         }
 

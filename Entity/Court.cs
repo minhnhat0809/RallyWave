@@ -15,8 +15,6 @@ public partial class Court
 
     public sbyte? MaxPlayers { get; set; }
 
-    public string? Image { get; set; }
-
     public string Address { get; set; } = null!;
 
     public string Province { get; set; } = null!;
@@ -24,6 +22,8 @@ public partial class Court
     public sbyte Status { get; set; }
 
     public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
+
+    public virtual ICollection<CourtImage> CourtImages { get; set; } = new List<CourtImage>();
 
     public virtual CourtOwner? CourtOwner { get; set; }
 

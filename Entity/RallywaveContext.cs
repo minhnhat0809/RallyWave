@@ -22,6 +22,8 @@ public partial class RallywaveContext : DbContext
 
     public virtual DbSet<Court> Courts { get; set; }
 
+    public virtual DbSet<CourtImage> CourtImages { get; set; }
+
     public virtual DbSet<CourtOwner> CourtOwners { get; set; }
 
     public virtual DbSet<Friendship> Friendships { get; set; }
@@ -49,7 +51,11 @@ public partial class RallywaveContext : DbContext
     public virtual DbSet<UserSport> UserSports { get; set; }
 
     public virtual DbSet<UserTeam> UserTeams { get; set; }
-    
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
+        => optionsBuilder.UseMySql("server=localhost;database=rallywave;user=root;password=N@hat892003.", Microsoft.EntityFrameworkCore.ServerVersion.Parse("8.0.39-mysql"));
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder
@@ -63,6 +69,8 @@ public partial class RallywaveContext : DbContext
             entity.ToTable("booking");
 
             entity.HasIndex(e => e.CourtId, "FK_Booking_Court");
+
+            entity.HasIndex(e => e.SlotId, "FK_Booking_Slot");
 
             entity.HasIndex(e => e.UserId, "FK_Booking_User");
 
@@ -95,6 +103,10 @@ public partial class RallywaveContext : DbContext
             entity.HasOne(d => d.Match).WithOne(p => p.Booking)
                 .HasForeignKey<Booking>(d => d.MatchId)
                 .HasConstraintName("FK_Booking_Match");
+
+            entity.HasOne(d => d.Slot).WithMany(p => p.Bookings)
+                .HasForeignKey(d => d.SlotId)
+                .HasConstraintName("FK_Booking_Slot");
 
             entity.HasOne(d => d.User).WithMany(p => p.Bookings)
                 .HasForeignKey(d => d.UserId)
@@ -146,9 +158,6 @@ public partial class RallywaveContext : DbContext
                 .HasMaxLength(100)
                 .HasColumnName("court_name");
             entity.Property(e => e.CourtOwnerId).HasColumnName("court_owner_id");
-            entity.Property(e => e.Image)
-                .HasMaxLength(255)
-                .HasColumnName("image");
             entity.Property(e => e.MaxPlayers).HasColumnName("max_players");
             entity.Property(e => e.Province)
                 .HasMaxLength(255)
@@ -163,6 +172,25 @@ public partial class RallywaveContext : DbContext
             entity.HasOne(d => d.Sport).WithMany(p => p.Courts)
                 .HasForeignKey(d => d.SportId)
                 .HasConstraintName("FK_Court_Sport");
+        });
+
+        modelBuilder.Entity<CourtImage>(entity =>
+        {
+            entity.HasKey(e => e.ImageId).HasName("PRIMARY");
+
+            entity.ToTable("court_image");
+
+            entity.HasIndex(e => e.CourtId, "FK_Court_Image_Court");
+
+            entity.Property(e => e.ImageId).HasColumnName("image_id");
+            entity.Property(e => e.CourtId).HasColumnName("court_id");
+            entity.Property(e => e.ImageUrl)
+                .HasMaxLength(2083)
+                .HasColumnName("image_url");
+
+            entity.HasOne(d => d.Court).WithMany(p => p.CourtImages)
+                .HasForeignKey(d => d.CourtId)
+                .HasConstraintName("FK_Court_Image_Court");
         });
 
         modelBuilder.Entity<CourtOwner>(entity =>

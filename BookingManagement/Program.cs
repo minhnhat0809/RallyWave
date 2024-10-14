@@ -34,7 +34,7 @@ builder.Services.AddScoped<IBookingRepo, BookingRepo>();
 builder.Services.AddCors(opts =>
 {
     opts.AddPolicy("CORSPolicy", corsPolicyBuilder => corsPolicyBuilder.AllowAnyHeader().WithOrigins()
-        .AllowAnyMethod().AllowCredentials().SetIsOriginAllowed((host) => true));
+        .AllowAnyMethod().AllowCredentials().SetIsOriginAllowed((_) => true));
 });
 
 //ultility
