@@ -199,12 +199,12 @@ public class UserRepo(RallywaveContext repositoryContext) : RepositoryBase<User>
                 {
                     case "email":
                         exist = await _repositoryContext.Users.FirstOrDefaultAsync(x => x.Email == property);
-                        if (exist==null) throw new KeyNotFoundException($"Property {property} not found");
                         return exist;
                     case "phoneNumber":
                         exist = await _repositoryContext.Users.FirstOrDefaultAsync(x => x.PhoneNumber.Equals(property));
-                        if (exist==null) throw new KeyNotFoundException($"Property {property} not found");
                         return exist;
+                    default:
+                        return null;
                 }
             } 
             throw new Exception("Invalid property value");
