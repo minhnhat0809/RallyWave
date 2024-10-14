@@ -35,36 +35,6 @@ builder.Services.AddControllers();
 // Add Services
 builder.Services.AddServices();
 
-/*----------------------------------------------------*/
-// authen & author
-builder.Services.AddSwaggerGen(c =>
-{
-    c.SwaggerDoc("v1", new OpenApiInfo { Title = "MyProject", Version = "v1.0.0" });
-
-    //👇 new code
-    var securitySchema = new OpenApiSecurityScheme
-    {
-        Description = "Using the Authorization header with the Bearer scheme.",
-        Name = "Authorization",
-        In = ParameterLocation.Header,
-        Type = SecuritySchemeType.Http,
-        Scheme = "bearer",
-        Reference = new OpenApiReference
-        {
-            Type = ReferenceType.SecurityScheme,
-            Id = "Bearer"
-        }
-    };
-
-    c.AddSecurityDefinition("Bearer", securitySchema);
-
-    c.AddSecurityRequirement(new OpenApiSecurityRequirement
-    {
-        { securitySchema, new[] { "Bearer" } }
-    });
-    //👆 new code
-});
-
 builder.Services.AddAuthentication(options =>
     {
         options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
