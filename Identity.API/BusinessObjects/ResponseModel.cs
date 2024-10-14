@@ -1,7 +1,7 @@
 namespace Identity.API.BusinessObjects;
 
 
-public class ResponseDto(object? result, string? message, bool isSucceed, int statusCode)
+public class ResponseModel(object? result, string? message, bool isSucceed, int statusCode)
 {
     public object? Result { get; set; } = result;
     public string? Message { get; set; } = message;

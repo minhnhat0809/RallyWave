@@ -14,7 +14,6 @@ public interface IUserRepo : IRepositoryBase<User>
     Task<UserViewDto> UpdateUser(User user);
 
     Task<UserViewDto> DeleteUser(User user);
-
-    public Task<User?> GetUserByEmail(string email);
+    public Task<User?> GetUserByPropertyAndValue(string property, string value);
 
 }
