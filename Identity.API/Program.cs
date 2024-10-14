@@ -1,17 +1,15 @@
-using System.Security.Claims;
+
+using System.Net.Http.Headers;
 using System.Text;
 using Entity;
-using FirebaseAdmin;
-using Google.Apis.Auth.OAuth2;
 using Identity.API.BusinessObjects;
+using Identity.API.BusinessObjects.LoginObjects;
 using Identity.API.DIs;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
-using Microsoft.AspNetCore.Authentication.OAuth;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
@@ -37,36 +35,6 @@ builder.Services.AddControllers();
 // Add Services
 builder.Services.AddServices();
 
-/*----------------------------------------------------*/
-// authen & author
-builder.Services.AddSwaggerGen(c =>
-{
-    c.SwaggerDoc("v1", new OpenApiInfo { Title = "MyProject", Version = "v1.0.0" });
-
-    //👇 new code
-    var securitySchema = new OpenApiSecurityScheme
-    {
-        Description = "Using the Authorization header with the Bearer scheme.",
-        Name = "Authorization",
-        In = ParameterLocation.Header,
-        Type = SecuritySchemeType.Http,
-        Scheme = "bearer",
-        Reference = new OpenApiReference
-        {
-            Type = ReferenceType.SecurityScheme,
-            Id = "Bearer"
-        }
-    };
-
-    c.AddSecurityDefinition("Bearer", securitySchema);
-
-    c.AddSecurityRequirement(new OpenApiSecurityRequirement
-    {
-        { securitySchema, new[] { "Bearer" } }
-    });
-    //👆 new code
-});
-
 builder.Services.AddAuthentication(options =>
     {
         options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
@@ -84,7 +52,10 @@ builder.Services.AddAuthentication(options =>
         options.SaveTokens = true;
         options.Scope.Add("email");
         options.Scope.Add("profile");
+        options.Scope.Add("openid");
     })
+    
+    //AC9d113f318b5c1facf55782e0d1d161fb
     .AddJwtBearer(options =>
     {
         options.RequireHttpsMetadata = false;
@@ -124,29 +95,26 @@ app.MapGet("/api/login/google-login", async (HttpContext context) =>
 app.MapGet("/api/login/response-token", [Authorize] async (HttpContext context) =>
 {
     var result = await context.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-    var responseDto = new ResponseDto(null, null, false, StatusCodes.Status400BadRequest);
+    var testResponse = new TestGoogleLoginModel(false, null, null, null);
 
     if (result?.Principal == null)
     {
-        responseDto.Message = "Unable to authenticate with Google.";
-        return Results.BadRequest(responseDto);
+        testResponse.Message = "Unable to authenticate with Google.";
+        return Results.BadRequest(testResponse);
     }
 
-    // Get access token and id token
-    var accessToken = result.Properties?.GetTokenValue("access_token");
     var idToken = result.Properties?.GetTokenValue("id_token");
-
+    
     if (string.IsNullOrEmpty(idToken))
     {
-        responseDto.Message = "ID Token is missing.";
-        return Results.BadRequest(responseDto);
+        testResponse.Message = "ID Token is missing.";
+        return Results.BadRequest(testResponse);
     }
-
-    responseDto.Result = new { AccessToken = accessToken, IdToken = idToken };
-    responseDto.IsSucceed = true;
-    responseDto.StatusCode = StatusCodes.Status200OK;
-
-    return Results.Ok(responseDto);
+    testResponse.AccessToken = "accessToken";
+    testResponse.IdToken = idToken;
+    testResponse.IsSuccess = true;
+    testResponse.Message = "Logged in successfully.";
+    return Results.Ok(testResponse);
 });
 
 // Middleware configuration

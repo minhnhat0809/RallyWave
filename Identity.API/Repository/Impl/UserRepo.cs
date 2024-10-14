@@ -1,6 +1,7 @@
 ﻿using Entity;
 using Identity.API.BusinessObjects.UserViewModel;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 
 namespace Identity.API.Repository.Impl;
 
@@ -187,22 +188,31 @@ public class UserRepo(RallywaveContext repositoryContext) : RepositoryBase<User>
         }
     }
 
-    public async Task<User?> GetUserByEmail(string email)
+    public async Task<User?> GetUserByPropertyAndValue(string property, string value)
     {
         try
         {
-            var exist = await _repositoryContext.Users.FirstOrDefaultAsync(x => x.Email == email);
-            if (exist!=null)
+            if (!property.IsNullOrEmpty())
             {
-                return exist;
-            }
+                User? exist;
+                switch (property.ToLower())
+                {
+                    case "email":
+                        exist = await _repositoryContext.Users.FirstOrDefaultAsync(x => x.Email == property);
+                        return exist;
+                    case "phoneNumber":
+                        exist = await _repositoryContext.Users.FirstOrDefaultAsync(x => x.PhoneNumber.Equals(property));
+                        return exist;
+                    default:
+                        return null;
+                }
+            } 
+            throw new Exception("Invalid property value");
         }
         catch (Exception e)
         {
             throw new Exception(e.Message);
         }
-
-        return null;
     }
 }
 

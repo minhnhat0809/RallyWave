@@ -13,21 +13,21 @@ namespace Identity.API.Services;
 
 public interface IUserService
 {
-    Task<ResponseDto> GetUser(string? filterField,
+    Task<ResponseModel> GetUser(string? filterField,
         string? filterValue,
         string? sortField,
         string sortValue,
         int pageNumber,
         int pageSize);
 
-    Task<ResponseDto> GetUserById(int userId);
+    Task<ResponseModel> GetUserById(int userId);
 
-    Task<ResponseDto> CreateUser(UserCreateDto userCreateDto);
+    Task<ResponseModel> CreateUser(UserCreateDto userCreateDto);
 
-    Task<ResponseDto> UpdateUser(int id, UserUpdateDto userCreateDto);
+    Task<ResponseModel> UpdateUser(int id, UserUpdateDto userCreateDto);
 
-    Task<ResponseDto> DeleteUser(int id);
-    Task<ResponseDto> GetUserByEmailAsync(string email);
+    Task<ResponseModel> DeleteUser(int id);
+    Task<ResponseModel> GetUserByEmailAsync(string email);
 }
 public class UserService : IUserService
     {
@@ -44,9 +44,9 @@ public class UserService : IUserService
             this.listExtensions = listExtensions;
         }
 
-        public async Task<ResponseDto> GetUser(string? filterField, string? filterValue, string? sortField, string sortValue, int pageNumber, int pageSize)
+        public async Task<ResponseModel> GetUser(string? filterField, string? filterValue, string? sortField, string sortValue, int pageNumber, int pageSize)
         {
-            var responseDto = new ResponseDto(null, "", true, 200);
+            var responseDto = new ResponseModel(null, "", true, 200);
             try
             {
                 List<UserViewDto>? users;
@@ -122,9 +122,9 @@ public class UserService : IUserService
 
 
 
-        public async Task<ResponseDto> GetUserById(int userId)
+        public async Task<ResponseModel> GetUserById(int userId)
         {
-            var responseDto = new ResponseDto(null, "", true, StatusCodes.Status200OK);
+            var responseDto = new ResponseModel(null, "", true, StatusCodes.Status200OK);
             try
             {
                 var user = await unitOfWork.UserRepo.GetUserById(userId);
@@ -149,9 +149,9 @@ public class UserService : IUserService
             return responseDto;
         }
 
-        public async Task<ResponseDto> CreateUser(UserCreateDto userCreateDto)
+        public async Task<ResponseModel> CreateUser(UserCreateDto userCreateDto)
         {
-            var responseDto = new ResponseDto(null, "", true, StatusCodes.Status201Created);
+            var responseDto = new ResponseModel(null, "", true, StatusCodes.Status201Created);
             try
             {
                 responseDto = await ValidateForCreating(userCreateDto);
@@ -176,9 +176,9 @@ public class UserService : IUserService
             return responseDto;
         }
 
-        public async Task<ResponseDto> UpdateUser(int id, UserUpdateDto userUpdateDto)
+        public async Task<ResponseModel> UpdateUser(int id, UserUpdateDto userUpdateDto)
         {
-            var responseDto = new ResponseDto(null, "", true, 200);
+            var responseDto = new ResponseModel(null, "", true, 200);
             try
             {
                 var user = await unitOfWork.UserRepo.GetUserById(id);
@@ -214,9 +214,9 @@ public class UserService : IUserService
             return responseDto;
         }
 
-        public async Task<ResponseDto> DeleteUser(int id)
+        public async Task<ResponseModel> DeleteUser(int id)
         {
-            var responseDto = new ResponseDto(null, "", true, 200);
+            var responseDto = new ResponseModel(null, "", true, 200);
             try
             {
                 var user = await unitOfWork.UserRepo.GetUserById(id);
@@ -244,12 +244,12 @@ public class UserService : IUserService
             return responseDto;
         }
 
-        public async Task<ResponseDto> GetUserByEmailAsync(string email)
+        public async Task<ResponseModel> GetUserByEmailAsync(string email)
         {
-            var responseDto = new ResponseDto(null, "", true, StatusCodes.Status200OK);
+            var responseDto = new ResponseModel(null, "", true, StatusCodes.Status200OK);
             try
             {
-                var userList = await unitOfWork.UserRepo.GetUsers("email", email) ;
+                var userList = await unitOfWork.UserRepo.FindByConditionAsync(u => u.Email == email,u => u) ;
                 if (userList == null || userList.Count == 0 )
                 {
                     responseDto.Message = "There are no users with this mail";
@@ -271,9 +271,9 @@ public class UserService : IUserService
             return responseDto;
         }
 
-        private async Task<ResponseDto> ValidateForCreating(UserCreateDto userCreateDto)
+        private async Task<ResponseModel> ValidateForCreating(UserCreateDto userCreateDto)
         {
-            var response = new ResponseDto(null, "", true, 200);
+            var response = new ResponseModel(null, "", true, 200);
 
             // Add your validation logic here
             // Example: Check if user already exists
@@ -289,9 +289,9 @@ public class UserService : IUserService
             return response;
         }
 
-        private async Task<ResponseDto> ValidateForUpdating(int id, UserUpdateDto userUpdateDto)
+        private async Task<ResponseModel> ValidateForUpdating(int id, UserUpdateDto userUpdateDto)
         {
-            var response = new ResponseDto(null, "", true, 200);
+            var response = new ResponseModel(null, "", true, 200);
 
             // Add your validation logic here
             // Example: Check if user exists

@@ -3,7 +3,6 @@ using Entity;
 using FirebaseAdmin.Auth;
 using Identity.API.BusinessObjects;
 using Identity.API.BusinessObjects.LoginObjects;
-using Identity.API.BusinessObjects.RequestObject;
 using Identity.API.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -19,33 +18,70 @@ namespace Identity.API.Controllers
     public class LoginController : ControllerBase
     {
         private readonly IUserService _userService;
-        private readonly IAuthService _authService; 
+        private readonly IAuthService _authService;
+        private readonly ResponseModel _responseModel;
         
         public LoginController(IUserService userService, IAuthService authService)
         {
             _userService = userService;
             _authService = authService;
+            _responseModel = new ResponseModel(null, null, false, StatusCodes.Status400BadRequest);
         }
+        
         [HttpPost("google")]
-        public async Task<ActionResult<ResponseDto>> GoogleResponse([FromBody] LoginModel request)
+        public async Task<ActionResult<ResponseModel>> GoogleResponse([FromBody] GoogleLoginModel request)
         {
             
-            var responseDto = new ResponseDto(null, null, false, StatusCodes.Status400BadRequest);
             var result = await _authService.Authenticate(request);
             
-            responseDto.Message = result.Message;
-            responseDto.StatusCode = StatusCodes.Status202Accepted;
-            responseDto.IsSucceed = result.IsSuccess;
-            responseDto.Result = result;
+            _responseModel.Message = result.Message;
+            _responseModel.StatusCode = StatusCodes.Status202Accepted;
+            _responseModel.IsSucceed = result.IsSuccess;
+            _responseModel.Result = result;
             
             if (!result.IsSuccess)
             {
-                return BadRequest(responseDto);
+                return BadRequest(_responseModel);
             }
 
-            return Ok(responseDto);
+            return Ok(_responseModel);
         }
 
+        [HttpPost("phone")]
+        public async Task<ActionResult<ResponseModel>> LoginWithPhone([FromBody] PhoneLoginRequest request)
+        {
+            var result = await _authService.SendPhoneVerificationAsync(request);
+            if (result.IsSucceed == false)
+            {
+                return BadRequest(_responseModel.Result = result);
+            }
+
+            // Send verification code
+            /*var verificationCode = GenerateRandomCode();
+            await _twilioService.SendSmsAsync(user.PhoneNumber, $"Your verification code is: {verificationCode}");
+            */
+
+            // Store the verification code (consider using a cache with expiration)
+            // Here, just an example, use your preferred method to store the code
+            // e.g., MemoryCache, Redis, etc.
+            //HttpContext.Session.SetString(user.PhoneNumber, verificationCode);
+
+            return Ok(new ResponseModel("Verification code sent", null, false, StatusCodes.Status200OK));
+        }
+
+        [HttpPost("sms-verify-code")]
+        public async Task<ActionResult<ResponseModel>> VerifyCode([FromBody] VerifyCodeRequest request)
+        {
+            var result = await _authService.VerifyPhoneCodeAsync(request);
+            if (result.IsSucceed == false)
+            {
+                return BadRequest(_responseModel.Result = result);
+            }
+
+
+            return Ok(new ResponseModel("Login successful", "", false, StatusCodes.Status200OK));
+        }
+        
         [HttpGet("logout")]
         public async Task<IActionResult> Logout()
         {
