@@ -192,28 +192,31 @@ public class UserRepo(RallywaveContext repositoryContext) : RepositoryBase<User>
     {
         try
         {
-            if (!property.IsNullOrEmpty())
+            // Validate input parameters
+            if (string.IsNullOrWhiteSpace(property) || string.IsNullOrWhiteSpace(value))
             {
-                User? exist;
-                switch (property.ToLower())
-                {
-                    case "email":
-                        exist = await _repositoryContext.Users.FirstOrDefaultAsync(x => x.Email == property);
-                        return exist;
-                    case "phoneNumber":
-                        exist = await _repositoryContext.Users.FirstOrDefaultAsync(x => x.PhoneNumber.Equals(property));
-                        return exist;
-                    default:
-                        return null;
-                }
-            } 
-            throw new Exception("Invalid property value");
+                throw new ArgumentException("Property and value must not be null or empty.");
+            }
+
+            // Fetch user based on the property name and value
+            var user = await _repositoryContext.Users
+                .FirstOrDefaultAsync(u => u.Email == value);
+
+            // Return the found user or null if not found
+            return user;
         }
-        catch (Exception e)
+        catch (ArgumentException ex)
         {
-            throw new Exception(e.Message);
+            // Handle invalid arguments
+            throw new Exception(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            // Handle other exceptions
+            throw new Exception($"An error occurred while retrieving the user: {ex.Message}");
         }
     }
+
 }
 
 

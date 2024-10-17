@@ -84,8 +84,7 @@ builder.Services.AddAuthentication(options =>
         options.Scope.Add("profile");
         options.Scope.Add("openid");
     })
-    
-    //AC9d113f318b5c1facf55782e0d1d161fb
+    //
     .AddJwtBearer(options =>
     {
         options.RequireHttpsMetadata = false;
