@@ -25,7 +25,7 @@ public partial class Court
 
     public virtual CourtOwner? CourtOwner { get; set; }
 
-    public virtual ICollection<Courtimage> Courtimages { get; set; } = new List<Courtimage>();
+    public virtual ICollection<CourtImage> CourtImages { get; set; } = new List<CourtImage>();
 
     public virtual ICollection<Slot> Slots { get; set; } = new List<Slot>();
 

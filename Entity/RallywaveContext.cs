@@ -24,7 +24,7 @@ public partial class RallywaveContext : DbContext
 
     public virtual DbSet<CourtOwner> CourtOwners { get; set; }
 
-    public virtual DbSet<Courtimage> Courtimages { get; set; }
+    public virtual DbSet<CourtImage> CourtImages { get; set; }
 
     public virtual DbSet<Friendship> Friendships { get; set; }
 
@@ -199,11 +199,11 @@ public partial class RallywaveContext : DbContext
             entity.Property(e => e.Status).HasColumnName("status");
         });
 
-        modelBuilder.Entity<Courtimage>(entity =>
+        modelBuilder.Entity<CourtImage>(entity =>
         {
             entity.HasKey(e => e.ImageId).HasName("PRIMARY");
 
-            entity.ToTable("courtimages");
+            entity.ToTable("courtImages");
 
             entity.HasIndex(e => e.CourtId, "FK_CourtImages_Court");
 
@@ -213,7 +213,7 @@ public partial class RallywaveContext : DbContext
                 .HasMaxLength(2083)
                 .HasColumnName("image_url");
 
-            entity.HasOne(d => d.Court).WithMany(p => p.Courtimages)
+            entity.HasOne(d => d.Court).WithMany(p => p.CourtImages)
                 .HasForeignKey(d => d.CourtId)
                 .HasConstraintName("FK_CourtImages_Court");
         });

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Entity;
 
-public partial class Courtimage
+public partial class CourtImage
 {
     public int ImageId { get; set; }
 
