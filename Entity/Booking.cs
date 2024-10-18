@@ -33,7 +33,5 @@ public partial class Booking
 
     public virtual PaymentDetail? PaymentDetail { get; set; }
 
-    public virtual Slot? Slot { get; set; }
-
     public virtual User? User { get; set; }
 }

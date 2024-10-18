@@ -25,6 +25,16 @@ public partial class User
 
     public sbyte Status { get; set; }
 
+    public byte[]? PasswordHash { get; set; }
+
+    public byte[]? PasswordSalt { get; set; }
+
+    public sbyte IsTwoFactorEnabled { get; set; }
+
+    public string? TwoFactorSecret { get; set; }
+
+    public string? FirebaseUid { get; set; }
+
     public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
 
     public virtual ICollection<Friendship> FriendshipUser1s { get; set; } = new List<Friendship>();

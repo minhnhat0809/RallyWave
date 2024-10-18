@@ -22,9 +22,9 @@ public partial class RallywaveContext : DbContext
 
     public virtual DbSet<Court> Courts { get; set; }
 
-    public virtual DbSet<CourtImage> CourtImages { get; set; }
-
     public virtual DbSet<CourtOwner> CourtOwners { get; set; }
+
+    public virtual DbSet<CourtImage> CourtImages { get; set; }
 
     public virtual DbSet<Friendship> Friendships { get; set; }
 
@@ -70,8 +70,6 @@ public partial class RallywaveContext : DbContext
 
             entity.HasIndex(e => e.CourtId, "FK_Booking_Court");
 
-            entity.HasIndex(e => e.SlotId, "FK_Booking_Slot");
-
             entity.HasIndex(e => e.UserId, "FK_Booking_User");
 
             entity.HasIndex(e => e.MatchId, "match_id").IsUnique();
@@ -103,10 +101,6 @@ public partial class RallywaveContext : DbContext
             entity.HasOne(d => d.Match).WithOne(p => p.Booking)
                 .HasForeignKey<Booking>(d => d.MatchId)
                 .HasConstraintName("FK_Booking_Match");
-
-            entity.HasOne(d => d.Slot).WithMany(p => p.Bookings)
-                .HasForeignKey(d => d.SlotId)
-                .HasConstraintName("FK_Booking_Slot");
 
             entity.HasOne(d => d.User).WithMany(p => p.Bookings)
                 .HasForeignKey(d => d.UserId)
@@ -174,25 +168,6 @@ public partial class RallywaveContext : DbContext
                 .HasConstraintName("FK_Court_Sport");
         });
 
-        modelBuilder.Entity<CourtImage>(entity =>
-        {
-            entity.HasKey(e => e.ImageId).HasName("PRIMARY");
-
-            entity.ToTable("court_image");
-
-            entity.HasIndex(e => e.CourtId, "FK_Court_Image_Court");
-
-            entity.Property(e => e.ImageId).HasColumnName("image_id");
-            entity.Property(e => e.CourtId).HasColumnName("court_id");
-            entity.Property(e => e.ImageUrl)
-                .HasMaxLength(2083)
-                .HasColumnName("image_url");
-
-            entity.HasOne(d => d.Court).WithMany(p => p.CourtImages)
-                .HasForeignKey(d => d.CourtId)
-                .HasConstraintName("FK_Court_Image_Court");
-        });
-
         modelBuilder.Entity<CourtOwner>(entity =>
         {
             entity.HasKey(e => e.CourtOwnerId).HasName("PRIMARY");
@@ -222,6 +197,25 @@ public partial class RallywaveContext : DbContext
                 .HasMaxLength(255)
                 .HasColumnName("province");
             entity.Property(e => e.Status).HasColumnName("status");
+        });
+
+        modelBuilder.Entity<CourtImage>(entity =>
+        {
+            entity.HasKey(e => e.ImageId).HasName("PRIMARY");
+
+            entity.ToTable("courtImages");
+
+            entity.HasIndex(e => e.CourtId, "FK_CourtImages_Court");
+
+            entity.Property(e => e.ImageId).HasColumnName("image_id");
+            entity.Property(e => e.CourtId).HasColumnName("court_id");
+            entity.Property(e => e.ImageUrl)
+                .HasMaxLength(2083)
+                .HasColumnName("image_url");
+
+            entity.HasOne(d => d.Court).WithMany(p => p.CourtImages)
+                .HasForeignKey(d => d.CourtId)
+                .HasConstraintName("FK_CourtImages_Court");
         });
 
         modelBuilder.Entity<Friendship>(entity =>
@@ -473,15 +467,28 @@ public partial class RallywaveContext : DbContext
             entity.Property(e => e.Email)
                 .HasMaxLength(100)
                 .HasColumnName("email");
+            entity.Property(e => e.FirebaseUid)
+                .HasMaxLength(255)
+                .HasColumnName("firebase_uid");
             entity.Property(e => e.Gender)
                 .HasMaxLength(10)
                 .IsFixedLength()
                 .HasColumnName("gender");
+            entity.Property(e => e.IsTwoFactorEnabled).HasColumnName("is_two_factor_enabled");
+            entity.Property(e => e.PasswordHash)
+                .HasMaxLength(255)
+                .HasColumnName("password_hash");
+            entity.Property(e => e.PasswordSalt)
+                .HasMaxLength(255)
+                .HasColumnName("password_salt");
             entity.Property(e => e.PhoneNumber).HasColumnName("phone_number");
             entity.Property(e => e.Province)
                 .HasMaxLength(255)
                 .HasColumnName("province");
             entity.Property(e => e.Status).HasColumnName("status");
+            entity.Property(e => e.TwoFactorSecret)
+                .HasMaxLength(255)
+                .HasColumnName("two_factor_secret");
             entity.Property(e => e.UserName)
                 .HasMaxLength(100)
                 .HasColumnName("user_name");

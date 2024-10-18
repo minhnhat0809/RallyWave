@@ -23,9 +23,9 @@ public partial class Court
 
     public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
 
-    public virtual ICollection<CourtImage> CourtImages { get; set; } = new List<CourtImage>();
-
     public virtual CourtOwner? CourtOwner { get; set; }
+
+    public virtual ICollection<CourtImage> CourtImages { get; set; } = new List<CourtImage>();
 
     public virtual ICollection<Slot> Slots { get; set; } = new List<Slot>();
 
