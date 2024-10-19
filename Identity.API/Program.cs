@@ -2,6 +2,8 @@
 using System.Net.Http.Headers;
 using System.Text;
 using Entity;
+using FirebaseAdmin;
+using Google.Apis.Auth.OAuth2;
 using Identity.API.BusinessObjects;
 using Identity.API.BusinessObjects.LoginObjects;
 using Identity.API.DIs;
@@ -14,7 +16,11 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
-
+// Firebase Admin SDK initialization
+FirebaseApp.Create(new AppOptions()
+{
+    Credential = GoogleCredential.FromFile("rally-wave-438116-firebase.json")
+});
 // CORS configuration
 builder.Services.AddCors(options =>
 {

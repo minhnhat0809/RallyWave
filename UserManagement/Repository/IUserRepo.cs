@@ -7,13 +7,13 @@ namespace UserManagement.Repository;
 
 public interface IUserRepo : IRepositoryBase<User>
 {
-    Task<List<UserViewDto>> GetUsers(string? filterField, string? filterValue);
+    Task<List<User>> GetUsers(string? filterField, string? filterValue);
 
-    Task<UserViewDto?> GetUserById(int userId);
+    Task<User?> GetUserById(int userId);
 
-    Task<UserViewDto> CreateUser(User user);
+    Task<User> CreateUser(User user);
 
-    Task<UserViewDto> UpdateUser(User user);
+    Task<User> UpdateUser(User user);
 
-    Task<UserViewDto> DeleteUser(User user);
+    Task<User> DeleteUser(User user);
 }
