@@ -25,5 +25,15 @@ public partial class CourtOwner
 
     public sbyte Status { get; set; }
 
+    public byte[]? PasswordHash { get; set; }
+
+    public byte[]? PasswordSalt { get; set; }
+
+    public sbyte IsTwoFactorEnabled { get; set; }
+
+    public string? TwoFactorSecret { get; set; }
+
+    public string? FirebaseUid { get; set; }
+
     public virtual ICollection<Court> Courts { get; set; } = new List<Court>();
 }

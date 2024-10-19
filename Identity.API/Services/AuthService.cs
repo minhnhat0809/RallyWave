@@ -20,11 +20,11 @@ namespace Identity.API.Services;
 public interface IAuthService
 {
     
-    public Task<ResponseLoginModel> Login(RequestLoginModel request);
-    public Task<ResponseLoginModel> LoginByGoogle(RequestGoogleLoginModel request);
+    public Task<ResponseModel> Login(RequestLoginModel request);
+    public Task<ResponseModel> LoginByGoogle(RequestGoogleLoginModel request);
     public Task<ResponseModel> Register(RequestRegisterModel request);
     public Task<ResponseModel> VerifyEmail(RequestVerifyModel requestVerifyDto);
-
+    public Task<ResponseLoginModel> ResetPassword(RequestLoginModel request);
 }
 
 
@@ -43,59 +43,8 @@ public class AuthService : IAuthService
         _responseLoginModel = new ResponseLoginModel(String.Empty, String.Empty, null, false);
         _responseModel = new ResponseModel(null, String.Empty, false, StatusCodes.Status500InternalServerError);
     }
-    // login by GOOGLE
-    /*public async Task<ResponseGoogleLoginModel> Login(GoogleLoginModel request)
-    {
-        if (request.IdToken != null)
-        {
-            var payload = await VerifyGoogleToken(request.IdToken);
-            
-            // User Role Problem:
-            //var userList = await _unitOfWork.UserRepo.GetUsers("email", payload.Email) ;
-            var userExist = await _unitOfWork.UserRepo.GetUserByPropertyAndValue("email",payload.Email);
-            // Not Exist -> add new one
-            if (userExist == null) 
-            {
-                User user = new User()
-                {
-                    UserName = payload.,
-                    Email = payload.Email,
-                    PhoneNumber = 0, // Placeholder
-                    Gender = "N/A",
-                    Dob = new DateOnly(2000, 1, 1),
-                    Address = "N/A",
-                    Province = "N/A",
-                    Avatar = payload.Avatar,
-                    Status = 1,
-                };
-                var newUser = await _unitOfWork.UserRepo.CreateUser(user);
-
-                // Only On Create User
-                if (request.Role != null)
-                {
-                    var token = GenerateJwtToken(user, request.Role);
-                    _responseGoogleLoginModel.Message = "Login successfully";
-                    _responseGoogleLoginModel.IsSuccess = true;
-                    _responseGoogleLoginModel.AccessToken = token;
-                    _responseGoogleLoginModel.User = newUser;
-                }
-            }
-            else // Existed - Go get the Token
-            {
-                var token = GenerateJwtToken(userExist, "User");
-                _responseGoogleLoginModel.Message = "Login successfully";
-                _responseGoogleLoginModel.IsSuccess = true;
-                _responseGoogleLoginModel.AccessToken = token;
-                _responseGoogleLoginModel.User = _mapper.Map<UserViewDto>(userExist);
-            }
-            
-            return _responseGoogleLoginModel;
-        }
-
-        return _responseGoogleLoginModel;
-    }*/
-
-    public async Task<ResponseLoginModel> Login(RequestLoginModel request)
+    // login by Username Password
+    public async Task<ResponseModel> Login(RequestLoginModel request)
     {
         try
         {
@@ -104,41 +53,54 @@ public class AuthService : IAuthService
             if (user != null)
             {
                 // Verify the password
-                var hashedPassword = _unitOfWork.AuthRepository.HashPassword(request.Password, user.PasswordSalt);
-                if (!hashedPassword.SequenceEqual(user.PasswordHash))
+                if (user is { PasswordSalt: not null, PasswordHash: not null })
                 {
-                    return new ResponseLoginModel(String.Empty, "Login fail successfully", null, false);
+                    var hashedPassword = _unitOfWork.AuthRepository.HashPassword(request.Password, user.PasswordSalt);
+                    if (!hashedPassword.SequenceEqual(user.PasswordHash))
+                    {
+                        return new ResponseModel(
+                            new ResponseLoginModel(String.Empty, String.Empty, null, false),
+                            "Invalid password or username", true, StatusCodes.Status404NotFound);
+                    }
                 }
 
                 // Generate JWT Token
                 var token = _unitOfWork.AuthRepository.GenerateJwtToken(user, "user");
-                // Generate Firebase Token
                 var firebaseToken = await FirebaseAuth.DefaultInstance.CreateCustomTokenAsync(user.FirebaseUid);
                 
-                return new ResponseLoginModel(token, firebaseToken, _mapper.Map<UserViewDto>(user), false);
+                return new ResponseModel(
+                    new ResponseLoginModel(token, firebaseToken, _mapper.Map<UserViewDto>(user), false),
+                    "Login Successfully", true, StatusCodes.Status200OK);
             }
-            throw new Exception("Invalid username or password.");
+            return new ResponseModel(
+                null,
+                "Invalid Username or Password", true, StatusCodes.Status404NotFound);
         }
         catch (Exception e)
         {
-            throw new Exception($"An error occurred during login: {e.Message}");
+            return new ResponseModel(
+                null,
+                $"An error occurred during login: {e.Message}", true, StatusCodes.Status500InternalServerError);
         }
     }
-
-    public async Task<ResponseLoginModel> LoginByGoogle(RequestGoogleLoginModel request)
+    
+    // Login By Google && Register
+    public async Task<ResponseModel> LoginByGoogle(RequestGoogleLoginModel request)
     {
         try
         {
-            // Step 1: Validate the Google ID Token
+            // Validate the Google ID Token
             var payload = await GoogleJsonWebSignature.ValidateAsync(request.IdToken);
             if (payload == null)
             {
-                throw new Exception("Invalid Google ID token.");
+                return new ResponseModel(
+                    null,
+                    "Invalid Google ID token.", true, StatusCodes.Status404NotFound);
             }
 
             UserRecord userRecord;
             User? user;
-            // Step 2: Check if user exists in Firebase Authentication
+            // Check if user exists in Firebase Authentication
             try
             {
                 // Try to get the user by UID (Google UID is used as Firebase UID)
@@ -147,8 +109,7 @@ public class AuthService : IAuthService
             }
             catch (FirebaseAuthException)
             {
-                // Step 3: If user does not exist, create a new Firebase user
-                
+                // If user does not exist, create a new Firebase user
                 userRecord = await FirebaseAuth.DefaultInstance.CreateUserAsync(new UserRecordArgs
                 {
                     Uid = payload.Subject, // Use Google UID as Firebase UID
@@ -156,7 +117,11 @@ public class AuthService : IAuthService
                     DisplayName = payload.Name,
                     PhotoUrl = payload.Picture
                 });
-
+                
+                // Create a new User entity
+                var salt = _unitOfWork.AuthRepository.GenerateSalt(); 
+                var hashedPassword = _unitOfWork.AuthRepository.HashPassword("Abc@Abc123", salt);
+                
                 // Create a new user in your application's database
                 var newUser = new User
                 {
@@ -169,39 +134,37 @@ public class AuthService : IAuthService
                     Dob = DateOnly.FromDateTime(DateTime.Now), 
                     Address = "N/A", 
                     Province = "N/A", 
-                    Status = 1 
-                    // Need to set Password default = Abc@Abc1 and auto generate salt to hash 
+                    Status = 1,
+                    PasswordHash = hashedPassword, // set pass default: Abc@Abc1 
+                    PasswordSalt = salt,
+                    IsTwoFactorEnabled = 1, // 1 is Email verified
+                    TwoFactorSecret = null,
                 };
 
                 user = await _unitOfWork.UserRepo.CreateUser(newUser); // Save user in the database
                 _responseLoginModel.IsNewUser = true;
             }
 
-            // Step 4: Send email verification if not verified
-            // Send email verification link
+            // Send email verification link (optional)
             await _unitOfWork.AuthRepository.SendEmailVerificationAsync(user.Email);
-
-            // Step 5: Optionally, handle Two-Factor Authentication setup (SMS or App)
-            // Example: Set up SMS-based 2FA
-            // await FirebaseAuth.DefaultInstance.MultiFactor.AddPhoneAsync(userRecord.Uid, new MultiFactorInfoArgs { ... });
-
-            // Step 6: Optionally, generate a password reset link
-            // var resetLink = await FirebaseAuth.DefaultInstance.GeneratePasswordResetLinkAsync(userRecord.Email);
-            // await _emailService.SendEmailAsync(userRecord.Email, "Reset your password", $"Please reset your password by clicking on this link: {resetLink}");
-
-            // Step 7: Generate Firebase custom token and Access Token for the user
-            var firebaseToken = await FirebaseAuth.DefaultInstance.CreateCustomTokenAsync(userRecord.Uid);
             
+            // Generate Firebase Token and Access Token
+            var firebaseToken = await FirebaseAuth.DefaultInstance.CreateCustomTokenAsync(userRecord.Uid);
             var token = _unitOfWork.AuthRepository.GenerateJwtToken(user, "user");
+            
             _responseLoginModel.FirebaseToken = firebaseToken;
             _responseLoginModel.AccessToken = token;
-            // Step 8: Return the Firebase custom token
-            return _responseLoginModel;
+            
+            return new ResponseModel(
+                new ResponseLoginModel(token, firebaseToken, _mapper.Map<UserViewDto>(user), false),
+                "Login Successfully", true, StatusCodes.Status200OK);
         }
         catch (Exception ex)
         {
             // Log the error or handle it
-            throw new Exception($"An error occurred during token verification: {ex.Message}");
+            return new ResponseModel(
+                null,
+                $"An error occurred during token verification: {ex.Message}", true, StatusCodes.Status500InternalServerError);
         }
     }
 
@@ -226,7 +189,7 @@ public class AuthService : IAuthService
                 }
 
                 // Create a new User entity
-                var salt = _unitOfWork.AuthRepository.GenerateSalt(); // Assuming you have a utility for generating salt
+                var salt = _unitOfWork.AuthRepository.GenerateSalt(); 
                 var hashedPassword = _unitOfWork.AuthRepository.HashPassword(request.Password, salt);
 
                 var newUser = new User
@@ -237,7 +200,6 @@ public class AuthService : IAuthService
                     PasswordHash = hashedPassword,
                     PasswordSalt = salt,
                     Status = 1, // Assuming 1 is the status for active users
-                    /*Role = request.Role, // Assign role*/
                     IsTwoFactorEnabled = 0, // Disable 2FA by default
                 };
 
@@ -306,5 +268,10 @@ public class AuthService : IAuthService
         {
             return new ResponseModel(null, $"An error occurred during email verification: {ex.Message}", false, StatusCodes.Status500InternalServerError);
         }
+    }
+
+    public Task<ResponseLoginModel> ResetPassword(RequestLoginModel request)
+    {
+        throw new NotImplementedException();
     }
 }
