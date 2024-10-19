@@ -5,7 +5,6 @@ using Identity.API.Repository.Impl;
 using Identity.API.Services;
 using Identity.API.Ultility;
 using UserManagement;
-using UserManagement.Repository;
 
 namespace Identity.API.DIs;
 

@@ -32,7 +32,7 @@ namespace Identity.API.Controllers
         public async Task<ActionResult<ResponseModel>> GoogleResponse([FromBody] GoogleLoginModel request)
         {
             
-            var result = await _authService.Authenticate(request);
+            var result = await _authService.Login(request);
             
             _responseModel.Message = result.Message;
             _responseModel.StatusCode = StatusCodes.Status202Accepted;
@@ -46,6 +46,8 @@ namespace Identity.API.Controllers
 
             return Ok(_responseModel);
         }
+        
+        
 
         [HttpPost("phone")]
         public async Task<ActionResult<ResponseModel>> LoginWithPhone([FromBody] PhoneLoginRequest request)
@@ -56,18 +58,9 @@ namespace Identity.API.Controllers
                 return BadRequest(_responseModel.Result = result);
             }
 
-            // Send verification code
-            /*var verificationCode = GenerateRandomCode();
-            await _twilioService.SendSmsAsync(user.PhoneNumber, $"Your verification code is: {verificationCode}");
-            */
-
-            // Store the verification code (consider using a cache with expiration)
-            // Here, just an example, use your preferred method to store the code
-            // e.g., MemoryCache, Redis, etc.
-            //HttpContext.Session.SetString(user.PhoneNumber, verificationCode);
-
-            return Ok(new ResponseModel("Verification code sent", null, false, StatusCodes.Status200OK));
+            return Ok(new ResponseModel(result, "Verification code sent", true, StatusCodes.Status200OK));
         }
+        
 
         [HttpPost("sms-verify-code")]
         public async Task<ActionResult<ResponseModel>> VerifyCode([FromBody] VerifyCodeRequest request)
@@ -77,8 +70,6 @@ namespace Identity.API.Controllers
             {
                 return BadRequest(_responseModel.Result = result);
             }
-
-
             return Ok(new ResponseModel("Login successful", "", false, StatusCodes.Status200OK));
         }
         

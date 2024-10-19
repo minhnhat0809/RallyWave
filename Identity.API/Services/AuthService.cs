@@ -7,24 +7,17 @@ using Google.Apis.Auth;
 using Identity.API.BusinessObjects;
 using Identity.API.BusinessObjects.LoginObjects;
 using Identity.API.BusinessObjects.UserViewModel;
+using Identity.API.Repository;
 using Microsoft.IdentityModel.Tokens;
 using Twilio;
 using Twilio.Rest.Verify.V2.Service;
 using UserManagement.DTOs.UserDto;
-using UserManagement.Repository;
 
 namespace Identity.API.Services;
 
 public interface IAuthService
 {
-    //private string? GenerateJwtToken(User user, string role);
-    //public Task<GoogleJsonWebSignature.Payload> VerifyGoogleToken(string token);
-    
-    
-    // Including Role, else return role not exist
-    public Task<ResponseGoogleLoginModel> Authenticate(GoogleLoginModel googleLoginDto);
-    public Task<ResponseModel> SendPhoneVerificationAsync(PhoneLoginRequest request);
-    Task<ResponseModel> VerifyPhoneCodeAsync(VerifyCodeRequest request);
+    public Task<ResponseGoogleLoginModel> Login(GoogleLoginModel googleLoginDto);
 }
 
 
@@ -44,55 +37,47 @@ public class AuthService : IAuthService
         _responseModel = new ResponseModel(null, null, false, StatusCodes.Status400BadRequest);
     }
     // login by GOOGLE
-    public async Task<ResponseGoogleLoginModel> Authenticate(GoogleLoginModel request)
+    public async Task<ResponseGoogleLoginModel> Login(GoogleLoginModel request)
     {
-        if (request.IdToken != null)
+        try
         {
-            var payload = await VerifyGoogleToken(request.IdToken);
-            
-            // User Role Problem:
-            //var userList = await _unitOfWork.UserRepo.GetUsers("email", payload.Email) ;
-            var userExist = await _unitOfWork.UserRepo.GetUserByPropertyAndValue("email",payload.Email);
-            // Not Exist -> add new one
-            if (userExist == null) 
+            // Verify the Google ID token with Firebase
+            FirebaseToken decodedToken = await FirebaseAuth.DefaultInstance.VerifyIdTokenAsync(idToken);
+            string firebaseUid = decodedToken.Uid;
+
+            // Check if user exists in the database
+            var user = _context.Users.FirstOrDefault(u => u.FirebaseUid == firebaseUid);
+            if (user == null)
             {
-                User user = new User()
+                // Register the user if not found
+                var userInfo = await FirebaseAuth.DefaultInstance.GetUserAsync(firebaseUid);
+                    
+                user = new User
                 {
-                    UserName = payload.Name,
-                    Email = payload.Email,
-                    PhoneNumber = 0, // Placeholder
-                    Gender = "N/A",
-                    Dob = new DateOnly(2000, 1, 1),
-                    Address = "N/A",
-                    Province = "N/A",
-                    Avatar = payload.Picture,
+                    UserName = userInfo.DisplayName,
+                    Email = userInfo.Email,
+                    FirebaseUid = firebaseUid,
+                    PhoneNumber = userInfo.PhoneNumber != null ? Convert.ToInt32(userInfo.PhoneNumber) : 0,
+                    Gender = "Not specified",  // Set default value or change as per your needs
+                    Dob = DateOnly.FromDateTime(DateTime.Now),  // Set default DOB or use actual value
+                    Address = "Unknown",
+                    Province = "Unknown",
                     Status = 1,
+                    Avatar = userInfo.PhotoUrl
                 };
-                var newUser = await _unitOfWork.UserRepo.CreateUser(user);
 
-                // Only On Create User
-                if (request.Role != null)
-                {
-                    var token = GenerateJwtToken(user, request.Role);
-                    _responseGoogleLoginModel.Message = "Login successfully";
-                    _responseGoogleLoginModel.IsSuccess = true;
-                    _responseGoogleLoginModel.AccessToken = token;
-                    _responseGoogleLoginModel.User = newUser;
-                }
+                _context.Users.Add(user);
+                await _context.SaveChangesAsync();
             }
-            else // Existed - Go get the Token
-            {
-                var token = GenerateJwtToken(userExist, "User");
-                _responseGoogleLoginModel.Message = "Login successfully";
-                _responseGoogleLoginModel.IsSuccess = true;
-                _responseGoogleLoginModel.AccessToken = token;
-                _responseGoogleLoginModel.User = _mapper.Map<UserViewDto>(userExist);
-            }
-            
-            return _responseGoogleLoginModel;
+
+            // User exists or was registered successfully - issue JWT or other session management token
+            // Return success message (and token if using JWT)
+            return Ok(new { message = "Login successful", userId = user.UserId });
         }
-
-        return _responseGoogleLoginModel;
+        catch (Exception ex)
+        {
+            return _responseGoogleLoginModel { message = "Invalid token", error = ex.Message });
+        }
     }
     // login by PHONE (send sms verify)
     public async Task<ResponseModel> SendPhoneVerificationAsync(PhoneLoginRequest request)
@@ -166,54 +151,7 @@ public class AuthService : IAuthService
 
     
     
-    // generate JWT Token 
-    private string? GenerateJwtToken(User user, string role)
-    {
-        if (user.Email != null)
-        {
-            var claims = new[]
-            {
-                new Claim(JwtRegisteredClaimNames.Sub, user.Email),             // needed when user register
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                new Claim(ClaimTypes.Name, user.UserName),
-                new Claim(ClaimTypes.Role, role), // Role come in Token
-                new Claim(ClaimTypes.HomePhone, user.PhoneNumber.ToString()),   // needed when court owner register
-            };
-
-            var key = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(_configuration["Authentication:Jwt:SecretKey"] ?? string.Empty));
-            var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-            var token = new JwtSecurityToken(
-                claims: claims,
-                expires: DateTime.Now.AddHours(1),
-                signingCredentials: credentials);
-
-            return new JwtSecurityTokenHandler().WriteToken(token);
-        }
-        return null;
-    }
-    // Verify Google Token 
-    private async Task<GoogleJsonWebSignature.Payload> VerifyGoogleToken(string token)
-    {
-        try
-        {
-            // ValidationSettings define the accepted audience (ClientId)
-            var settings = new GoogleJsonWebSignature.ValidationSettings
-            {
-                Audience = new List<string?> { _configuration["Authentication:Google:ClientId"] }
-            };
-
-            // Validate the token using Google's library
-            var payload = await GoogleJsonWebSignature.ValidateAsync(token, settings);
-            return payload;
-        }
-        catch (InvalidJwtException ex)
-        {
-            // Token is invalid or expired
-            throw new Exception(ex.Message);
-        }
-    }
+    
 
     
 }

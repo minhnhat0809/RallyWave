@@ -2,12 +2,12 @@ using AutoMapper;
 using Entity;
 using Identity.API.BusinessObjects;
 using Identity.API.BusinessObjects.UserViewModel;
+using Identity.API.Repository;
 using Identity.API.Ultility;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using UserManagement.DTOs.UserDto;
 using UserManagement.DTOs.UserDto.ViewDto;
-using UserManagement.Repository;
 
 namespace Identity.API.Services;
 
