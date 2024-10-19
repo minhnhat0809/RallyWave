@@ -14,21 +14,21 @@ public class MatchRepo(RallywaveContext repositoryContext) : RepositoryBase<Matc
                 {
                     case "teamsize":
                         matches = await FindByConditionAsync(m => m.TeamSize == sbyte.Parse(filterValue!), m => 
-                                new MatchViewsDto(
-                                    m.MatchId, 
-                                    m.Sport!.SportName, 
-                                    m.MatchName, 
-                                    m.CreateByNavigation!.UserName,
-                                    m.MatchType,
-                                    m.TeamSize,
-                                    m.MinLevel,
-                                    m.MaxLevel,
-                                    m.Date,
-                                    m.TimeStart,
-                                    m.TimeEnd,
-                                    m.Location!,
-                                    m.Status ?? 0
-                                ));
+                            new MatchViewsDto(
+                                m.MatchId, 
+                                m.Sport.SportName, 
+                                m.MatchName, 
+                                m.CreateByNavigation.UserName,
+                                m.MatchType,
+                                m.TeamSize,
+                                m.MinLevel,
+                                m.MaxLevel,
+                                m.Date,
+                                m.TimeStart,
+                                m.TimeEnd,
+                                m.Location!,
+                                m.Status ?? 0
+                            ));
                         break;
                     case "minlevel":
                         if (sbyte.TryParse(filterValue, out var minLevel))
@@ -36,9 +36,9 @@ public class MatchRepo(RallywaveContext repositoryContext) : RepositoryBase<Matc
                             matches = await FindByConditionAsync(m => m.MinLevel == minLevel,m => 
                                 new MatchViewsDto(
                                     m.MatchId, 
-                                    m.Sport!.SportName, 
+                                    m.Sport.SportName, 
                                     m.MatchName, 
-                                    m.CreateByNavigation!.UserName,
+                                    m.CreateByNavigation.UserName,
                                     m.MatchType,
                                     m.TeamSize,
                                     m.MinLevel,
@@ -57,9 +57,9 @@ public class MatchRepo(RallywaveContext repositoryContext) : RepositoryBase<Matc
                             matches = await FindByConditionAsync(m => m.MinLevel == maxLevel,m => 
                                 new MatchViewsDto(
                                     m.MatchId, 
-                                    m.Sport!.SportName, 
+                                    m.Sport.SportName, 
                                     m.MatchName, 
-                                    m.CreateByNavigation!.UserName,
+                                    m.CreateByNavigation.UserName,
                                     m.MatchType,
                                     m.TeamSize,
                                     m.MinLevel,
@@ -78,9 +78,9 @@ public class MatchRepo(RallywaveContext repositoryContext) : RepositoryBase<Matc
                             matches = await FindByConditionAsync(m => m.Mode == mode,m => 
                                 new MatchViewsDto(
                                     m.MatchId, 
-                                    m.Sport!.SportName, 
+                                    m.Sport.SportName, 
                                     m.MatchName, 
-                                    m.CreateByNavigation!.UserName,
+                                    m.CreateByNavigation.UserName,
                                     m.MatchType,
                                     m.TeamSize,
                                     m.MinLevel,
@@ -98,9 +98,9 @@ public class MatchRepo(RallywaveContext repositoryContext) : RepositoryBase<Matc
                             m.MinAge != null && m.MinAge.Equals(sbyte.Parse(filterValue!)),m => 
                             new MatchViewsDto(
                                 m.MatchId, 
-                                m.Sport!.SportName, 
+                                m.Sport.SportName, 
                                 m.MatchName, 
-                                m.CreateByNavigation!.UserName,
+                                m.CreateByNavigation.UserName,
                                 m.MatchType,
                                 m.TeamSize,
                                 m.MinLevel,
@@ -117,9 +117,9 @@ public class MatchRepo(RallywaveContext repositoryContext) : RepositoryBase<Matc
                                 m.MinAge != null && m.MaxAge.Equals(sbyte.Parse(filterValue!)),m => 
                             new MatchViewsDto(
                                 m.MatchId, 
-                                m.Sport!.SportName, 
+                                m.Sport.SportName, 
                                 m.MatchName, 
-                                m.CreateByNavigation!.UserName,
+                                m.CreateByNavigation.UserName,
                                 m.MatchType,
                                 m.TeamSize,
                                 m.MinLevel,
@@ -135,9 +135,9 @@ public class MatchRepo(RallywaveContext repositoryContext) : RepositoryBase<Matc
                         matches = await FindByConditionAsync(m => m.Gender != null && m.Gender.Equals(filterValue),m => 
                             new MatchViewsDto(
                                 m.MatchId, 
-                                m.Sport!.SportName, 
+                                m.Sport.SportName, 
                                 m.MatchName, 
-                                m.CreateByNavigation!.UserName,
+                                m.CreateByNavigation.UserName,
                                 m.MatchType,
                                 m.TeamSize,
                                 m.MinLevel,
@@ -155,9 +155,9 @@ public class MatchRepo(RallywaveContext repositoryContext) : RepositoryBase<Matc
                             matches = await FindByConditionAsync(m => m.Date.Equals(date),m => 
                                 new MatchViewsDto(
                                     m.MatchId, 
-                                    m.Sport!.SportName, 
+                                    m.Sport.SportName, 
                                     m.MatchName, 
-                                    m.CreateByNavigation!.UserName,
+                                    m.CreateByNavigation.UserName,
                                     m.MatchType,
                                     m.TeamSize,
                                     m.MinLevel,
@@ -176,9 +176,9 @@ public class MatchRepo(RallywaveContext repositoryContext) : RepositoryBase<Matc
                             matches = await FindByConditionAsync(m => m.TimeStart.Equals(timeStart),m => 
                                 new MatchViewsDto(
                                     m.MatchId, 
-                                    m.Sport!.SportName, 
+                                    m.Sport.SportName, 
                                     m.MatchName, 
-                                    m.CreateByNavigation!.UserName,
+                                    m.CreateByNavigation.UserName,
                                     m.MatchType,
                                     m.TeamSize,
                                     m.MinLevel,
@@ -197,9 +197,9 @@ public class MatchRepo(RallywaveContext repositoryContext) : RepositoryBase<Matc
                             matches = await FindByConditionAsync(m => m.TimeStart.Equals(timeEnd),m => 
                                 new MatchViewsDto(
                                     m.MatchId, 
-                                    m.Sport!.SportName, 
+                                    m.Sport.SportName, 
                                     m.MatchName, 
-                                    m.CreateByNavigation!.UserName,
+                                    m.CreateByNavigation.UserName,
                                     m.MatchType,
                                     m.TeamSize,
                                     m.MinLevel,
@@ -218,9 +218,30 @@ public class MatchRepo(RallywaveContext repositoryContext) : RepositoryBase<Matc
                             matches = await FindByConditionAsync(m => m.MatchType.Equals(type),m => 
                                 new MatchViewsDto(
                                     m.MatchId, 
-                                    m.Sport!.SportName, 
+                                    m.Sport.SportName, 
                                     m.MatchName, 
-                                    m.CreateByNavigation!.UserName,
+                                    m.CreateByNavigation.UserName,
+                                    m.MatchType,
+                                    m.TeamSize,
+                                    m.MinLevel,
+                                    m.MaxLevel,
+                                    m.Date,
+                                    m.TimeStart,
+                                    m.TimeEnd,
+                                    m.Location!,
+                                    m.Status ?? 0
+                                ));
+                        }
+                        break;
+                    case "user":
+                        if (Int32.TryParse(filterValue, out var userId))
+                        {
+                            matches = await FindByConditionAsync(m => m.CreateBy.Equals(userId),m => 
+                                new MatchViewsDto(
+                                    m.MatchId, 
+                                    m.Sport.SportName, 
+                                    m.MatchName, 
+                                    m.CreateByNavigation.UserName,
                                     m.MatchType,
                                     m.TeamSize,
                                     m.MinLevel,

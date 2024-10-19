@@ -7,6 +7,8 @@ public partial class User
 {
     public int UserId { get; set; }
 
+    public int? SubId { get; set; }
+
     public string UserName { get; set; } = null!;
 
     public string? Email { get; set; }
@@ -25,6 +27,16 @@ public partial class User
 
     public sbyte Status { get; set; }
 
+    public byte[]? PasswordHash { get; set; }
+
+    public byte[]? PasswordSalt { get; set; }
+
+    public sbyte IsTwoFactorEnabled { get; set; }
+
+    public string? TwoFactorSecret { get; set; }
+
+    public string? FirebaseUid { get; set; }
+
     public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
 
     public virtual ICollection<Friendship> FriendshipUser1s { get; set; } = new List<Friendship>();
@@ -34,6 +46,8 @@ public partial class User
     public virtual ICollection<Match> Matches { get; set; } = new List<Match>();
 
     public virtual ICollection<Message> Messages { get; set; } = new List<Message>();
+
+    public virtual Subscription? Sub { get; set; }
 
     public virtual ICollection<Team> Teams { get; set; } = new List<Team>();
 

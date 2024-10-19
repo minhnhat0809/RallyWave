@@ -9,6 +9,8 @@ public partial class PaymentDetail
 
     public int? BookingId { get; set; }
 
+    public int? SubId { get; set; }
+
     public string? Note { get; set; }
 
     public double Total { get; set; }

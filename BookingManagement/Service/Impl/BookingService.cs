@@ -12,29 +12,42 @@ namespace BookingManagement.Service.Impl;
 public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate validate, ListExtensions listExtensions) : IBookingService
 {
     
-    public async Task<ResponseDto> GetBookings(string? filterField, string? filterValue, string? sortField, string sortValue, int pageNumber,
+    public async Task<ResponseDto> GetBookings(int userId, string? filterField, string? filterValue, string? sortField, string sortValue, int pageNumber,
         int pageSize)
     {
         var responseDto = new ResponseDto(null, "", true, 200);
         try
         {
             List<BookingsViewDto>? bookings;
+
+            int total;
             
             if (validate.IsEmptyOrWhiteSpace(filterField) || validate.IsEmptyOrWhiteSpace(filterValue))
             {
-                bookings = await unitOfWork.BookingRepo.FindAllAsync(b => new BookingsViewDto(b.BookingId, b.Date, b.TimeStart, b.TimeEnd, b.Status, b.PaymentDetail), null);
+                bookings = await unitOfWork.BookingRepo.FindByConditionAsync(b => b.UserId.HasValue && b.UserId.Value == userId,
+                    b => new BookingsViewDto(b.BookingId,
+                        b.Date,
+                        b.TimeStart,
+                        b.TimeEnd,
+                        b.Cost,
+                        b.Status
+                    ));
+
+                total = bookings.Count;
             }
             else
             {
-                bookings = await unitOfWork.BookingRepo.GetBookings(filterField, filterValue);
+                bookings = await unitOfWork.BookingRepo.GetBookings(userId, filterField, filterValue);
+                total = bookings.Count;
             }
+            
             
             
             bookings = Sort(bookings, sortField, sortValue);
 
             bookings = listExtensions.Paging(bookings, pageNumber, pageSize);
             
-            responseDto.Result = bookings;
+            responseDto.Result = new { bookings, total};
             responseDto.Message = "Get successfully!";
         }
         catch (Exception e)
@@ -152,6 +165,7 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
             }
             else
             {
+                booking.Status = 3;
                 await unitOfWork.BookingRepo.DeleteBooking(booking);
                 responseDto.Message = "Delete successfully!";
             }

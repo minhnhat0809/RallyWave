@@ -5,7 +5,7 @@ namespace BookingManagement.Repository.Impl;
 
 public class BookingRepo(RallywaveContext repositoryContext) : RepositoryBase<Booking>(repositoryContext), IBookingRepo
 {
-    public async Task<List<BookingsViewDto>> GetBookings(string? filterField, string? filterValue)
+    public async Task<List<BookingsViewDto>> GetBookings(int userId, string? filterField, string? filterValue)
     {
         try
         {
@@ -14,34 +14,64 @@ public class BookingRepo(RallywaveContext repositoryContext) : RepositoryBase<Bo
                 {
                     case "date":
                         var date = DateOnly.Parse(filterValue!);
-                        bookings = await FindByConditionAsync(b => b.Date.Equals(date), b => new BookingsViewDto(b.BookingId, b.Date, b.TimeStart, b.TimeEnd, b.Status, b.PaymentDetail),
-                            b => b.PaymentDetail);
+                        bookings = await FindByConditionAsync(b => b.Date.Equals(date), 
+                            b => new BookingsViewDto
+                            (b.BookingId,
+                                b.Date,
+                                b.TimeStart,
+                                b.TimeEnd,
+                                b.Cost,
+                                b.Status
+                            ));
                         break;
                     
                     case "timestart":
                         var timeStart = TimeOnly.Parse(filterValue!);
-                        bookings = await FindByConditionAsync(b => b.TimeStart.Equals(timeStart), b => new BookingsViewDto(b.BookingId, b.Date, b.TimeStart, b.TimeEnd, b.Status, b.PaymentDetail),
-                            b => b.PaymentDetail);
+                        bookings = await FindByConditionAsync(b => b.TimeStart.Equals(timeStart), b => new BookingsViewDto
+                            (b.BookingId,
+                                b.Date,
+                                b.TimeStart,
+                                b.TimeEnd,
+                                b.Cost,
+                                b.Status
+                            ));
                         break;
                     
                     case "timeend":
                         var timeEnd = TimeOnly.Parse(filterValue!);
-                        bookings = await FindByConditionAsync(b => b.TimeStart.Equals(timeEnd), b => new BookingsViewDto(b.BookingId, b.Date, b.TimeStart, b.TimeEnd, b.Status, b.PaymentDetail),
-                            b => b.PaymentDetail);
+                        bookings = await FindByConditionAsync(b => b.TimeStart.Equals(timeEnd), b => new BookingsViewDto
+                        (b.BookingId,
+                            b.Date,
+                            b.TimeStart,
+                            b.TimeEnd,
+                            b.Cost,
+                            b.Status
+                        ));
                         break;
                     
                     case "createat":
                         var createAt = TimeOnly.Parse(filterValue!);
-                        bookings = await FindByConditionAsync(b => b.TimeStart.Equals(createAt), b => new BookingsViewDto(b.BookingId, b.Date, b.TimeStart, b.TimeEnd, b.Status, b.PaymentDetail),
-                            b => b.PaymentDetail);
+                        bookings = await FindByConditionAsync(b => b.TimeStart.Equals(createAt), b => new BookingsViewDto
+                        (b.BookingId,
+                            b.Date,
+                            b.TimeStart,
+                            b.TimeEnd,
+                            b.Cost,
+                            b.Status
+                        ));
                         break;
                     case "status":
                         if (sbyte.TryParse(filterValue, out var status))
                         {
                             bookings = await FindByConditionAsync(b => b.Status.Equals(status),
-                                b => new BookingsViewDto(b.BookingId, b.Date, b.TimeStart, b.TimeEnd, b.Status,
-                                    b.PaymentDetail),
-                                b => b.PaymentDetail);
+                                b => new BookingsViewDto
+                                (b.BookingId,
+                                    b.Date,
+                                    b.TimeStart,
+                                    b.TimeEnd,
+                                    b.Cost,
+                                    b.Status
+                                ));
                         }
 
                         break;

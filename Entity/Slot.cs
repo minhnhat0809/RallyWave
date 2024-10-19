@@ -7,7 +7,7 @@ public partial class Slot
 {
     public int SlotId { get; set; }
 
-    public int? CourtId { get; set; }
+    public int CourtId { get; set; }
 
     public TimeOnly TimeStart { get; set; }
 
@@ -15,7 +15,5 @@ public partial class Slot
 
     public double Cost { get; set; }
 
-    public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
-
-    public virtual Court? Court { get; set; }
+    public virtual Court Court { get; set; } = null!;
 }

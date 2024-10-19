@@ -21,6 +21,8 @@ public partial class Booking
 
     public TimeOnly TimeEnd { get; set; }
 
+    public double Cost { get; set; }
+
     public DateTime CreateAt { get; set; }
 
     public string? Note { get; set; }
@@ -32,8 +34,6 @@ public partial class Booking
     public virtual Match? Match { get; set; }
 
     public virtual PaymentDetail? PaymentDetail { get; set; }
-
-    public virtual Slot? Slot { get; set; }
 
     public virtual User? User { get; set; }
 }

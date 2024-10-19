@@ -11,4 +11,6 @@ public interface IUnitOfWork
     IUserMatchRepo UserMatchRepo { get; }
     
     IUserSportRepo UserSportRepo { get; }
+    
+    IFriendShipRepo FriendShipRepo { get; }
 }
