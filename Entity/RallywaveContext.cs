@@ -185,25 +185,38 @@ public partial class RallywaveContext : DbContext
             entity.Property(e => e.Email)
                 .HasMaxLength(100)
                 .HasColumnName("email");
+            entity.Property(e => e.FirebaseUid)
+                .HasMaxLength(255)
+                .HasColumnName("firebase_uid");
             entity.Property(e => e.Gender)
                 .HasMaxLength(10)
                 .IsFixedLength()
                 .HasColumnName("gender");
+            entity.Property(e => e.IsTwoFactorEnabled).HasColumnName("is_two_factor_enabled");
             entity.Property(e => e.Name)
                 .HasMaxLength(100)
                 .HasColumnName("name");
+            entity.Property(e => e.PasswordHash)
+                .HasMaxLength(255)
+                .HasColumnName("password_hash");
+            entity.Property(e => e.PasswordSalt)
+                .HasMaxLength(255)
+                .HasColumnName("password_salt");
             entity.Property(e => e.PhoneNumber).HasColumnName("phone_number");
             entity.Property(e => e.Province)
                 .HasMaxLength(255)
                 .HasColumnName("province");
             entity.Property(e => e.Status).HasColumnName("status");
+            entity.Property(e => e.TwoFactorSecret)
+                .HasMaxLength(255)
+                .HasColumnName("two_factor_secret");
         });
 
         modelBuilder.Entity<CourtImage>(entity =>
         {
             entity.HasKey(e => e.ImageId).HasName("PRIMARY");
 
-            entity.ToTable("courtImages");
+            entity.ToTable("CourtImages");
 
             entity.HasIndex(e => e.CourtId, "FK_CourtImages_Court");
 

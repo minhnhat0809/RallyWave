@@ -68,8 +68,22 @@ namespace Identity.API.Controllers
                 return new ResponseModel(null, ex.Message, false, StatusCodes.Status500InternalServerError);
             }
         }
+        [HttpPost("reset-password")]
+        public async Task<ActionResult<ResponseModel>> ResetPassword(RequestLoginModel request)
+        {
+            try
+            {
+                var result = await _authService.ResetPassword(request);
+                _responseModel = new ResponseModel(result, "Login successful", true, StatusCodes.Status200OK);
+                return Ok(_responseModel);
+            }
+            catch (Exception ex)
+            {
+                return new ResponseModel(null, ex.Message, false, StatusCodes.Status500InternalServerError);
+            }
+        }
         [HttpPost("verify-email")]
-        public async Task<ActionResult<ResponseModel>> VerifyByEmail(RequestVerifyModel request)
+        public async Task<ActionResult<ResponseModel>> Verify(RequestVerifyModel request)
         {
             try
             {
