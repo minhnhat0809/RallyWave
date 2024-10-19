@@ -1,9 +1,8 @@
-﻿namespace UserManagement.DTOs.UserDto;
+﻿namespace Identity.API.BusinessObjects.UserViewModel;
 
 public class UserCreateDto
 {
     public string UserName { get; set; } = null!;
-
     public string? Email { get; set; }
 
     public int PhoneNumber { get; set; }
@@ -16,7 +15,7 @@ public class UserCreateDto
 
     public string Province { get; set; } = null!;
 
-    public string? Avatar { get; set; }
-
     public sbyte Status { get; set; }
+
+    public string Password { get; set; } = null!;
 }

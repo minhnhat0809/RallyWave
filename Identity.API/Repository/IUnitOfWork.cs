@@ -1,8 +1,9 @@
-﻿using Identity.API.Repository;
+﻿using Identity.API.Repository.Impl;
 
-namespace UserManagement.Repository;
+namespace Identity.API.Repository;
 
 public interface IUnitOfWork
 { 
     IUserRepo UserRepo { get; }
+    IAuthRepository AuthRepository { get; }
 }

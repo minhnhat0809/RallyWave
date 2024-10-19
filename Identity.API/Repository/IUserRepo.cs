@@ -9,11 +9,11 @@ public interface IUserRepo : IRepositoryBase<User>
 
     Task<UserViewDto?> GetUserById(int userId);
 
-    Task<UserViewDto> CreateUser(User user);
+    Task<User> CreateUser(User user);
 
-    Task<UserViewDto> UpdateUser(User user);
+    Task<User> UpdateUser(User user);
 
-    Task<UserViewDto> DeleteUser(User user);
-    public Task<User?> GetUserByPropertyAndValue(string property, string value);
+    Task<User> DeleteUser(User user);
+    Task<User?> GetUserByPropertyAndValue(string property, string value);
 
 }

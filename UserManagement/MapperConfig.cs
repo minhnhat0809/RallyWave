@@ -9,8 +9,9 @@ public class MapperConfig : Profile
 {
     public MapperConfig()
     {
-        CreateMap<User, UserViewDto>().ReverseMap();
-        
+        CreateMap<User, UserViewDto>()
+            .ForMember(dest => dest.Dob, opt => opt.MapFrom(src => src.Dob.ToString("yyyy-MM-dd"))); // Example for `DateOnly`
+
         CreateMap<UserCreateDto, User>();
         CreateMap<UserUpdateDto, User>();
     }
