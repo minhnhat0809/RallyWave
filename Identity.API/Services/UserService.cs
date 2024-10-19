@@ -68,7 +68,7 @@ public class UserService : IUserService
                 }
                 else
                 {
-                    users = await unitOfWork.UserRepo.GetUsers(filterField, filterValue);
+                    users = mapper.Map<List<UserViewDto>>(await unitOfWork.UserRepo.GetUsers(filterField, filterValue));
                 }
 
                 users = Sort(users, sortField, sortValue);
@@ -229,7 +229,7 @@ public class UserService : IUserService
                 else
                 {
                     User userModel = mapper.Map<User>(user);
-                    user = await unitOfWork.UserRepo.DeleteUser(userModel);
+                    await unitOfWork.UserRepo.DeleteUser(userModel);
                     responseDto.Result = user;
                     responseDto.Message = "Delete successfully!";
                 }

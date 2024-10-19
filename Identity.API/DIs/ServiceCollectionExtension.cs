@@ -17,6 +17,7 @@ public static class ServiceCollectionExtension
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<IAuthService, AuthService>();
         // Repositories
+        services.AddScoped<IAuthRepository, AuthRepository>();
         services.AddScoped<IUserRepo, UserRepo>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         

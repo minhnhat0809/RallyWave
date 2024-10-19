@@ -19,6 +19,16 @@ public class UserViewDto
     public string Province { get; set; } = null!;
 
     public string? Avatar { get; set; }
+    
+    public byte[]? PasswordHash { get; set; }
+
+    public byte[]? PasswordSalt { get; set; }
+
+    public sbyte IsTwoFactorEnabled { get; set; }
+
+    public string? TwoFactorSecret { get; set; }
+
+    public string? FirebaseUid { get; set; }
 
     public sbyte Status { get; set; }
     public UserViewDto(int userId, string userName, string? email, int phoneNumber, string gender, DateOnly dob, string address, string province, string? avatar, sbyte status)
