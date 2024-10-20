@@ -2,9 +2,9 @@
 
 namespace CourtManagement.Repository.Impl;
 
-public class UnitOfWork(RallywaveContext context) : IUnitOfWork
+public class UnitOfWork(RallyWaveContext context) : IUnitOfWork
 {
-    private readonly RallywaveContext _context = context;
+    private readonly RallyWaveContext _context = context;
     public ICourtRepo CourtRepo { get; } = new CourtRepo(context);
 
     public ICourtOwnerRepo CourtOwnerRepo { get; } = new CourtOwnerRepo(context);

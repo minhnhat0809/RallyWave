@@ -3,7 +3,7 @@
 
 namespace MatchManagement.Repository.Impl;
 
-public class UnitOfWork(RallywaveContext context) : IUnitOfWork
+public class UnitOfWork(RallyWaveContext context) : IUnitOfWork
 {
     public IMatchRepo MatchRepo { get; } = new MatchRepo(context);
 

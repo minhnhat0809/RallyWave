@@ -3,7 +3,7 @@ using Entity;
 
 namespace BookingManagement.Repository.Impl;
 
-public class BookingRepo(RallywaveContext repositoryContext) : RepositoryBase<Booking>(repositoryContext), IBookingRepo
+public class BookingRepo(RallyWaveContext repositoryContext) : RepositoryBase<Booking>(repositoryContext), IBookingRepo
 {
     public async Task<List<BookingsViewDto>> GetBookings(int userId, string? filterField, string? filterValue)
     {
