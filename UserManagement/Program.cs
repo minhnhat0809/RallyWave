@@ -15,6 +15,16 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
 
+//retrieve connection string from AWS Secrets Manager
+var getSecret = new GetSecret();
+var connectionString = await getSecret.GetConnectionString();
+
+//db context
+builder.Services.AddDbContext<RallyWaveContext>(options =>
+{
+    options.UseMySql(connectionString, new MySqlServerVersion(new Version(8, 0, 39))); 
+});
+
 //mapper 
 builder.Services.AddAutoMapper(typeof(MapperConfig).Assembly);
 
@@ -34,13 +44,6 @@ builder.Services.AddCors(opts =>
 {
     opts.AddPolicy("CORSPolicy", corsPolicyBuilder => corsPolicyBuilder.AllowAnyHeader().WithOrigins()
         .AllowAnyMethod().AllowCredentials().SetIsOriginAllowed((_) => true));
-});
-
-//db context
-builder.Services.AddDbContext<RallyWaveContext>(options =>
-{
-    options.UseMySql(builder.Configuration.GetConnectionString("RallyWave"),
-        new MySqlServerVersion(new Version(8, 0, 39))); 
 });
 
 var app = builder.Build();

@@ -6,7 +6,6 @@ using Microsoft.EntityFrameworkCore;
 using BookingManagement.Repository;
 using BookingManagement.Repository.Impl;
 using BookingManagement.Ultility;
-using MassTransit;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,10 +15,14 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
 
+//retrieve connection string from AWS Secrets Manager
+var getSecret = new GetSecret();
+var connectionString = await getSecret.GetConnectionString();
+
+//db context
 builder.Services.AddDbContext<RallyWaveContext>(options =>
 {
-    options.UseMySql(builder.Configuration.GetConnectionString("RallyWave"),
-        new MySqlServerVersion(new Version(8, 0, 39))); 
+    options.UseMySql(connectionString, new MySqlServerVersion(new Version(8, 0, 39))); 
 });
 
 //service
@@ -40,6 +43,7 @@ builder.Services.AddCors(opts =>
 //ultility
 builder.Services.AddScoped(typeof(Validate));
 builder.Services.AddScoped(typeof(ListExtensions));
+builder.Services.AddScoped(typeof(GetSecret));
 
 
 //mapper 
