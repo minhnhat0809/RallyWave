@@ -2,7 +2,7 @@
 
 namespace MatchManagement.Repository;
 
-public interface IFriendShipRepo : IRepositoryBase<FriendShip>
+public interface IFriendShipRepo : IRepositoryBase<Friendship>
 {
     
 }
