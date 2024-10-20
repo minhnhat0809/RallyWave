@@ -53,7 +53,7 @@ public partial class RallywaveContext : DbContext
     public virtual DbSet<UserSport> UserSports { get; set; }
 
     public virtual DbSet<UserTeam> UserTeams { get; set; }
-
+    
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder
@@ -250,7 +250,7 @@ public partial class RallywaveContext : DbContext
 
             entity.ToTable("friendship");
 
-            entity.HasIndex(e => e.User2Id, "FK_FriendShip_User2");
+            entity.HasIndex(e => e.User2Id, "FK_Friend_Ship_User2");
 
             entity.Property(e => e.User1Id).HasColumnName("user1_id");
             entity.Property(e => e.User2Id).HasColumnName("user2_id");
@@ -259,12 +259,12 @@ public partial class RallywaveContext : DbContext
             entity.HasOne(d => d.User1).WithMany(p => p.FriendshipUser1s)
                 .HasForeignKey(d => d.User1Id)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_FriendShip_User1");
+                .HasConstraintName("FK_Friend_Ship_User1");
 
             entity.HasOne(d => d.User2).WithMany(p => p.FriendshipUser2s)
                 .HasForeignKey(d => d.User2Id)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_FriendShip_User2");
+                .HasConstraintName("FK_Friend_Ship_User2");
         });
 
         modelBuilder.Entity<Match>(entity =>
