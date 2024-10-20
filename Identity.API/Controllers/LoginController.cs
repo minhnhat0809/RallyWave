@@ -18,12 +18,10 @@ namespace Identity.API.Controllers
     public class LoginController : ControllerBase
     {
         private readonly IAuthService _authService;
-        ResponseModel _responseModel;
         
         public LoginController(IAuthService authService)
         {
             _authService = authService;
-            _responseModel = new ResponseModel(null, null, false, StatusCodes.Status400BadRequest);
         }
         
         [HttpPost("google")]
@@ -32,64 +30,7 @@ namespace Identity.API.Controllers
             try
             {
                 var result = await _authService.LoginByGoogle(request);
-                _responseModel = new ResponseModel(result, "Login by Google successful", true, StatusCodes.Status200OK);
-                return Ok(_responseModel);
-            }
-            catch (Exception ex)
-            {
-                return new ResponseModel(null, ex.Message, false, StatusCodes.Status500InternalServerError);
-            }
-        }
-        [HttpPost("register")]
-        public async Task<ActionResult<ResponseModel>> LoginByGoogle(RequestRegisterModel request)
-        {
-            try
-            {
-                var result = await _authService.Register(request);
-                _responseModel = new ResponseModel(result, "Login by Google successful", true, StatusCodes.Status200OK);
-                return Ok(_responseModel);
-            }
-            catch (Exception ex)
-            {
-                return new ResponseModel(null, ex.Message, false, StatusCodes.Status500InternalServerError);
-            }
-        }
-        [HttpPost("login")]
-        public async Task<ActionResult<ResponseModel>> Login(RequestLoginModel request)
-        {
-            try
-            {
-                var result = await _authService.Login(request);
-                _responseModel = new ResponseModel(result, "Login successful", true, StatusCodes.Status200OK);
-                return Ok(_responseModel);
-            }
-            catch (Exception ex)
-            {
-                return new ResponseModel(null, ex.Message, false, StatusCodes.Status500InternalServerError);
-            }
-        }
-        [HttpPost("reset-password")]
-        public async Task<ActionResult<ResponseModel>> ResetPassword(RequestLoginModel request)
-        {
-            try
-            {
-                var result = await _authService.ResetPassword(request);
-                _responseModel = new ResponseModel(result, "Login successful", true, StatusCodes.Status200OK);
-                return Ok(_responseModel);
-            }
-            catch (Exception ex)
-            {
-                return new ResponseModel(null, ex.Message, false, StatusCodes.Status500InternalServerError);
-            }
-        }
-        [HttpPost("verify-email")]
-        public async Task<ActionResult<ResponseModel>> Verify(RequestVerifyModel request)
-        {
-            try
-            {
-                var result = await _authService.VerifyEmail(request);
-                _responseModel = new ResponseModel(result, "Verify successful", true, StatusCodes.Status200OK);
-                return Ok(_responseModel);
+                return Ok(result);
             }
             catch (Exception ex)
             {
@@ -97,6 +38,74 @@ namespace Identity.API.Controllers
             }
         }
         
+        [HttpPost("register")]
+        public async Task<ActionResult<ResponseModel>> Register(RequestRegisterModel request)
+        {
+            try
+            {
+                var result = await _authService.Register(request);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return new ResponseModel(null, ex.Message, false, StatusCodes.Status500InternalServerError);
+            }
+        }
+        
+        [HttpPost("login")]
+        public async Task<ActionResult<ResponseModel>> Login(RequestLoginModel request)
+        {
+            try
+            {
+                var result = await _authService.Login(request);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return new ResponseModel(null, ex.Message, false, StatusCodes.Status500InternalServerError);
+            }
+        }
+        
+        [HttpPost("reset-password")]
+        public async Task<ActionResult<ResponseModel>> ResetPassword(RequestLoginModel request)
+        {
+            try
+            {
+                var result = await _authService.ResetPassword(request);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return new ResponseModel(null, ex.Message, false, StatusCodes.Status500InternalServerError);
+            }
+        }
+        
+        [HttpPost("verify-account")]
+        public async Task<ActionResult<ResponseModel>> VerifyAccount(RequestVerifyAccountModel request)
+        {
+            try
+            {
+                var result = await _authService.VerifyEmailAccount(request);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return new ResponseModel(null, ex.Message, false, StatusCodes.Status500InternalServerError);
+            }
+        }
+        [HttpPost("verify-password-reset")]
+        public async Task<ActionResult<ResponseModel>> VerifyPasswordReset(RequestVerifyModel request)
+        {
+            try
+            {
+                var result = await _authService.VerifyEmailResetPassword(request);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return new ResponseModel(null, ex.Message, false, StatusCodes.Status500InternalServerError);
+            }
+        }
     }
 
 }

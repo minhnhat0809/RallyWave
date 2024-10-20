@@ -1,5 +1,6 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 using AutoMapper;
 using Entity;
@@ -23,33 +24,31 @@ public interface IAuthService
     public Task<ResponseModel> Login(RequestLoginModel request);
     public Task<ResponseModel> LoginByGoogle(RequestGoogleLoginModel request);
     public Task<ResponseModel> Register(RequestRegisterModel request);
-    public Task<ResponseModel> VerifyEmail(RequestVerifyModel requestVerifyDto);
-    public Task<ResponseLoginModel> ResetPassword(RequestLoginModel request);
+    public Task<ResponseModel> VerifyEmailAccount(RequestVerifyAccountModel requestVerifyDto);
+    public Task<ResponseModel> VerifyEmailResetPassword(RequestVerifyModel requestVerifyDto);
+    public Task<ResponseModel> ResetPassword(RequestLoginModel request);
 }
 
 
 public class AuthService : IAuthService
 {
-    private readonly IConfiguration _configuration;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
     private readonly ResponseLoginModel _responseLoginModel;
-    private readonly ResponseModel _responseModel;
-    public AuthService(IConfiguration configuration, IUnitOfWork unitOfWork, IMapper mapper)
+    public AuthService(IUnitOfWork unitOfWork, IMapper mapper)
     {
-        _configuration = configuration;
         _unitOfWork = unitOfWork;
         _mapper = mapper;
         _responseLoginModel = new ResponseLoginModel(String.Empty, String.Empty, null, false);
-        _responseModel = new ResponseModel(null, String.Empty, false, StatusCodes.Status500InternalServerError);
+        
     }
-    // login by Username Password
+    // login by Email Password
     public async Task<ResponseModel> Login(RequestLoginModel request)
     {
         try
         {
             // Fetch user from the database
-            var user = await _unitOfWork.UserRepo.GetUserByPropertyAndValue("username", request.Username);
+            var user = await _unitOfWork.UserRepo.GetUserByPropertyAndValue("email", request.Email);
             if (user != null)
             {
                 // Verify the password
@@ -106,8 +105,7 @@ public class AuthService : IAuthService
                 // Try to get the user by UID (Google UID is used as Firebase UID)
                 userRecord = await FirebaseAuth.DefaultInstance.GetUserAsync(payload.Subject);
                 user = await _unitOfWork.UserRepo.GetUserByPropertyAndValue("firebase-uid", userRecord.Uid);
-            }
-            catch (FirebaseAuthException)
+            }catch (FirebaseAuthException)
             {
                 // If user does not exist, create a new Firebase user
                 userRecord = await FirebaseAuth.DefaultInstance.CreateUserAsync(new UserRecordArgs
@@ -137,27 +135,37 @@ public class AuthService : IAuthService
                     Status = 1,
                     PasswordHash = hashedPassword, // set pass default: Abc@Abc1 
                     PasswordSalt = salt,
-                    IsTwoFactorEnabled = 1, // 1 is Email verified
+                    IsTwoFactorEnabled = 0, // 1 is Email verified
                     TwoFactorSecret = null,
                 };
 
                 user = await _unitOfWork.UserRepo.CreateUser(newUser); // Save user in the database
                 _responseLoginModel.IsNewUser = true;
+                
+                // Send email verification code 
+                user.TwoFactorSecret = _unitOfWork.AuthRepository.GenerateVerificationCode();
+                await _unitOfWork.AuthRepository.SendEmailVerificationAsync(user.Email, user.TwoFactorSecret);
             }
 
-            // Send email verification link (optional)
-            await _unitOfWork.AuthRepository.SendEmailVerificationAsync(user.Email);
+            if (user != null)
+            {
+                // Generate Firebase Token and Access Token
+                var firebaseToken = await FirebaseAuth.DefaultInstance.CreateCustomTokenAsync(userRecord.Uid);
+                var token = _unitOfWork.AuthRepository.GenerateJwtToken(user, "user");
             
-            // Generate Firebase Token and Access Token
-            var firebaseToken = await FirebaseAuth.DefaultInstance.CreateCustomTokenAsync(userRecord.Uid);
-            var token = _unitOfWork.AuthRepository.GenerateJwtToken(user, "user");
+                // Check if newAccount
+                if (user.IsTwoFactorEnabled == 0) _responseLoginModel.IsNewUser = true;
+                
+                _responseLoginModel.FirebaseToken = firebaseToken;
+                _responseLoginModel.AccessToken = token;
             
-            _responseLoginModel.FirebaseToken = firebaseToken;
-            _responseLoginModel.AccessToken = token;
-            
+                return new ResponseModel(
+                    new ResponseLoginModel(token, firebaseToken, _mapper.Map<UserViewDto>(user), _responseLoginModel.IsNewUser),
+                    "Login Successfully", true, StatusCodes.Status200OK);
+            }
             return new ResponseModel(
-                new ResponseLoginModel(token, firebaseToken, _mapper.Map<UserViewDto>(user), false),
-                "Login Successfully", true, StatusCodes.Status200OK);
+                new ResponseLoginModel(String.Empty,String.Empty, null, _responseLoginModel.IsNewUser),
+                "User not found!", false, StatusCodes.Status400BadRequest);
         }
         catch (Exception ex)
         {
@@ -174,13 +182,6 @@ public class AuthService : IAuthService
         {
             if (request.Role == "user")
             {
-                // Check if username exists
-                var existingUserByUsername = await _unitOfWork.UserRepo.GetUserByPropertyAndValue("username", request.Username);
-                if (existingUserByUsername != null)
-                {
-                    return new ResponseModel(null, "Username is already taken!", false, StatusCodes.Status400BadRequest);
-                }
-
                 // Check if email exists
                 var existingUserByEmail = await _unitOfWork.UserRepo.GetUserByPropertyAndValue("email", request.Email);
                 if (existingUserByEmail != null)
@@ -222,14 +223,17 @@ public class AuthService : IAuthService
                 // Generate a Firebase token for the user using their FirebaseUid
                 string firebaseToken = await FirebaseAuth.DefaultInstance.CreateCustomTokenAsync(newUser.FirebaseUid);
 
-                // Send email verification link
-                await _unitOfWork.AuthRepository.SendEmailVerificationAsync(request.Email);
+                // Send email verification code 
+                newUser.TwoFactorSecret = _unitOfWork.AuthRepository.GenerateVerificationCode();
+                await _unitOfWork.AuthRepository.SendEmailVerificationAsync(newUser.Email, newUser.TwoFactorSecret);
                 
                 // Map the user to a UserViewDto for the response
                 var userViewDto = _mapper.Map<UserViewDto>(newUser);
 
                 // Return success response with Firebase token and user details
-                return new ResponseModel(new ResponseRegisterModel(firebaseToken, userViewDto), "User registered successfully! Proceed to verify email.", true, StatusCodes.Status201Created);
+                return new ResponseModel(
+                    new ResponseRegisterModel(firebaseToken, userViewDto), 
+                    "User registered successfully! Proceed to verify email.", true, StatusCodes.Status201Created);
             }
             return new ResponseModel(null, "Role is not found!", false, StatusCodes.Status404NotFound);
         } 
@@ -239,7 +243,7 @@ public class AuthService : IAuthService
         }
     }
 
-    public async Task<ResponseModel> VerifyEmail(RequestVerifyModel request)
+    public async Task<ResponseModel> VerifyEmailAccount(RequestVerifyAccountModel request)
     {
         try
         {
@@ -251,16 +255,15 @@ public class AuthService : IAuthService
             }
 
             // Check if the code matches the stored code
-            /*if (user.TwoFactorSecret == request.VerificationCode)
+            if (user.TwoFactorSecret == request.VerificationCode)
             {
                 // Update the user's email verification status
-                user.EmailVerified = true;
                 user.IsTwoFactorEnabled = 1; // Enable 2FA after verification
-                user.EmailVerificationCode = null; // Clear the verification code
+                user.TwoFactorSecret = null; // Clear the verification code
                 await _unitOfWork.UserRepo.UpdateUser(user);
 
                 return new ResponseModel(null, "Email verified successfully! Two-factor authentication is now enabled.", true, StatusCodes.Status200OK);
-            }*/
+            }
 
             return new ResponseModel(null, "Invalid verification code!", false, StatusCodes.Status400BadRequest);
         }
@@ -270,8 +273,78 @@ public class AuthService : IAuthService
         }
     }
 
-    public Task<ResponseLoginModel> ResetPassword(RequestLoginModel request)
+    public async Task<ResponseModel> VerifyEmailResetPassword(RequestVerifyModel request)
     {
-        throw new NotImplementedException();
+        try
+        {
+            // Find the user by email
+            var user = await _unitOfWork.UserRepo.GetUserByPropertyAndValue("email", request.Email);
+            if (user == null)
+            {
+                return new ResponseModel(null, "User not found!", false, StatusCodes.Status404NotFound);
+            }
+
+            // Check if the code matches the stored code
+            if (user.TwoFactorSecret == request.VerificationCode)
+            {
+                // Create a new User entity
+                var salt = _unitOfWork.AuthRepository.GenerateSalt(); 
+                var hashedPassword = _unitOfWork.AuthRepository.HashPassword(request.NewPassword, salt);
+                
+                // Update the user's password
+                user.PasswordSalt = salt;
+                user.PasswordHash = hashedPassword;
+                // Clear the verification code
+                user.TwoFactorSecret = null; 
+                
+                await _unitOfWork.UserRepo.UpdateUser(user);
+
+                return new ResponseModel(null, "Password being reset successfully!", true, StatusCodes.Status200OK);
+            }
+            return new ResponseModel(null, "Invalid verification code!", false, StatusCodes.Status400BadRequest);
+        }
+        catch (Exception ex)
+        {
+            return new ResponseModel(null, $"An error occurred during email verification: {ex.Message}", false, StatusCodes.Status500InternalServerError);
+        }
+    }
+
+    public async Task<ResponseModel> ResetPassword(RequestLoginModel request)
+    {
+        try
+        {
+            // Find the user by email
+            var user = await _unitOfWork.UserRepo.GetUserByPropertyAndValue("email", request.Email);
+            if (user == null)
+            {
+                return new ResponseModel(null, "User not found!", false, StatusCodes.Status404NotFound);
+            }
+
+            // Hash the input password using the same salt
+            var hashedPasswordInput = _unitOfWork.AuthRepository.HashPassword(request.Password, user.PasswordSalt);
+
+
+            // Compare the hashed passwords in constant time to avoid timing attacks
+            if (CryptographicOperations.FixedTimeEquals(user.PasswordHash, hashedPasswordInput))
+            {
+                // Generate verification code
+                user.TwoFactorSecret = _unitOfWork.AuthRepository.GenerateVerificationCode();
+    
+                // Save verification code
+                await _unitOfWork.UserRepo.UpdateUser(user);
+    
+                // Send email verification code
+                await _unitOfWork.AuthRepository.SendEmailVerificationAsync(user.Email, user.TwoFactorSecret);
+
+                return new ResponseModel(null, "Email verification for reset password being sent successfully!", true, StatusCodes.Status200OK);
+            }
+
+// If the password does not match
+            return new ResponseModel(null, "Invalid password!", false, StatusCodes.Status400BadRequest);
+        }
+        catch (Exception ex)
+        {
+            return new ResponseModel(null, $"An error occurred during email verification: {ex.Message}", false, StatusCodes.Status500InternalServerError);
+        }
     }
 }

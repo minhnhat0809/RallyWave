@@ -20,7 +20,7 @@ public interface IAuthRepository
     public string GenerateVerificationCode();
     public Task SendEmailChangeConfirmationAsync(string newEmail);
     public Task SendPasswordResetEmailAsync(string email);
-    public Task SendEmailVerificationAsync(string email);
+    public Task SendEmailVerificationAsync(string email, string code);
 }
 public class AuthRepository(IConfiguration configuration) : IAuthRepository 
 {
@@ -85,15 +85,13 @@ public class AuthRepository(IConfiguration configuration) : IAuthRepository
     }
     
     // email verification reset
-    public async Task SendEmailVerificationAsync(string email)
+    public async Task SendEmailVerificationAsync(string email, string code)
     {
         try
         {
-            // Generate the email verification link
-            string verificationLink = await GenerateEmailVerificationLinkAsync(email);
-            Console.WriteLine(verificationLink);
-            // Send the verification email with the generated link
-            await SendVerificationEmail(email, verificationLink);
+            var verificationLink = GenerateVerificationLink(email, code); // Create a link or token for verification
+            var body = $"Please verify your email by clicking on this link: <a href='{verificationLink}'>Verify Email</a>" + $"{code}";
+            await SendVerificationEmail(email, body);
         }
         catch (Exception ex)
         {
@@ -101,24 +99,23 @@ public class AuthRepository(IConfiguration configuration) : IAuthRepository
         }
     }
 
-    private async Task SendVerificationEmail(string email, string verificationLink)
+    private async Task SendVerificationEmail(string email, string body)
     {
         try
         {
             var mailMessage = new MailMessage("info.rallywave@gmail.com", email)
             {
                 Subject = "Verify your email address",
-                //Body = $"Please verify your email by clicking on this link: {verificationLink}",
-                Body = "Testing email verification",
+                Body = body,
                 IsBodyHtml = true,
             };
 
             using var smtpClient = new SmtpClient("smtp.gmail.com")
             {
-                Port = 587 ,
-                Credentials = new NetworkCredential("info.rallywave@gmail.com", "njsjphqegtsrdtgu"),
+                Port = 587,
+                Credentials = new NetworkCredential("info.rallywave@gmail.com", "njsjphqegtsrdtgu"), // Consider using secure storage for credentials
                 EnableSsl = true,
-            };  
+            };
 
             await smtpClient.SendMailAsync(mailMessage);
             Console.WriteLine("Verification email sent successfully.");
@@ -128,20 +125,14 @@ public class AuthRepository(IConfiguration configuration) : IAuthRepository
             Console.WriteLine($"Error sending email: {ex.Message}");
         }
     }
-    private async Task<string> GenerateEmailVerificationLinkAsync(string email)
+
+    // Generates a verification link for the user
+    private string GenerateVerificationLink(string email, string code)
     {
-        try
-        {
-            // Generate the email verification link
-            var emailVerificationLink = await FirebaseAuth.DefaultInstance.GenerateEmailVerificationLinkAsync(email);
-            return emailVerificationLink;
-        }
-        catch (FirebaseAuthException ex)
-        {
-            Console.WriteLine($"Error generating email verification link: {ex.Message}");
-            throw;
-        }
+        // Assuming there's a frontend or API endpoint to handle this verification link
+        return $"https://rally-wave-438116.firebaseapp.com/verify-email?email={email}&code={code}";
     }
+
     
     // password verification reset
     public async Task SendPasswordResetEmailAsync(string email)

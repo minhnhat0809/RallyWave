@@ -174,9 +174,7 @@ public class UserRepo(RallywaveContext repositoryContext) : RepositoryBase<User>
             // Fetch user based on the property name and value
             return property switch
             {
-                "username" => await _repositoryContext.Users
-                    .FirstOrDefaultAsync(u => u.UserName == value),
-            
+                
                 "email" => await _repositoryContext.Users
                     .FirstOrDefaultAsync(u => u.Email == value),
             
