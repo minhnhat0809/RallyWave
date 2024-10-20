@@ -2,7 +2,7 @@
 
 namespace BookingManagement.Repository.Impl;
 
-public class MatchRepo(RallywaveContext repositoryContext) : RepositoryBase<Match>(repositoryContext), IMatchRepo
+public class MatchRepo(RallyWaveContext repositoryContext) : RepositoryBase<Match>(repositoryContext), IMatchRepo
 {
     
 }

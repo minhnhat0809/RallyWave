@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Entity;
 
-public partial class Friendship
+public partial class FriendShip
 {
     public int User1Id { get; set; }
 

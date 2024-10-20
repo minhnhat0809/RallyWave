@@ -2,7 +2,7 @@
 
 namespace ChattingManagement.Repository.Impl;
 
-public class UnitOfWork(RallywaveContext context) : IUnitOfWork
+public class UnitOfWork(RallyWaveContext context) : IUnitOfWork
 {
     
 }

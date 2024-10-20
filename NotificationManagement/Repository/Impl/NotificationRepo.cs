@@ -2,7 +2,7 @@
 
 namespace NotificationManagement.Repository.Impl;
 
-public class NotificationRepo(RallywaveContext repositoryContext) : RepositoryBase<Notification>(repositoryContext), INotificationRepo
+public class NotificationRepo(RallyWaveContext repositoryContext) : RepositoryBase<Notification>(repositoryContext), INotificationRepo
 {
     
 }

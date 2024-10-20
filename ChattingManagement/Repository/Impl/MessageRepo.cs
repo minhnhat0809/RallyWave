@@ -2,7 +2,7 @@
 
 namespace ChattingManagement.Repository.Impl;
 
-public class MessageRepo(RallywaveContext repositoryContext) : RepositoryBase<Message>(repositoryContext), IMessageRepo
+public class MessageRepo(RallyWaveContext repositoryContext) : RepositoryBase<Message>(repositoryContext), IMessageRepo
 {
     
 }

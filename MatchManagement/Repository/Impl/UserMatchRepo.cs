@@ -2,7 +2,7 @@ using Entity;
 
 namespace MatchManagement.Repository.Impl;
 
-public class UserMatchRepo(RallywaveContext repositoryContext) : RepositoryBase<UserMatch>(repositoryContext), IUserMatchRepo
+public class UserMatchRepo(RallyWaveContext repositoryContext) : RepositoryBase<UserMatch>(repositoryContext), IUserMatchRepo
 {
     public async Task UnEnrollment(UserMatch userMatch)
     {

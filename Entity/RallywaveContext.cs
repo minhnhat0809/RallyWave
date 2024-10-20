@@ -5,13 +5,13 @@ using Pomelo.EntityFrameworkCore.MySql.Scaffolding.Internal;
 
 namespace Entity;
 
-public partial class RallywaveContext : DbContext
+public partial class RallyWaveContext : DbContext
 {
-    public RallywaveContext()
+    public RallyWaveContext()
     {
     }
 
-    public RallywaveContext(DbContextOptions<RallywaveContext> options)
+    public RallyWaveContext(DbContextOptions<RallyWaveContext> options)
         : base(options)
     {
     }
@@ -26,7 +26,7 @@ public partial class RallywaveContext : DbContext
 
     public virtual DbSet<CourtOwner> CourtOwners { get; set; }
 
-    public virtual DbSet<Friendship> Friendships { get; set; }
+    public virtual DbSet<FriendShip> FriendShips { get; set; }
 
     public virtual DbSet<Match> Matches { get; set; }
 
@@ -53,7 +53,6 @@ public partial class RallywaveContext : DbContext
     public virtual DbSet<UserSport> UserSports { get; set; }
 
     public virtual DbSet<UserTeam> UserTeams { get; set; }
-
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder
@@ -64,7 +63,7 @@ public partial class RallywaveContext : DbContext
         {
             entity.HasKey(e => e.BookingId).HasName("PRIMARY");
 
-            entity.ToTable("booking");
+            entity.ToTable("Booking");
 
             entity.HasIndex(e => e.UserId, "FK_Booking_User");
 
@@ -110,7 +109,7 @@ public partial class RallywaveContext : DbContext
         {
             entity.HasKey(e => e.ConservationId).HasName("PRIMARY");
 
-            entity.ToTable("conservation");
+            entity.ToTable("Conservation");
 
             entity.HasIndex(e => e.MatchId, "match_id").IsUnique();
 
@@ -137,7 +136,7 @@ public partial class RallywaveContext : DbContext
         {
             entity.HasKey(e => e.CourtId).HasName("PRIMARY");
 
-            entity.ToTable("court");
+            entity.ToTable("Court");
 
             entity.HasIndex(e => e.CourtOwnerId, "FK_Court_Owner");
 
@@ -173,7 +172,7 @@ public partial class RallywaveContext : DbContext
         {
             entity.HasKey(e => e.ImageId).HasName("PRIMARY");
 
-            entity.ToTable("court_image");
+            entity.ToTable("Court_Image");
 
             entity.HasIndex(e => e.CourtId, "FK_Court_Image_Court");
 
@@ -192,7 +191,7 @@ public partial class RallywaveContext : DbContext
         {
             entity.HasKey(e => e.CourtOwnerId).HasName("PRIMARY");
 
-            entity.ToTable("court_owner");
+            entity.ToTable("Court_Owner");
 
             entity.HasIndex(e => e.SubId, "FK_Court_Owner_Subscription");
 
@@ -242,13 +241,13 @@ public partial class RallywaveContext : DbContext
                 .HasConstraintName("FK_Court_Owner_Subscription");
         });
 
-        modelBuilder.Entity<Friendship>(entity =>
+        modelBuilder.Entity<FriendShip>(entity =>
         {
             entity.HasKey(e => new { e.User1Id, e.User2Id })
                 .HasName("PRIMARY")
                 .HasAnnotation("MySql:IndexPrefixLength", new[] { 0, 0 });
 
-            entity.ToTable("friendship");
+            entity.ToTable("FriendShip");
 
             entity.HasIndex(e => e.User2Id, "FK_FriendShip_User2");
 
@@ -256,12 +255,12 @@ public partial class RallywaveContext : DbContext
             entity.Property(e => e.User2Id).HasColumnName("user2_id");
             entity.Property(e => e.Level).HasColumnName("level");
 
-            entity.HasOne(d => d.User1).WithMany(p => p.FriendshipUser1s)
+            entity.HasOne(d => d.User1).WithMany(p => p.FriendShipUser1s)
                 .HasForeignKey(d => d.User1Id)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_FriendShip_User1");
 
-            entity.HasOne(d => d.User2).WithMany(p => p.FriendshipUser2s)
+            entity.HasOne(d => d.User2).WithMany(p => p.FriendShipUser2s)
                 .HasForeignKey(d => d.User2Id)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_FriendShip_User2");
@@ -271,7 +270,7 @@ public partial class RallywaveContext : DbContext
         {
             entity.HasKey(e => e.MatchId).HasName("PRIMARY");
 
-            entity.ToTable("match");
+            entity.ToTable("Match");
 
             entity.HasIndex(e => e.SportId, "FK_Match_Sport");
 
@@ -337,7 +336,7 @@ public partial class RallywaveContext : DbContext
         {
             entity.HasKey(e => e.MessageId).HasName("PRIMARY");
 
-            entity.ToTable("message");
+            entity.ToTable("Message");
 
             entity.HasIndex(e => e.ConservationId, "FK_Message_Conservation");
 
@@ -368,7 +367,7 @@ public partial class RallywaveContext : DbContext
         {
             entity.HasKey(e => e.NotificationId).HasName("PRIMARY");
 
-            entity.ToTable("notification");
+            entity.ToTable("Notification");
 
             entity.Property(e => e.NotificationId).HasColumnName("notification_id");
             entity.Property(e => e.Category)
@@ -391,7 +390,7 @@ public partial class RallywaveContext : DbContext
         {
             entity.HasKey(e => e.PaymentId).HasName("PRIMARY");
 
-            entity.ToTable("payment_detail");
+            entity.ToTable("Payment_Detail");
 
             entity.HasIndex(e => e.BookingId, "booking_id").IsUnique();
 
@@ -419,7 +418,7 @@ public partial class RallywaveContext : DbContext
         {
             entity.HasKey(e => e.SlotId).HasName("PRIMARY");
 
-            entity.ToTable("slot");
+            entity.ToTable("Slot");
 
             entity.HasIndex(e => e.CourtId, "FK_Slot_Court");
 
@@ -443,7 +442,7 @@ public partial class RallywaveContext : DbContext
         {
             entity.HasKey(e => e.SportId).HasName("PRIMARY");
 
-            entity.ToTable("sport");
+            entity.ToTable("Sport");
 
             entity.Property(e => e.SportId).HasColumnName("sport_id");
             entity.Property(e => e.SportName)
@@ -458,7 +457,7 @@ public partial class RallywaveContext : DbContext
         {
             entity.HasKey(e => e.SubId).HasName("PRIMARY");
 
-            entity.ToTable("subscription");
+            entity.ToTable("Subscription");
 
             entity.Property(e => e.SubId).HasColumnName("sub_id");
             entity.Property(e => e.IsActive)
@@ -477,7 +476,7 @@ public partial class RallywaveContext : DbContext
         {
             entity.HasKey(e => e.TeamId).HasName("PRIMARY");
 
-            entity.ToTable("team");
+            entity.ToTable("Team");
 
             entity.HasIndex(e => e.SportId, "FK_Team_Sport");
 
@@ -507,7 +506,7 @@ public partial class RallywaveContext : DbContext
         {
             entity.HasKey(e => e.UserId).HasName("PRIMARY");
 
-            entity.ToTable("user");
+            entity.ToTable("User");
 
             entity.HasIndex(e => e.SubId, "FK_User_Subscription");
 
@@ -569,7 +568,7 @@ public partial class RallywaveContext : DbContext
                         j.HasKey("UserId", "ConservationId")
                             .HasName("PRIMARY")
                             .HasAnnotation("MySql:IndexPrefixLength", new[] { 0, 0 });
-                        j.ToTable("user_conservation");
+                        j.ToTable("User_Conservation");
                         j.HasIndex(new[] { "ConservationId" }, "FK_User_Conservation_Conservation");
                         j.IndexerProperty<int>("UserId").HasColumnName("user_id");
                         j.IndexerProperty<int>("ConservationId").HasColumnName("conservation_id");
@@ -582,7 +581,7 @@ public partial class RallywaveContext : DbContext
                 .HasName("PRIMARY")
                 .HasAnnotation("MySql:IndexPrefixLength", new[] { 0, 0 });
 
-            entity.ToTable("user_match");
+            entity.ToTable("User_Match");
 
             entity.HasIndex(e => e.MatchId, "FK_User_Match_Match");
 
@@ -607,7 +606,7 @@ public partial class RallywaveContext : DbContext
                 .HasName("PRIMARY")
                 .HasAnnotation("MySql:IndexPrefixLength", new[] { 0, 0 });
 
-            entity.ToTable("user_notification");
+            entity.ToTable("User_Notification");
 
             entity.HasIndex(e => e.NotificationId, "FK_User_Notification_Notification");
 
@@ -637,7 +636,7 @@ public partial class RallywaveContext : DbContext
                 .HasName("PRIMARY")
                 .HasAnnotation("MySql:IndexPrefixLength", new[] { 0, 0 });
 
-            entity.ToTable("user_sport");
+            entity.ToTable("User_Sport");
 
             entity.HasIndex(e => e.SportId, "FK_User_Sport_Sport");
 
@@ -665,7 +664,7 @@ public partial class RallywaveContext : DbContext
                 .HasName("PRIMARY")
                 .HasAnnotation("MySql:IndexPrefixLength", new[] { 0, 0 });
 
-            entity.ToTable("user_team");
+            entity.ToTable("User_Team");
 
             entity.HasIndex(e => e.TeamId, "FK_User_Team_Team");
 

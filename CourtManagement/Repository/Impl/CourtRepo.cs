@@ -3,7 +3,7 @@ using Entity;
 
 namespace CourtManagement.Repository.Impl;
 
-public class CourtRepo(RallywaveContext repositoryContext) : RepositoryBase<Court>(repositoryContext), ICourtRepo
+public class CourtRepo(RallyWaveContext repositoryContext) : RepositoryBase<Court>(repositoryContext), ICourtRepo
 {
     public async Task<List<CourtsViewDto>> GetCourts(string? filterField, string? filterValue)
     {
