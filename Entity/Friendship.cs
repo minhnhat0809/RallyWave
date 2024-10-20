@@ -1,5 +1,4 @@
-﻿
-namespace Entity;
+﻿namespace Entity;
 
 public partial class Friendship
 {

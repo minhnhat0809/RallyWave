@@ -53,11 +53,7 @@ public partial class RallywaveContext : DbContext
     public virtual DbSet<UserSport> UserSports { get; set; }
 
     public virtual DbSet<UserTeam> UserTeams { get; set; }
-
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseMySql("server=localhost;database=rallywave;user=root;password=N@hat892003.", Microsoft.EntityFrameworkCore.ServerVersion.Parse("8.0.39-mysql"));
-
+    
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder
@@ -74,7 +70,7 @@ public partial class RallywaveContext : DbContext
 
             entity.HasIndex(e => e.UserId, "FK_Booking_User");
 
-            entity.HasIndex(e => e.Date, "idx_booking_date");
+            entity.HasIndex(e => new { e.Date, e.TimeStart, e.TimeEnd }, "IX_Booking_Date_TimeStart_TimeEnd_Filtered");
 
             entity.HasIndex(e => e.MatchId, "match_id").IsUnique();
 
@@ -89,7 +85,6 @@ public partial class RallywaveContext : DbContext
             entity.Property(e => e.Note)
                 .HasMaxLength(255)
                 .HasColumnName("note");
-            entity.Property(e => e.SlotId).HasColumnName("slot_id");
             entity.Property(e => e.Status).HasColumnName("status");
             entity.Property(e => e.TimeEnd)
                 .HasColumnType("time")
@@ -236,6 +231,9 @@ public partial class RallywaveContext : DbContext
                 .HasColumnName("province");
             entity.Property(e => e.Status).HasColumnName("status");
             entity.Property(e => e.SubId).HasColumnName("sub_id");
+            entity.Property(e => e.TaxCode)
+                .HasMaxLength(15)
+                .HasColumnName("tax_code");
             entity.Property(e => e.TwoFactorSecret)
                 .HasMaxLength(255)
                 .HasColumnName("two_factor_secret");
@@ -280,7 +278,7 @@ public partial class RallywaveContext : DbContext
 
             entity.HasIndex(e => e.CreateBy, "FK_Match_User");
 
-            entity.HasIndex(e => e.Date, "idx_match_date");
+            entity.HasIndex(e => new { e.Date, e.TimeStart, e.TimeEnd }, "IX_Match_Date_TimeStart_TimeEnd");
 
             entity.Property(e => e.MatchId).HasColumnName("match_id");
             entity.Property(e => e.AddByOthers)

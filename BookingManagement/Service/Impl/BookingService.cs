@@ -401,9 +401,8 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
         
         //get booking that overlaps
         var overlapBooking = await unitOfWork.BookingRepo
-            .AnyAsync(b => b.SlotId != null &&
+            .AnyAsync(b =>
                            b.Date.Equals(date) &&
-                           b.SlotId.Value.Equals(slot.SlotId) &&
                            b.TimeStart < timeEnd &&
                            b.TimeEnd > timeStart);
         
@@ -431,10 +430,9 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
 
         //get booking that overlaps
         var overlapBooking = await unitOfWork.BookingRepo
-            .AnyAsync(b => b.SlotId != null &&
+            .AnyAsync(b =>
                            b.BookingId !=  id &&
                            b.Date.Equals(date) &&
-                           b.SlotId.Value.Equals(slot.SlotId) &&
                            b.TimeStart < timeEnd &&
                            b.TimeEnd > timeStart);
         

@@ -9,6 +9,8 @@ public partial class CourtOwner
 
     public int? SubId { get; set; }
 
+    public string? TaxCode { get; set; }
+
     public string? Name { get; set; }
 
     public string? Email { get; set; }
