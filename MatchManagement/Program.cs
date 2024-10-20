@@ -21,6 +21,11 @@ builder.Services.AddScoped<IMatchService, MatchService>();
 //repo
 builder.Services.AddScoped<IMatchRepo, MatchRepo>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddScoped<IFriendShipRepo, FriendShipRepo>();
+builder.Services.AddScoped<ISportRepo, SportRepo>();
+builder.Services.AddScoped<IUserRepo, UserRepo>();
+builder.Services.AddScoped<IUserSportRepo, UserSportRepo>();
+builder.Services.AddScoped<IUserMatchRepo, UserMatchRepo>();
 
 //utilities
 builder.Services.AddScoped(typeof(Validate));

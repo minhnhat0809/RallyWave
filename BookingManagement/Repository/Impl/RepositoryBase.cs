@@ -20,8 +20,11 @@ public class RepositoryBase<T>(RallywaveContext repositoryContext) : IRepository
 
         return await query.Select(selector).ToListAsync(); 
     }
-
-
+    
+    public async Task<int> CountByConditionAsync(Expression<Func<T, bool>> condition)
+    {
+        return await repositoryContext.Set<T>().CountAsync(condition);
+    }
     
     public async Task<List<TResult>> FindByConditionAsync<TResult>(
         Expression<Func<T, bool>> expression, 

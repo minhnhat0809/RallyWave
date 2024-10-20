@@ -22,14 +22,16 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
         try
         {
             List<MatchViewsDto>? matches;
+            int total;
+            
             if (_validate.IsEmptyOrWhiteSpace(filterField) || _validate.IsEmptyOrWhiteSpace(filterValue))
             {
                 matches = await _unitOfWork.MatchRepo.FindAllAsync(m => 
                     new MatchViewsDto(
                         m.MatchId, 
-                        m.Sport!.SportName, 
+                        m.Sport.SportName, 
                         m.MatchName, 
-                        m.CreateByNavigation!.UserName,
+                        m.CreateByNavigation.UserName,
                         m.MatchType,
                         m.TeamSize,
                         m.MinLevel,
@@ -40,17 +42,20 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
                         m.Location!,
                         m.Status ?? 0
                     ));
+
+                total = matches.Count;
             }
             else
             {
                 matches = await _unitOfWork.MatchRepo.GetMatches(filterField, filterValue);
+                total = matches.Count;
             }
             
             matches = Sort(matches, sortField, sortValue);
 
             matches = _listExtensions.Paging(matches, pageNumber, pageSize);
 
-            responseDto.Result = matches;
+            responseDto.Result = new { matches, total};
         }
         catch (Exception e)
         {
@@ -79,10 +84,13 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
             
             //check match in database
             var matchEnroll = await _unitOfWork.MatchRepo.GetByConditionAsync(m => m.MatchId == matchId,
-                m => new MatchEnrollDto(m.SportId!.Value,
+                m => new MatchEnrollDto(
+                m.CreateBy,
+                m.SportId,
                 m.TimeStart,
                 m.TimeEnd,
                 m.Date,
+                m.Mode,
                 m.Gender,
                 m.MaxAge,
                 m.MinAge,
@@ -98,16 +106,35 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
                 return responseDto;
             }
 
+            if (matchEnroll.Mode == 1)
+            {
+                var check = _unitOfWork.FriendShipRepo.AnyAsync(fs => 
+                                                                      fs.User1Id == userId && 
+                                                                      fs.User2Id == matchEnroll.UserId ||
+                                                                      fs.User1Id == matchEnroll.UserId && 
+                                                                      fs.User2Id == userId)
+                    
+                    .Result;
+                if (!check)
+                {
+                    responseDto.Message = "This match is only for friends of the match owner.";
+                    responseDto.StatusCode = StatusCodes.Status400BadRequest;
+                    responseDto.IsSucceed = false;
+                    return responseDto;
+                }
+                
+            }else if (matchEnroll.Mode == 2)
+            {
+                
+            }
+
             //overall validation
             responseDto = await ValidateForEnrolling(userId, matchEnroll);
 
             if (responseDto.IsSucceed == false) return responseDto;
 
             //enroll user into match
-            await _unitOfWork.UserMatchRepo.CreateAsync(new UserMatch(){UserId = userId, MatchId = matchId, Status = 1});
-
-
-
+            await _unitOfWork.UserMatchRepo.CreateAsync(new UserMatch(){UserId = userId, MatchId = matchId, Status = 0});
         }
         catch (Exception e)
         {
@@ -202,9 +229,7 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
                 }
             }
 
-            userMatch.Status = 2;
-
-            await _unitOfWork.UserMatchRepo.UpdateAsync(userMatch);
+            await _unitOfWork.UserMatchRepo.UnEnrollment(userMatch);
             
         }
         catch (Exception e)
@@ -223,7 +248,7 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
         try
         {
             var match = await _unitOfWork.MatchRepo.GetByConditionAsync(m => m.MatchId == id,
-                m => m, m => m.Sport!);
+                m => m, m => m.Sport);
             
             if (match == null)
             {
@@ -520,7 +545,7 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
                 m => m.CreateBy);
 
             //check overlap matches
-            var checkOverlap = await IsOverlap(userId!.Value, matchUpdateDto.Date, matchUpdateDto.TimeStart,
+            var checkOverlap = await IsOverlap(userId, matchUpdateDto.Date, matchUpdateDto.TimeStart,
                 matchUpdateDto.TimeEnd);
             
             if (checkOverlap)

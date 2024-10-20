@@ -1,13 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace Entity;
+﻿namespace Entity;
 
 public partial class PaymentDetail
 {
     public int PaymentId { get; set; }
 
     public int? BookingId { get; set; }
+
+    public int? SubId { get; set; }
 
     public string? Note { get; set; }
 

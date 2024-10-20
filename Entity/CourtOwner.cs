@@ -7,6 +7,10 @@ public partial class CourtOwner
 {
     public int CourtOwnerId { get; set; }
 
+    public int? SubId { get; set; }
+
+    public string? TaxCode { get; set; }
+
     public string? Name { get; set; }
 
     public string? Email { get; set; }
@@ -36,4 +40,6 @@ public partial class CourtOwner
     public string? FirebaseUid { get; set; }
 
     public virtual ICollection<Court> Courts { get; set; } = new List<Court>();
+
+    public virtual Subscription? Sub { get; set; }
 }

@@ -1,13 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace Entity;
+﻿namespace Entity;
 
 public partial class Slot
 {
     public int SlotId { get; set; }
 
-    public int? CourtId { get; set; }
+    public int CourtId { get; set; }
 
     public TimeOnly TimeStart { get; set; }
 
@@ -15,5 +12,5 @@ public partial class Slot
 
     public double Cost { get; set; }
 
-    public virtual Court? Court { get; set; }
+    public virtual Court Court { get; set; } = null!;
 }

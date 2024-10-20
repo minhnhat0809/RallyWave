@@ -1,15 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace Entity;
+﻿namespace Entity;
 
 public partial class Match
 {
     public int MatchId { get; set; }
 
-    public int? SportId { get; set; }
+    public int SportId { get; set; }
 
-    public int? CreateBy { get; set; }
+    public int CreateBy { get; set; }
 
     public string MatchName { get; set; } = null!;
 
@@ -55,9 +52,9 @@ public partial class Match
 
     public virtual Conservation? Conservation { get; set; }
 
-    public virtual User? CreateByNavigation { get; set; }
+    public virtual User CreateByNavigation { get; set; } = null!;
 
-    public virtual Sport? Sport { get; set; }
+    public virtual Sport Sport { get; set; } = null!;
 
     public virtual ICollection<UserMatch> UserMatches { get; set; } = new List<UserMatch>();
 }

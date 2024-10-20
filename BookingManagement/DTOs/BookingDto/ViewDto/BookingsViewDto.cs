@@ -3,27 +3,23 @@ using Entity;
 
 namespace BookingManagement.DTOs.BookingDto.ViewDto;
 
-public class BookingsViewDto
+public class BookingsViewDto(
+    int bookingId,
+    DateOnly date,
+    TimeOnly timeStart,
+    TimeOnly timeEnd,
+    double cost,
+    sbyte status)
 {
-    public int BookingId { get; set; }
+    public int BookingId { get; set; } = bookingId;
 
-    public DateOnly Date { get; set; }
+    public DateOnly Date { get; set; } = date;
 
-    public TimeOnly TimeStart { get; set; }
+    public TimeOnly TimeStart { get; set; } = timeStart;
 
-    public TimeOnly TimeEnd { get; set; }
+    public TimeOnly TimeEnd { get; set; } = timeEnd;
 
-    public sbyte Status { get; set; }
-    
-    public PaymentDetail? PaymentDetail { get; set; }
+    public double cost { get; set; } = cost;
 
-    public BookingsViewDto(int bookingId, DateOnly date, TimeOnly timeStart, TimeOnly timeEnd, sbyte status, PaymentDetail? paymentDetail)
-    {
-        BookingId = bookingId;
-        Date = date;
-        TimeStart = timeStart;
-        TimeEnd = timeEnd;
-        Status = status;
-        PaymentDetail = paymentDetail;
-    }
+    public sbyte Status { get; set; } = status;
 }

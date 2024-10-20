@@ -1,15 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace Entity;
+﻿namespace Entity;
 
 public partial class Court
 {
     public int CourtId { get; set; }
 
-    public int? CourtOwnerId { get; set; }
+    public int CourtOwnerId { get; set; }
 
-    public int? SportId { get; set; }
+    public int SportId { get; set; }
 
     public string CourtName { get; set; } = null!;
 
@@ -23,11 +20,11 @@ public partial class Court
 
     public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
 
-    public virtual CourtOwner? CourtOwner { get; set; }
-
     public virtual ICollection<CourtImage> CourtImages { get; set; } = new List<CourtImage>();
+
+    public virtual CourtOwner CourtOwner { get; set; } = null!;
 
     public virtual ICollection<Slot> Slots { get; set; } = new List<Slot>();
 
-    public virtual Sport? Sport { get; set; }
+    public virtual Sport Sport { get; set; } = null!;
 }

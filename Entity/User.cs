@@ -1,11 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace Entity;
+﻿namespace Entity;
 
 public partial class User
 {
     public int UserId { get; set; }
+
+    public int? SubId { get; set; }
 
     public string UserName { get; set; } = null!;
 
@@ -44,6 +43,8 @@ public partial class User
     public virtual ICollection<Match> Matches { get; set; } = new List<Match>();
 
     public virtual ICollection<Message> Messages { get; set; } = new List<Message>();
+
+    public virtual Subscription? Sub { get; set; }
 
     public virtual ICollection<Team> Teams { get; set; } = new List<Team>();
 

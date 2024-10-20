@@ -5,7 +5,9 @@ namespace BookingManagement.Service;
 
 public interface IBookingService
 {
-    Task<ResponseDto> GetBookings(string? filterField,
+    Task<ResponseDto> GetBookings(
+        int userId,
+        string? filterField,
         string? filterValue,
         string? sortField,
         string sortValue,

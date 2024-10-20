@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace Entity;
+﻿namespace Entity;
 
 public partial class Booking
 {
@@ -13,13 +10,13 @@ public partial class Booking
 
     public int? CourtId { get; set; }
 
-    public int? SlotId { get; set; }
-
     public DateOnly Date { get; set; }
 
     public TimeOnly TimeStart { get; set; }
 
     public TimeOnly TimeEnd { get; set; }
+
+    public double Cost { get; set; }
 
     public DateTime CreateAt { get; set; }
 

@@ -8,8 +8,9 @@ namespace BookingManagement.Controller
     [ApiController]
     public class BookingController(IBookingService bookingService) : ControllerBase
     {
-        [HttpGet("bookings")]
+        [HttpGet("bookings/user/{userId:int}")]
         public async Task<IActionResult> GetBookings(
+            int userId,
             [FromQuery] string? filterField,
             [FromQuery] string? filterValue,
             [FromQuery] string? sortField,
@@ -18,7 +19,7 @@ namespace BookingManagement.Controller
             [FromQuery] int pageSize = 5
         )
         {
-            var response = await bookingService.GetBookings(filterField, filterValue, sortField, sortValue, pageNumber, pageSize);
+            var response = await bookingService.GetBookings(userId, filterField, filterValue, sortField, sortValue, pageNumber, pageSize);
             return StatusCode(response.StatusCode, response);
         }
         

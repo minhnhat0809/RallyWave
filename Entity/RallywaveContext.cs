@@ -22,9 +22,9 @@ public partial class RallywaveContext : DbContext
 
     public virtual DbSet<Court> Courts { get; set; }
 
-    public virtual DbSet<CourtOwner> CourtOwners { get; set; }
-
     public virtual DbSet<CourtImage> CourtImages { get; set; }
+
+    public virtual DbSet<CourtOwner> CourtOwners { get; set; }
 
     public virtual DbSet<Friendship> Friendships { get; set; }
 
@@ -40,6 +40,8 @@ public partial class RallywaveContext : DbContext
 
     public virtual DbSet<Sport> Sports { get; set; }
 
+    public virtual DbSet<Subscription> Subscriptions { get; set; }
+
     public virtual DbSet<Team> Teams { get; set; }
 
     public virtual DbSet<User> Users { get; set; }
@@ -51,10 +53,7 @@ public partial class RallywaveContext : DbContext
     public virtual DbSet<UserSport> UserSports { get; set; }
 
     public virtual DbSet<UserTeam> UserTeams { get; set; }
-
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        => optionsBuilder.UseMySql("server=localhost;database=rallywave;user=root;password=N@hat892003.", Microsoft.EntityFrameworkCore.ServerVersion.Parse("8.0.39-mysql"));
-
+    
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder
@@ -71,9 +70,12 @@ public partial class RallywaveContext : DbContext
 
             entity.HasIndex(e => e.UserId, "FK_Booking_User");
 
+            entity.HasIndex(e => new { e.Date, e.TimeStart, e.TimeEnd }, "IX_Booking_Date_TimeStart_TimeEnd_Filtered");
+
             entity.HasIndex(e => e.MatchId, "match_id").IsUnique();
 
             entity.Property(e => e.BookingId).HasColumnName("booking_id");
+            entity.Property(e => e.Cost).HasColumnName("cost");
             entity.Property(e => e.CourtId).HasColumnName("court_id");
             entity.Property(e => e.CreateAt)
                 .HasColumnType("datetime")
@@ -83,7 +85,6 @@ public partial class RallywaveContext : DbContext
             entity.Property(e => e.Note)
                 .HasMaxLength(255)
                 .HasColumnName("note");
-            entity.Property(e => e.SlotId).HasColumnName("slot_id");
             entity.Property(e => e.Status).HasColumnName("status");
             entity.Property(e => e.TimeEnd)
                 .HasColumnType("time")
@@ -160,11 +161,32 @@ public partial class RallywaveContext : DbContext
 
             entity.HasOne(d => d.CourtOwner).WithMany(p => p.Courts)
                 .HasForeignKey(d => d.CourtOwnerId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Court_Owner");
 
             entity.HasOne(d => d.Sport).WithMany(p => p.Courts)
                 .HasForeignKey(d => d.SportId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Court_Sport");
+        });
+
+        modelBuilder.Entity<CourtImage>(entity =>
+        {
+            entity.HasKey(e => e.ImageId).HasName("PRIMARY");
+
+            entity.ToTable("court_image");
+
+            entity.HasIndex(e => e.CourtId, "FK_Court_Image_Court");
+
+            entity.Property(e => e.ImageId).HasColumnName("image_id");
+            entity.Property(e => e.CourtId).HasColumnName("court_id");
+            entity.Property(e => e.ImageUrl)
+                .HasMaxLength(2083)
+                .HasColumnName("image_url");
+
+            entity.HasOne(d => d.Court).WithMany(p => p.CourtImages)
+                .HasForeignKey(d => d.CourtId)
+                .HasConstraintName("FK_Court_Image_Court");
         });
 
         modelBuilder.Entity<CourtOwner>(entity =>
@@ -172,6 +194,8 @@ public partial class RallywaveContext : DbContext
             entity.HasKey(e => e.CourtOwnerId).HasName("PRIMARY");
 
             entity.ToTable("court_owner");
+
+            entity.HasIndex(e => e.SubId, "FK_Court_Owner_Subscription");
 
             entity.Property(e => e.CourtOwnerId).HasColumnName("court_owner_id");
             entity.Property(e => e.Address)
@@ -206,28 +230,17 @@ public partial class RallywaveContext : DbContext
                 .HasMaxLength(255)
                 .HasColumnName("province");
             entity.Property(e => e.Status).HasColumnName("status");
+            entity.Property(e => e.SubId).HasColumnName("sub_id");
+            entity.Property(e => e.TaxCode)
+                .HasMaxLength(15)
+                .HasColumnName("tax_code");
             entity.Property(e => e.TwoFactorSecret)
                 .HasMaxLength(255)
                 .HasColumnName("two_factor_secret");
-        });
 
-        modelBuilder.Entity<CourtImage>(entity =>
-        {
-            entity.HasKey(e => e.ImageId).HasName("PRIMARY");
-
-            entity.ToTable("CourtImages");
-
-            entity.HasIndex(e => e.CourtId, "FK_CourtImages_Court");
-
-            entity.Property(e => e.ImageId).HasColumnName("image_id");
-            entity.Property(e => e.CourtId).HasColumnName("court_id");
-            entity.Property(e => e.ImageUrl)
-                .HasMaxLength(2083)
-                .HasColumnName("image_url");
-
-            entity.HasOne(d => d.Court).WithMany(p => p.CourtImages)
-                .HasForeignKey(d => d.CourtId)
-                .HasConstraintName("FK_CourtImages_Court");
+            entity.HasOne(d => d.Sub).WithMany(p => p.CourtOwners)
+                .HasForeignKey(d => d.SubId)
+                .HasConstraintName("FK_Court_Owner_Subscription");
         });
 
         modelBuilder.Entity<Friendship>(entity =>
@@ -264,6 +277,8 @@ public partial class RallywaveContext : DbContext
             entity.HasIndex(e => e.SportId, "FK_Match_Sport");
 
             entity.HasIndex(e => e.CreateBy, "FK_Match_User");
+
+            entity.HasIndex(e => new { e.Date, e.TimeStart, e.TimeEnd }, "IX_Match_Date_TimeStart_TimeEnd");
 
             entity.Property(e => e.MatchId).HasColumnName("match_id");
             entity.Property(e => e.AddByOthers)
@@ -310,10 +325,12 @@ public partial class RallywaveContext : DbContext
 
             entity.HasOne(d => d.CreateByNavigation).WithMany(p => p.Matches)
                 .HasForeignKey(d => d.CreateBy)
+                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Match_User");
 
             entity.HasOne(d => d.Sport).WithMany(p => p.Matches)
                 .HasForeignKey(d => d.SportId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Match_Sport");
         });
 
@@ -379,12 +396,15 @@ public partial class RallywaveContext : DbContext
 
             entity.HasIndex(e => e.BookingId, "booking_id").IsUnique();
 
+            entity.HasIndex(e => e.SubId, "sub_id").IsUnique();
+
             entity.Property(e => e.PaymentId).HasColumnName("payment_id");
             entity.Property(e => e.BookingId).HasColumnName("booking_id");
             entity.Property(e => e.Note)
                 .HasMaxLength(255)
                 .HasColumnName("note");
             entity.Property(e => e.Status).HasColumnName("status");
+            entity.Property(e => e.SubId).HasColumnName("sub_id");
             entity.Property(e => e.Total).HasColumnName("total");
             entity.Property(e => e.Type)
                 .HasMaxLength(10)
@@ -416,6 +436,7 @@ public partial class RallywaveContext : DbContext
 
             entity.HasOne(d => d.Court).WithMany(p => p.Slots)
                 .HasForeignKey(d => d.CourtId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Slot_Court");
         });
 
@@ -432,6 +453,25 @@ public partial class RallywaveContext : DbContext
             entity.Property(e => e.Status)
                 .HasColumnType("bit(1)")
                 .HasColumnName("status");
+        });
+
+        modelBuilder.Entity<Subscription>(entity =>
+        {
+            entity.HasKey(e => e.SubId).HasName("PRIMARY");
+
+            entity.ToTable("subscription");
+
+            entity.Property(e => e.SubId).HasColumnName("sub_id");
+            entity.Property(e => e.IsActive)
+                .HasColumnType("bit(1)")
+                .HasColumnName("isActive");
+            entity.Property(e => e.Price).HasColumnName("price");
+            entity.Property(e => e.SubDescription)
+                .HasMaxLength(255)
+                .HasColumnName("sub_description");
+            entity.Property(e => e.SubName)
+                .HasMaxLength(100)
+                .HasColumnName("sub_name");
         });
 
         modelBuilder.Entity<Team>(entity =>
@@ -455,10 +495,12 @@ public partial class RallywaveContext : DbContext
 
             entity.HasOne(d => d.CreateByNavigation).WithMany(p => p.Teams)
                 .HasForeignKey(d => d.CreateBy)
+                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Team_User");
 
             entity.HasOne(d => d.Sport).WithMany(p => p.Teams)
                 .HasForeignKey(d => d.SportId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Team_Sport");
         });
 
@@ -467,6 +509,8 @@ public partial class RallywaveContext : DbContext
             entity.HasKey(e => e.UserId).HasName("PRIMARY");
 
             entity.ToTable("user");
+
+            entity.HasIndex(e => e.SubId, "FK_User_Subscription");
 
             entity.Property(e => e.UserId).HasColumnName("user_id");
             entity.Property(e => e.Address)
@@ -498,12 +542,17 @@ public partial class RallywaveContext : DbContext
                 .HasMaxLength(255)
                 .HasColumnName("province");
             entity.Property(e => e.Status).HasColumnName("status");
+            entity.Property(e => e.SubId).HasColumnName("sub_id");
             entity.Property(e => e.TwoFactorSecret)
                 .HasMaxLength(255)
                 .HasColumnName("two_factor_secret");
             entity.Property(e => e.UserName)
                 .HasMaxLength(100)
                 .HasColumnName("user_name");
+
+            entity.HasOne(d => d.Sub).WithMany(p => p.Users)
+                .HasForeignKey(d => d.SubId)
+                .HasConstraintName("FK_User_Subscription");
 
             entity.HasMany(d => d.Conservations).WithMany(p => p.Users)
                 .UsingEntity<Dictionary<string, object>>(
