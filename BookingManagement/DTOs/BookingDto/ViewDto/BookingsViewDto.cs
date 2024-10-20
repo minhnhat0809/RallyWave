@@ -19,7 +19,7 @@ public class BookingsViewDto(
 
     public TimeOnly TimeEnd { get; set; } = timeEnd;
 
-    public double cost { get; set; } = cost;
+    public double Cost { get; set; } = cost;
 
     public sbyte Status { get; set; } = status;
 }

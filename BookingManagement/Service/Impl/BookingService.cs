@@ -11,6 +11,12 @@ namespace BookingManagement.Service.Impl;
 
 public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate validate, ListExtensions listExtensions) : IBookingService
 {
+    private class MatchSlot (TimeOnly timeStart, TimeOnly timeEnd, double cost)
+    {
+        public TimeOnly TimeStart { get; set; } = timeStart;
+        public TimeOnly TimeEnd { get; set; } = timeEnd;
+        public double Cost { get; set; } = cost;
+    }
     
     public async Task<ResponseDto> GetBookings(int userId, string? filterField, string? filterValue, string? sortField, string sortValue, int pageNumber,
         int pageSize)
@@ -91,17 +97,22 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
         var responseDto = new ResponseDto(null, "", true, StatusCodes.Status201Created);
         try
         {
-            responseDto = await ValidateForCreating(bookingCreateDto);
+            var responseCourtSlot = await ValidateForCreating(bookingCreateDto);
             if (responseDto.IsSucceed == false)
             {
+                responseDto.Message = responseCourtSlot.Message;
+                responseDto.IsSucceed = false;
+                responseDto.StatusCode = responseCourtSlot.StatusCode;
                 return responseDto;
             }
 
             var booking = mapper.Map<Booking>(bookingCreateDto);
             booking.CreateAt = DateTime.Now;
+            booking.Cost = responseCourtSlot.Cost!.Value;
             
             await unitOfWork.BookingRepo.CreateBooking(booking);
             
+            responseDto.Result = mapper.Map<BookingViewDto>(booking);
             responseDto.Message = "Create successfully!";
         }
         catch (Exception e)
@@ -128,18 +139,24 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
                 return responseDto;
             }
 
-            responseDto = await ValidateForUpdating(id, bookingUpdateDto);
+            var responseCourtSlot = await ValidateForUpdating(id, bookingUpdateDto);
 
             if (responseDto.IsSucceed == false)
             {
+                responseDto.Message = responseCourtSlot.Message;
+                responseDto.IsSucceed = false;
+                responseDto.StatusCode = responseCourtSlot.StatusCode;
                 return responseDto;
             }
             
             booking = mapper.Map<Booking>(bookingUpdateDto);
+            booking.CreateAt = DateTime.Now;
+            booking.Cost = responseCourtSlot.Cost!.Value;
             
             await unitOfWork.BookingRepo.UpdateBooking(booking);
+
+            responseDto.Result = mapper.Map<BookingViewDto>(booking);
             responseDto.Message = "Update successfully!";
-            
         }
         catch (Exception e)
         {
@@ -153,7 +170,7 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
 
     public async Task<ResponseDto> DeleteBooking(int id)
     {
-        var responseDto = new ResponseDto(null, "", true, 200);
+        var responseDto = new ResponseDto(null, "", true, StatusCodes.Status200OK);
         try
         {
             var booking = await unitOfWork.BookingRepo.GetBookingById(id);
@@ -180,7 +197,7 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
         return responseDto;
     }
 
-    private async Task<ResponseDto> ValidateForCreating(BookingCreateDto bookingCreateDto)
+    private async Task<ResponseCourtSlotDto> ValidateForCreating(BookingCreateDto bookingCreateDto)
     {
         var today = DateOnly.FromDateTime(DateTime.Now.Date);
         var timeNow = TimeOnly.FromDateTime(DateTime.Now);
@@ -188,7 +205,7 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
         // Validate that both MatchId and UserId are not provided at the same time
         if (bookingCreateDto is { MatchId: not null, UserId: not null })
         {
-            return new ResponseDto(null, "Match and user cannot be specified simultaneously.", false, StatusCodes.Status400BadRequest);
+            return new ResponseCourtSlotDto(null, "Match and user cannot be specified simultaneously.", false, StatusCodes.Status400BadRequest);
         }
 
         // Validate MatchId
@@ -199,7 +216,7 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
             
             if (match == null)
             {
-             return new ResponseDto(null, "Match not found.", false, StatusCodes.Status404NotFound);
+             return new ResponseCourtSlotDto(null, "Match not found.", false, StatusCodes.Status404NotFound);
             }
         }
 
@@ -211,34 +228,15 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
             
             if (user == null)
             {
-                return new ResponseDto(null, "User not found.", false, StatusCodes.Status404NotFound);
+                return new ResponseCourtSlotDto(null, "User not found.", false, StatusCodes.Status404NotFound);
             }
         }
-
-        // Validate CourtId
-        if (!bookingCreateDto.CourtId.HasValue)
-        {
-            return new ResponseDto(null, "Court Id cannot be null.", false, StatusCodes.Status400BadRequest);
-        }
-
-        var court = await unitOfWork.CourtRepo.GetCourtById(bookingCreateDto.CourtId.Value);
+        
+        //Check court in database
+        var court = await unitOfWork.CourtRepo.GetCourtById(bookingCreateDto.CourtId);
         if (court == null)
         {
-            return new ResponseDto(null, "Court not found.", false, StatusCodes.Status404NotFound);
-        }
-
-        // Validate SlotId
-        if (!bookingCreateDto.SlotId.HasValue)
-        {
-            return new ResponseDto(null, "Slot Id cannot be null.", false, StatusCodes.Status400BadRequest);
-        }
-
-        var slot = await unitOfWork.SlotRepo.GetByConditionAsync(s => s.SlotId == bookingCreateDto.SlotId.Value,
-            s => new SlotValidateDto(s.SlotId, s.TimeStart, s.TimeEnd));
-
-        if (slot == null)
-        {
-            return new ResponseDto(null, "Slot not found.", false, StatusCodes.Status404NotFound);
+            return new ResponseCourtSlotDto(null, "Court not found.", false, StatusCodes.Status404NotFound);
         }
 
         // Validate booking date and time
@@ -246,32 +244,46 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
         switch (dateComparison)
         {
             case < 0:
-                return new ResponseDto(null, "Reserved date is in the past.", false, StatusCodes.Status400BadRequest);
+                return new ResponseCourtSlotDto(null, "Reserved date is in the past.", false, StatusCodes.Status400BadRequest);
             case 0 when bookingCreateDto.TimeStart.CompareTo(timeNow) <= 0:
-                return new ResponseDto(null, "Reserved time is too close.", false, StatusCodes.Status400BadRequest);
+                return new ResponseCourtSlotDto(null, "Reserved time is too close.", false, StatusCodes.Status400BadRequest);
         }
 
         // Validate time range (TimeStart < TimeEnd)
         if (bookingCreateDto.TimeStart >= bookingCreateDto.TimeEnd)
         {
-            return new ResponseDto(null, "Start time must be earlier than end time.", false, StatusCodes.Status400BadRequest);
+            return new ResponseCourtSlotDto(null, "Start time must be earlier than end time.", false, StatusCodes.Status400BadRequest);
         }
 
-        // Validate time overlap with existing slots
-        var response = await CheckCourtAvailableForCreating(slot, bookingCreateDto.Date, bookingCreateDto.TimeStart, bookingCreateDto.TimeEnd);
+        //Validate time range is in any slots
+        var response = await ValidateSlotAndCalculateCost(bookingCreateDto.CourtId, bookingCreateDto.TimeStart, bookingCreateDto.TimeEnd);
+        if (!response.IsSucceed)
+        {
+            return response;
+        }
 
+        //Store cost in local variable
+        double total = 0;
+        if(response.Cost.HasValue){total = response.Cost.Value;}
+
+        // Validate time overlap with existing slots
+        response = await CheckCourtAvailableForCreating(bookingCreateDto.CourtId, bookingCreateDto.Date, bookingCreateDto.TimeStart, bookingCreateDto.TimeEnd);
+
+        //Set cost back to return
+        response.Cost = total;
+        
         return response;
     }
     
-    private async Task<ResponseDto> ValidateForUpdating(int id, BookingUpdateDto bookingUpdateDto)
+    private async Task<ResponseCourtSlotDto> ValidateForUpdating(int id, BookingUpdateDto bookingUpdateDto)
     {
-        var response = new ResponseDto(null, "", true, 200);
+        var response = new ResponseCourtSlotDto(null, "", true, 200);
 
         var today = DateOnly.FromDateTime(DateTime.Now.Date);
 
         var timeNow = TimeOnly.FromDateTime(DateTime.Now);
         
-        // validate user and court
+        // validate user and match
         if (bookingUpdateDto is { MatchId: not null, UserId: not null })
         {
             response.IsSucceed = false;
@@ -309,44 +321,11 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
         }
         
         // validate court
-        if (!bookingUpdateDto.CourtId.HasValue)
-        {
-            response.IsSucceed = false;
-            response.Message = "Court Id cannot be null.";
-            response.StatusCode = StatusCodes.Status400BadRequest;
-            return response;
-        }
-        
-        var court = await unitOfWork.CourtRepo.GetCourtById(bookingUpdateDto.CourtId.Value);
+        var court = await unitOfWork.CourtRepo.GetCourtById(bookingUpdateDto.CourtId);
         if (court == null)
         {
             response.IsSucceed = false;
             response.Message = "There are no courts with this id";
-            response.StatusCode = StatusCodes.Status400BadRequest;
-            return response;
-        }
-        
-        // validate slot
-        if (!bookingUpdateDto.SlotId.HasValue)
-        {
-            response.IsSucceed = false;
-            response.Message = "Slot Id cannot be null.";
-            response.StatusCode = StatusCodes.Status400BadRequest;
-            return response;
-        }
-
-        var slot = await unitOfWork.SlotRepo.GetByConditionAsync(s => s.SlotId == bookingUpdateDto.SlotId, 
-            s => new SlotValidateDto
-            (
-                s.SlotId,
-                s.TimeStart,
-                s.TimeEnd
-            ));
-        
-        if (slot == null)
-        {
-            response.IsSucceed = false;
-            response.Message = "There are no slots with this id";
             response.StatusCode = StatusCodes.Status400BadRequest;
             return response;
         }
@@ -379,29 +358,35 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
             return response;
         }
         
-        // validate overlap time
-        response = await CheckCourtAvailableForUpdating(id, slot, bookingUpdateDto.Date, bookingUpdateDto.TimeStart,
-            bookingUpdateDto.TimeEnd);
-
-        return response;
-    }
-
-    private async Task<ResponseDto> CheckCourtAvailableForCreating(SlotValidateDto slot, DateOnly date, TimeOnly timeStart, TimeOnly timeEnd )
-    {
-        var response = new ResponseDto(null, "", true, 200);
+        response = await ValidateSlotAndCalculateCost(bookingUpdateDto.CourtId, bookingUpdateDto.TimeStart, bookingUpdateDto.TimeEnd);
         
-        // compare time start and time end with time of slot
-        if (slot.TimeStart.CompareTo(timeStart) > 0 || slot.TimeEnd.CompareTo(timeEnd) < 0)
+        //Validate time range is in any slots
+        if (!response.IsSucceed)
         {
-            response.IsSucceed = false;
-            response.Message = "Time of booking is not in rang time of slot";
-            response.StatusCode = StatusCodes.Status400BadRequest;
             return response;
         }
         
+        //Store cost in local variable
+        double total = 0;
+        if(response.Cost.HasValue){total = response.Cost.Value;}
+        
+        // validate overlap time
+        response = await CheckCourtAvailableForUpdating(bookingUpdateDto.CourtId, id, bookingUpdateDto.Date, bookingUpdateDto.TimeStart,
+            bookingUpdateDto.TimeEnd);
+
+        //Set cost back to return
+        response.Cost = total;
+        
+        return response;
+    }
+
+    private async Task<ResponseCourtSlotDto> CheckCourtAvailableForCreating(int courtId, DateOnly date, TimeOnly timeStart, TimeOnly timeEnd )
+    {
+        var response = new ResponseCourtSlotDto(null, "", true, 200);
+        
         //get booking that overlaps
         var overlapBooking = await unitOfWork.BookingRepo
-            .AnyAsync(b =>
+            .AnyAsync(b => b.CourtId == courtId &&
                            b.Date.Equals(date) &&
                            b.TimeStart < timeEnd &&
                            b.TimeEnd > timeStart);
@@ -415,22 +400,13 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
         return response;
     }
     
-    private async Task<ResponseDto> CheckCourtAvailableForUpdating(int id, SlotValidateDto slot, DateOnly date, TimeOnly timeStart, TimeOnly timeEnd )
+    private async Task<ResponseCourtSlotDto> CheckCourtAvailableForUpdating(int courtId, int id, DateOnly date, TimeOnly timeStart, TimeOnly timeEnd )
     {
-        var response = new ResponseDto(null, "", true, 200);
-        
-        // compare time start and time end with time of slot
-        if (slot.TimeStart.CompareTo(timeStart) > 0 || slot.TimeEnd.CompareTo(timeEnd) < 0)
-        {
-            response.IsSucceed = false;
-            response.Message = "Time of booking is not in rang time of slot";
-            response.StatusCode = StatusCodes.Status400BadRequest;
-            return response;
-        }
+        var response = new ResponseCourtSlotDto(null, "", true, 200);
 
         //get booking that overlaps
         var overlapBooking = await unitOfWork.BookingRepo
-            .AnyAsync(b =>
+            .AnyAsync(b => b.CourtId == courtId &&
                            b.BookingId !=  id &&
                            b.Date.Equals(date) &&
                            b.TimeStart < timeEnd &&
@@ -472,5 +448,61 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
 
         return bookings;
     }
-    
+
+    private async Task<ResponseCourtSlotDto> ValidateSlotAndCalculateCost(int courtId, TimeOnly timeStart, TimeOnly timeEnd)
+    {
+        var response = new ResponseCourtSlotDto(null, "", true, 200);
+
+        // Fetch the court slots for the given court
+        var courtSlots = await unitOfWork.SlotRepo.FindByConditionAsync(s => s.CourtId == courtId, 
+            s => new MatchSlot(
+                s.TimeStart,
+                s.TimeEnd,
+                s.Cost
+                ));
+
+        if (courtSlots.Count == 0)
+        {
+            response.IsSucceed = false;
+            response.Message = "No slots available for this court.";
+            response.StatusCode = StatusCodes.Status400BadRequest;
+            return response;
+        }
+
+        //Find slots that match or overlap with the requested timeStart and timeEnd
+        var matchingSlots = courtSlots
+            .Where(s => s.TimeStart <= timeEnd && s.TimeEnd >= timeStart)
+            .OrderBy(s => s.TimeStart)
+            .ToList();
+
+        //Check if the time range is fully covered
+        if (matchingSlots.Count == 0 || matchingSlots.First().TimeStart > timeStart || matchingSlots.Last().TimeEnd < timeEnd)
+        {
+            response.IsSucceed = false;
+            response.Message = "Time range is not fully covered by available slots.";
+            response.StatusCode = StatusCodes.Status400BadRequest;
+            return response;
+        }
+
+        //Ensure there are no gaps between the slots
+        for (var i = 0; i < matchingSlots.Count - 1; i++)
+        {
+            if (matchingSlots[i].TimeEnd == matchingSlots[i + 1].TimeStart) continue;
+            response.IsSucceed = false;
+            response.Message = "There is a gap between the available slots.";
+            response.StatusCode = StatusCodes.Status400BadRequest;
+            return response;
+        }
+        
+        var totalCost = (from slot in matchingSlots 
+                let overlapStart = timeStart > slot.TimeStart ? timeStart : slot.TimeStart 
+                let overlapEnd = timeEnd < slot.TimeEnd ? timeEnd : slot.TimeEnd 
+                let overlapDuration = (overlapEnd.ToTimeSpan() - overlapStart.ToTimeSpan()).TotalHours 
+                select overlapDuration * slot.Cost)
+            .Sum();
+
+        response.Cost = totalCost;
+        
+        return response;
+    }
 }

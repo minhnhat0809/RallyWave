@@ -1,4 +1,7 @@
-﻿namespace Entity;
+﻿using System;
+using System.Collections.Generic;
+
+namespace Entity;
 
 public partial class Booking
 {
@@ -8,7 +11,7 @@ public partial class Booking
 
     public int? MatchId { get; set; }
 
-    public int? CourtId { get; set; }
+    public int CourtId { get; set; }
 
     public DateOnly Date { get; set; }
 
@@ -24,7 +27,7 @@ public partial class Booking
 
     public sbyte Status { get; set; }
 
-    public virtual Court? Court { get; set; }
+    public virtual Court Court { get; set; } = null!;
 
     public virtual Match? Match { get; set; }
 

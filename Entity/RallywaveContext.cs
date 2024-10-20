@@ -53,7 +53,7 @@ public partial class RallywaveContext : DbContext
     public virtual DbSet<UserSport> UserSports { get; set; }
 
     public virtual DbSet<UserTeam> UserTeams { get; set; }
-    
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder
@@ -66,11 +66,9 @@ public partial class RallywaveContext : DbContext
 
             entity.ToTable("booking");
 
-            entity.HasIndex(e => e.CourtId, "FK_Booking_Court");
-
             entity.HasIndex(e => e.UserId, "FK_Booking_User");
 
-            entity.HasIndex(e => new { e.Date, e.TimeStart, e.TimeEnd }, "IX_Booking_Date_TimeStart_TimeEnd_Filtered");
+            entity.HasIndex(e => new { e.CourtId, e.Date, e.TimeStart, e.TimeEnd }, "idx_booking_court_date_time");
 
             entity.HasIndex(e => e.MatchId, "match_id").IsUnique();
 
@@ -96,6 +94,7 @@ public partial class RallywaveContext : DbContext
 
             entity.HasOne(d => d.Court).WithMany(p => p.Bookings)
                 .HasForeignKey(d => d.CourtId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Booking_Court");
 
             entity.HasOne(d => d.Match).WithOne(p => p.Booking)
