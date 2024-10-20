@@ -7,6 +7,7 @@ using Entity;
 using FirebaseAdmin.Auth;
 using Google.Apis.Auth;
 using Identity.API.BusinessObjects;
+using Identity.API.BusinessObjects.CourtOwnerModel;
 using Identity.API.BusinessObjects.LoginObjects;
 using Identity.API.BusinessObjects.UserViewModel;
 using Identity.API.Repository;
@@ -42,7 +43,7 @@ public class AuthService : IAuthService
         _responseLoginModel = new ResponseLoginModel(String.Empty, String.Empty, null, false);
         
     }
-    // login by Email Password
+    // login by Email Password: User and Court Owner
     public async Task<ResponseModel> Login(RequestLoginModel request)
     {
         try
@@ -63,12 +64,37 @@ public class AuthService : IAuthService
                     }
                 }
 
-                // Generate JWT Token
-                var token = _unitOfWork.AuthRepository.GenerateJwtToken(user, "user");
+                // Generate User JWT Token
+                var token = _unitOfWork.AuthRepository.GenerateUserJwtToken(user, "user");
                 var firebaseToken = await FirebaseAuth.DefaultInstance.CreateCustomTokenAsync(user.FirebaseUid);
                 
                 return new ResponseModel(
                     new ResponseLoginModel(token, firebaseToken, _mapper.Map<UserViewDto>(user), false),
+                    "Login Successfully", true, StatusCodes.Status200OK);
+            }
+            // Fetch court owners from the database
+            var courtOwner = await _unitOfWork.CourtOwnerRepository.GetCourtOwnerByPropertyAndValue("email", request.Email);
+            if (courtOwner != null)
+            {
+                // Verify the password
+                if (courtOwner is { PasswordSalt: not null, PasswordHash: not null })
+                {
+                    var hashedPassword =
+                        _unitOfWork.AuthRepository.HashPassword(request.Password, courtOwner.PasswordSalt);
+                    if (!hashedPassword.SequenceEqual(courtOwner.PasswordHash))
+                    {
+                        return new ResponseModel(
+                            new ResponseLoginModel(String.Empty, String.Empty, null, false),
+                            "Invalid password or username", true, StatusCodes.Status404NotFound);
+                    }
+                }
+
+                // Generate Court Owner JWT Token
+                var token = _unitOfWork.AuthRepository.GenerateCourtOwnerJwtToken(courtOwner, "user");
+                var firebaseToken = await FirebaseAuth.DefaultInstance.CreateCustomTokenAsync(courtOwner.FirebaseUid);
+
+                return new ResponseModel(
+                    new ResponseLoginModel(token, firebaseToken, _mapper.Map<CourtOwnerViewDto>(courtOwner), false),
                     "Login Successfully", true, StatusCodes.Status200OK);
             }
             return new ResponseModel(
@@ -83,7 +109,7 @@ public class AuthService : IAuthService
         }
     }
     
-    // Login By Google && Register
+    // Login By Google && Register: User and CourtOwner
     public async Task<ResponseModel> LoginByGoogle(RequestGoogleLoginModel request)
     {
         try
@@ -98,14 +124,20 @@ public class AuthService : IAuthService
             }
 
             UserRecord userRecord;
-            User? user;
+            User? user = null;
+            CourtOwner? courtOwner = null;
+            string email = null;
+            string code = null;
             // Check if user exists in Firebase Authentication
             try
             {
                 // Try to get the user by UID (Google UID is used as Firebase UID)
                 userRecord = await FirebaseAuth.DefaultInstance.GetUserAsync(payload.Subject);
-                user = await _unitOfWork.UserRepo.GetUserByPropertyAndValue("firebase-uid", userRecord.Uid);
-            }catch (FirebaseAuthException)
+                
+                if (request.Role == new Contract().User) user = await _unitOfWork.UserRepo.GetUserByPropertyAndValue("firebase-uid", userRecord.Uid);
+                if (request.Role == new Contract().CourtOwner) courtOwner = await _unitOfWork.CourtOwnerRepository.GetCourtOwnerByPropertyAndValue("firebase-uid", userRecord.Uid);
+            }
+            catch (FirebaseAuthException)
             {
                 // If user does not exist, create a new Firebase user
                 userRecord = await FirebaseAuth.DefaultInstance.CreateUserAsync(new UserRecordArgs
@@ -120,52 +152,92 @@ public class AuthService : IAuthService
                 var salt = _unitOfWork.AuthRepository.GenerateSalt(); 
                 var hashedPassword = _unitOfWork.AuthRepository.HashPassword("Abc@Abc123", salt);
                 
-                // Create a new user in your application's database
-                var newUser = new User
+                // Depending on the role, register a new user or court owner
+                if (request.Role == new Contract().User)
                 {
-                    UserName = payload.Name,
-                    Email = payload.Email,
-                    FirebaseUid = payload.Subject, // Store Google UID as well
-                    Avatar = payload.Picture,
-                    PhoneNumber = 0, 
-                    Gender = "N/A",
-                    Dob = DateOnly.FromDateTime(DateTime.Now), 
-                    Address = "N/A", 
-                    Province = "N/A", 
-                    Status = 1,
-                    PasswordHash = hashedPassword, // set pass default: Abc@Abc1 
-                    PasswordSalt = salt,
-                    IsTwoFactorEnabled = 0, // 1 is Email verified
-                    TwoFactorSecret = null,
-                };
-
-                user = await _unitOfWork.UserRepo.CreateUser(newUser); // Save user in the database
-                _responseLoginModel.IsNewUser = true;
-                
-                // Send email verification code 
-                user.TwoFactorSecret = _unitOfWork.AuthRepository.GenerateVerificationCode();
-                await _unitOfWork.AuthRepository.SendEmailVerificationAsync(user.Email, user.TwoFactorSecret);
+                    var newUser = new User
+                    {
+                        UserName = payload.Name,
+                        Email = payload.Email,
+                        FirebaseUid = payload.Subject, // Store Google UID as Firebase UID
+                        Avatar = payload.Picture,
+                        PhoneNumber = 0,
+                        Gender = "N/A",
+                        Dob = DateOnly.FromDateTime(DateTime.Now),
+                        Address = "N/A",
+                        Province = "N/A",
+                        Status = 1,
+                        PasswordHash = hashedPassword,
+                        PasswordSalt = salt,
+                        IsTwoFactorEnabled = 0,
+                        TwoFactorSecret = _unitOfWork.AuthRepository.GenerateVerificationCode(),
+                    };
+                    // Send Verification Email Account
+                    await _unitOfWork.AuthRepository.SendEmailVerificationAsync(newUser.Email,
+                        newUser.TwoFactorSecret);
+                    
+                    user = await _unitOfWork.UserRepo.CreateUser(newUser); // Save the user to the database
+                    _responseLoginModel.IsNewUser = true;
+                }else if (request.Role == new Contract().CourtOwner)
+                {
+                    var newCourtOwner = new CourtOwner
+                    {
+                        Name = payload.Name,
+                        Email = payload.Email,
+                        FirebaseUid = payload.Subject,
+                        Avatar = payload.Picture,
+                        PhoneNumber = 0,
+                        Address = "N/A",
+                        Gender = "N/A",
+                        Province = "N/A",
+                        Status = 1,
+                        PasswordHash = hashedPassword,
+                        PasswordSalt = salt,
+                        IsTwoFactorEnabled = 0,
+                        TwoFactorSecret = _unitOfWork.AuthRepository.GenerateVerificationCode(),
+                    };
+                    // Send Verification Email Account
+                    await _unitOfWork.AuthRepository.SendEmailVerificationAsync(newCourtOwner.Email, newCourtOwner.TwoFactorSecret);
+                    courtOwner = await _unitOfWork.CourtOwnerRepository.CreateCourtOwner(newCourtOwner); // Save the court owner to the database
+                    _responseLoginModel.IsNewUser = true;
+                }
             }
-
-            if (user != null)
-            {
-                // Generate Firebase Token and Access Token
-                var firebaseToken = await FirebaseAuth.DefaultInstance.CreateCustomTokenAsync(userRecord.Uid);
-                var token = _unitOfWork.AuthRepository.GenerateJwtToken(user, "user");
+            // Generate Firebase Token and Access Token
+            var firebaseToken = await FirebaseAuth.DefaultInstance.CreateCustomTokenAsync(userRecord.Uid);
             
-                // Check if newAccount
+            
+            if (request.Role == new Contract().User && user != null)
+            {
+                var token = _unitOfWork.AuthRepository.GenerateUserJwtToken(user, new Contract().User);
+
+                // Check if new account
                 if (user.IsTwoFactorEnabled == 0) _responseLoginModel.IsNewUser = true;
-                
+
                 _responseLoginModel.FirebaseToken = firebaseToken;
                 _responseLoginModel.AccessToken = token;
-            
+
                 return new ResponseModel(
                     new ResponseLoginModel(token, firebaseToken, _mapper.Map<UserViewDto>(user), _responseLoginModel.IsNewUser),
                     "Login Successfully", true, StatusCodes.Status200OK);
             }
+            if (request.Role == new Contract().CourtOwner && courtOwner != null)
+            {
+                var token = _unitOfWork.AuthRepository.GenerateCourtOwnerJwtToken(courtOwner, new Contract().CourtOwner);
+
+                // Check if new account
+                if (courtOwner.IsTwoFactorEnabled == 0) _responseLoginModel.IsNewUser = true;
+
+                _responseLoginModel.FirebaseToken = firebaseToken;
+                _responseLoginModel.AccessToken = token;
+
+                return new ResponseModel(
+                    new ResponseLoginModel(token, firebaseToken, _mapper.Map<CourtOwnerViewDto>(courtOwner), _responseLoginModel.IsNewUser),
+                    "Login Successfully", true, StatusCodes.Status200OK);
+            }
+
             return new ResponseModel(
-                new ResponseLoginModel(String.Empty,String.Empty, null, _responseLoginModel.IsNewUser),
-                "User not found!", false, StatusCodes.Status400BadRequest);
+                new ResponseLoginModel(string.Empty, string.Empty, null, _responseLoginModel.IsNewUser),
+                "Login fail successfully!", false, StatusCodes.Status400BadRequest);
         }
         catch (Exception ex)
         {
@@ -175,12 +247,13 @@ public class AuthService : IAuthService
                 $"An error occurred during token verification: {ex.Message}", true, StatusCodes.Status500InternalServerError);
         }
     }
-
+    // Register Account: User and Court Owner
     public async Task<ResponseModel> Register(RequestRegisterModel request)
     {
         try
         {
-            if (request.Role == "user")
+            // USER REGISTER
+            if (request.Role == new Contract().User)
             {
                 // Check if email exists
                 var existingUserByEmail = await _unitOfWork.UserRepo.GetUserByPropertyAndValue("email", request.Email);
@@ -190,18 +263,22 @@ public class AuthService : IAuthService
                 }
 
                 // Create a new User entity
-                var salt = _unitOfWork.AuthRepository.GenerateSalt(); 
+                var salt = _unitOfWork.AuthRepository.GenerateSalt();
                 var hashedPassword = _unitOfWork.AuthRepository.HashPassword(request.Password, salt);
 
                 var newUser = new User
                 {
                     UserName = request.Username,
                     Email = request.Email,
-                    PhoneNumber = int.Parse(request.PhoneNumber), // Ensure it's a valid integer
+                    Address = "N/A",
+                    Gender = "N/A",
+                    Province = "N/A",
+                    PhoneNumber = int.Parse(request.PhoneNumber),
                     PasswordHash = hashedPassword,
                     PasswordSalt = salt,
-                    Status = 1, // Assuming 1 is the status for active users
-                    IsTwoFactorEnabled = 0, // Disable 2FA by default
+                    Status = 1, // Active status
+                    IsTwoFactorEnabled = 0, // 2FA disabled by default
+                    TwoFactorSecret = _unitOfWork.AuthRepository.GenerateVerificationCode()
                 };
 
                 // Create a Firebase user record
@@ -211,49 +288,126 @@ public class AuthService : IAuthService
                     EmailVerified = false,
                     Password = request.Password,
                     DisplayName = request.Username,
-                    PhoneNumber = $"+{request.PhoneNumber}", // Ensure the phone number format is correct for Firebase
+                    PhoneNumber = $"+84{Int32.Parse(request.PhoneNumber)}", 
                     Disabled = false,
                 };
                 UserRecord firebaseUser = await FirebaseAuth.DefaultInstance.CreateUserAsync(userRecordArgs);
                 newUser.FirebaseUid = firebaseUser.Uid;
-                
+
                 // Save the new user to the database
                 await _unitOfWork.UserRepo.CreateUser(newUser);
 
-                // Generate a Firebase token for the user using their FirebaseUid
+                // Generate a Firebase custom token for the user
                 string firebaseToken = await FirebaseAuth.DefaultInstance.CreateCustomTokenAsync(newUser.FirebaseUid);
 
-                // Send email verification code 
-                newUser.TwoFactorSecret = _unitOfWork.AuthRepository.GenerateVerificationCode();
-                await _unitOfWork.AuthRepository.SendEmailVerificationAsync(newUser.Email, newUser.TwoFactorSecret);
-                
+                // Send email verification link
+                string emailVerificationLink = await FirebaseAuth.DefaultInstance.GenerateEmailVerificationLinkAsync(newUser.Email);
+                await _unitOfWork.AuthRepository.SendEmailVerificationAsync(newUser.Email, emailVerificationLink);
+
                 // Map the user to a UserViewDto for the response
                 var userViewDto = _mapper.Map<UserViewDto>(newUser);
 
                 // Return success response with Firebase token and user details
                 return new ResponseModel(
-                    new ResponseRegisterModel(firebaseToken, userViewDto), 
+                    new ResponseRegisterModel(firebaseToken, userViewDto),
                     "User registered successfully! Proceed to verify email.", true, StatusCodes.Status201Created);
             }
+
+            // COURT OWNER REGISTER
+            if (request.Role == new Contract().CourtOwner)
+            {
+                // Check if email exists
+                var existingByEmail = await _unitOfWork.CourtOwnerRepository.GetCourtOwnerByPropertyAndValue("email", request.Email);
+                if (existingByEmail != null)
+                {
+                    return new ResponseModel(null, "Email is already in use!", false, StatusCodes.Status400BadRequest);
+                }
+
+                // Create a new CourtOwner entity
+                var salt = _unitOfWork.AuthRepository.GenerateSalt();
+                var hashedPassword = _unitOfWork.AuthRepository.HashPassword(request.Password, salt);
+
+                var newUser = new CourtOwner
+                {
+                    Name = request.Username,
+                    Email = request.Email,
+                    Address = "N/A",
+                    Gender = "N/A",
+                    Province = "N/A",
+                    PhoneNumber = int.Parse(request.PhoneNumber),
+                    PasswordHash = hashedPassword,
+                    PasswordSalt = salt,
+                    Status = 1, // Active status
+                    IsTwoFactorEnabled = 0, 
+                    TwoFactorSecret = _unitOfWork.AuthRepository.GenerateVerificationCode()
+                };
+
+                // Create a Firebase user record
+                var userRecordArgs = new UserRecordArgs
+                {
+                    Email = request.Email,
+                    EmailVerified = false,
+                    Password = request.Password,
+                    DisplayName = request.Username,
+                    PhoneNumber = $"+84{Int32.Parse(request.PhoneNumber)}", 
+                    Disabled = false,
+                };
+                UserRecord firebaseUser = await FirebaseAuth.DefaultInstance.CreateUserAsync(userRecordArgs);
+                newUser.FirebaseUid = firebaseUser.Uid;
+
+                // Save the new court owner to the database
+                await _unitOfWork.CourtOwnerRepository.CreateAsync(newUser);
+
+                // Generate a Firebase token for the user
+                string firebaseToken = await FirebaseAuth.DefaultInstance.CreateCustomTokenAsync(newUser.FirebaseUid);
+
+                // Send email verification link
+                string emailVerificationLink = await FirebaseAuth.DefaultInstance.GenerateEmailVerificationLinkAsync(newUser.Email);
+                await _unitOfWork.AuthRepository.SendEmailVerificationAsync(newUser.Email, emailVerificationLink);
+
+                // Map the court owner to a UserViewDto for the response
+                var courtOwnerViewDto = _mapper.Map<CourtOwnerViewDto>(newUser);
+
+                // Return success response with Firebase token and user details
+                return new ResponseModel(
+                    new ResponseRegisterModel(firebaseToken, courtOwnerViewDto),
+                    "User registered successfully! Proceed to verify email.", true, StatusCodes.Status201Created);
+            }
+
             return new ResponseModel(null, "Role is not found!", false, StatusCodes.Status404NotFound);
-        } 
+        }
         catch (Exception ex)
         {
             return new ResponseModel(null, $"An error occurred during registration: {ex.Message}", false, StatusCodes.Status500InternalServerError);
         }
     }
 
+    // Verify Email Account: User and Court Owner
     public async Task<ResponseModel> VerifyEmailAccount(RequestVerifyAccountModel request)
     {
         try
         {
+            // CHECK USER FIRST
             // Find the user by email
             var user = await _unitOfWork.UserRepo.GetUserByPropertyAndValue("email", request.Email);
             if (user == null)
             {
-                return new ResponseModel(null, "User not found!", false, StatusCodes.Status404NotFound);
-            }
+                // CHECK COURT OWNER LATER
+                var courtOwner = await _unitOfWork.CourtOwnerRepository.GetCourtOwnerByPropertyAndValue("email", request.Email);
+                if (courtOwner== null) return new ResponseModel(null, "Email not found!", false, StatusCodes.Status404NotFound);
+                // Check if the code matches the stored code
+                if (courtOwner.TwoFactorSecret == request.VerificationCode)
+                {
+                    // Update the CourtOwner's email verification status
+                    courtOwner.IsTwoFactorEnabled = 1; // Enable 2FA after verification
+                    courtOwner.TwoFactorSecret = null; // Clear the verification code
+                    await _unitOfWork.CourtOwnerRepository.UpdateCourtOwner(courtOwner);
 
+                    return new ResponseModel(null, "Email verified successfully! Two-factor authentication is now enabled.", true, StatusCodes.Status200OK);
+                }
+                return new ResponseModel(null, "Invalid verification code!", false, StatusCodes.Status400BadRequest);
+            }
+            
             // Check if the code matches the stored code
             if (user.TwoFactorSecret == request.VerificationCode)
             {
@@ -272,16 +426,38 @@ public class AuthService : IAuthService
             return new ResponseModel(null, $"An error occurred during email verification: {ex.Message}", false, StatusCodes.Status500InternalServerError);
         }
     }
-
+    // Verify Reset Password: User and Court Owner
     public async Task<ResponseModel> VerifyEmailResetPassword(RequestVerifyModel request)
     {
         try
         {
+            // CHECK USER FIRST
             // Find the user by email
             var user = await _unitOfWork.UserRepo.GetUserByPropertyAndValue("email", request.Email);
             if (user == null)
             {
-                return new ResponseModel(null, "User not found!", false, StatusCodes.Status404NotFound);
+                // CHECK COURT OWNER LATER
+                var courtOwner = await _unitOfWork.CourtOwnerRepository.GetCourtOwnerByPropertyAndValue("email", request.Email);
+                if (courtOwner== null) 
+                    return new ResponseModel(null, "Email not found!", false, StatusCodes.Status404NotFound);
+                // Check if the code matches the stored code
+                if (courtOwner.TwoFactorSecret == request.VerificationCode)
+                {
+                    // Create a new CourtOwner entity
+                    var salt = _unitOfWork.AuthRepository.GenerateSalt(); 
+                    var hashedPassword = _unitOfWork.AuthRepository.HashPassword(request.NewPassword, salt);
+                
+                    // Update the user's password
+                    courtOwner.PasswordSalt = salt;
+                    courtOwner.PasswordHash = hashedPassword;
+                    // Clear the verification code
+                    courtOwner.TwoFactorSecret = null; 
+                
+                    await _unitOfWork.CourtOwnerRepository.UpdateCourtOwner(courtOwner);
+
+                    return new ResponseModel(null, "Password being reset successfully!", true, StatusCodes.Status200OK);
+                }
+                return new ResponseModel(null, "Invalid verification code!", false, StatusCodes.Status400BadRequest);
             }
 
             // Check if the code matches the stored code
@@ -308,7 +484,7 @@ public class AuthService : IAuthService
             return new ResponseModel(null, $"An error occurred during email verification: {ex.Message}", false, StatusCodes.Status500InternalServerError);
         }
     }
-
+    // Reset Password: User and Court Owner
     public async Task<ResponseModel> ResetPassword(RequestLoginModel request)
     {
         try
@@ -317,15 +493,36 @@ public class AuthService : IAuthService
             var user = await _unitOfWork.UserRepo.GetUserByPropertyAndValue("email", request.Email);
             if (user == null)
             {
+                // CHECK COURT OWNER LATER
+                var courtOwner = await _unitOfWork.CourtOwnerRepository.GetCourtOwnerByPropertyAndValue("email", request.Email);
+                if (courtOwner== null) 
+                    return new ResponseModel(null, "Email not found!", false, StatusCodes.Status404NotFound);
+                // Hash the input password using the same salt
+                var hashedPasswordInputCourtOwner = _unitOfWork.AuthRepository.HashPassword(request.Password, courtOwner.PasswordSalt);
+                // Compare the hashed passwords in constant time to avoid timing attacks
+                if (CryptographicOperations.FixedTimeEquals(courtOwner.PasswordHash, hashedPasswordInputCourtOwner))
+                {
+                    // Generate verification code
+                    courtOwner.TwoFactorSecret = _unitOfWork.AuthRepository.GenerateVerificationCode();
+    
+                    // Save verification code
+                    await _unitOfWork.CourtOwnerRepository.UpdateCourtOwner(courtOwner);
+    
+                    // Send email verification code
+                    await _unitOfWork.AuthRepository.SendEmailVerificationAsync(courtOwner.Email, courtOwner.TwoFactorSecret);
+
+                    return new ResponseModel(null, "Email verification for reset password being sent successfully!", true, StatusCodes.Status200OK);
+                }
+
+                // If the password does not match
+                return new ResponseModel(null, "Invalid password!", false, StatusCodes.Status400BadRequest);
                 return new ResponseModel(null, "User not found!", false, StatusCodes.Status404NotFound);
             }
 
             // Hash the input password using the same salt
-            var hashedPasswordInput = _unitOfWork.AuthRepository.HashPassword(request.Password, user.PasswordSalt);
-
-
+            var hashedPasswordInputUser = _unitOfWork.AuthRepository.HashPassword(request.Password, user.PasswordSalt);
             // Compare the hashed passwords in constant time to avoid timing attacks
-            if (CryptographicOperations.FixedTimeEquals(user.PasswordHash, hashedPasswordInput))
+            if (CryptographicOperations.FixedTimeEquals(user.PasswordHash, hashedPasswordInputUser))
             {
                 // Generate verification code
                 user.TwoFactorSecret = _unitOfWork.AuthRepository.GenerateVerificationCode();
@@ -339,7 +536,7 @@ public class AuthService : IAuthService
                 return new ResponseModel(null, "Email verification for reset password being sent successfully!", true, StatusCodes.Status200OK);
             }
 
-// If the password does not match
+            // If the password does not match
             return new ResponseModel(null, "Invalid password!", false, StatusCodes.Status400BadRequest);
         }
         catch (Exception ex)

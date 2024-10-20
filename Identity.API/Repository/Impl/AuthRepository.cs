@@ -14,13 +14,14 @@ namespace Identity.API.Repository.Impl;
 
 public interface IAuthRepository
 {
-    public string GenerateJwtToken(User user, string role);
     public byte[] HashPassword(string password, byte[] salt);
     public byte[] GenerateSalt();
-    public string GenerateVerificationCode();
+    public string GenerateUserJwtToken(User user, string role);
+    public string GenerateCourtOwnerJwtToken(CourtOwner courtOwner, string role);
     public Task SendEmailChangeConfirmationAsync(string newEmail);
     public Task SendPasswordResetEmailAsync(string email);
     public Task SendEmailVerificationAsync(string email, string code);
+    public string GenerateVerificationCode();
 }
 public class AuthRepository(IConfiguration configuration) : IAuthRepository 
 {
@@ -43,8 +44,8 @@ public class AuthRepository(IConfiguration configuration) : IAuthRepository
         return Convert.FromBase64String(pwdString);
     }
     
-    // generate access token
-    public string GenerateJwtToken(User user, string role)
+    // generate access token for User
+    public string GenerateUserJwtToken(User user, string role)
     {
         try
         {
@@ -55,6 +56,39 @@ public class AuthRepository(IConfiguration configuration) : IAuthRepository
                     new Claim(JwtRegisteredClaimNames.Sub, user.Email),
                     new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
                     new Claim(ClaimTypes.Name, user.UserName),
+                    new Claim(ClaimTypes.Role, role)
+                };
+
+                var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Authentication:Jwt:SecretKey"] ?? string.Empty));
+                var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+                var token = new JwtSecurityToken(
+                    claims: claims,
+                    expires: DateTime.Now.AddHours(1),
+                    signingCredentials: creds);
+
+                return new JwtSecurityTokenHandler().WriteToken(token);
+            }
+            throw new Exception("Email address not found");
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw new Exception(e.Message);
+        }
+    }
+    // generate access token for User
+    public string GenerateCourtOwnerJwtToken(CourtOwner courtOwner, string role)
+    {
+        try
+        {
+            if (courtOwner.Email != null)
+            {
+                var claims = new[]
+                {
+                    new Claim(JwtRegisteredClaimNames.Sub, courtOwner.Email),
+                    new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                    new Claim(ClaimTypes.Name, courtOwner.Name),
                     new Claim(ClaimTypes.Role, role)
                 };
 

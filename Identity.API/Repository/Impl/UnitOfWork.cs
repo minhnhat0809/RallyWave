@@ -6,4 +6,5 @@ public class UnitOfWork(RallywaveContext context, IConfiguration configuration) 
 {
     public IUserRepo UserRepo { get; } = new UserRepo(context);
     public IAuthRepository AuthRepository { get; } = new AuthRepository(configuration);
+    public ICourtOwnerRepository CourtOwnerRepository { get; } = new CourtOwnerRepository(context);
 }

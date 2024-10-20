@@ -8,10 +8,11 @@ public class RequestGoogleLoginModel
     public string? Role { get; set; }
 }
 
-public class ResponseLoginModel(string? accessToken, string? firebaseToken, UserViewDto? user, bool isNewUser)
+public class ResponseLoginModel(string? accessToken, string? firebaseToken, Object? user, bool isNewUser)
 {
     public string? AccessToken { get; set; } = accessToken;
     public string? FirebaseToken { get; set; } = firebaseToken;
-    public UserViewDto? User { get; set; } = user;
+    
+    public Object? User { get; set; } = user;
     public bool IsNewUser { get; set; } = isNewUser; // Indicates if the user was just created
 }

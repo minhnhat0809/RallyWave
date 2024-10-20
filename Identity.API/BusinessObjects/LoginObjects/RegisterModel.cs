@@ -11,8 +11,8 @@ public class RequestRegisterModel
     public required string PhoneNumber { get; set; } // Optional for additional verification
     public required string Role { get; set; } // Optional for user roles
 }
-public class ResponseRegisterModel(string? firebaseToken, UserViewDto? user)
+public class ResponseRegisterModel(string? firebaseToken, Object? user)
 {
     public string? FirebaseToken { get; set; } = firebaseToken;
-    public UserViewDto? User { get; set; } = user;
+    public Object? User { get; set; } = user;
 }
