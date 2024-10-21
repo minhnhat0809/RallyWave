@@ -119,22 +119,12 @@ public class UserRepo(RallywaveContext repositoryContext) : RepositoryBase<User>
         }
     }
 
-    public async Task<UserViewDto> CreateUser(User user)
+    public async Task<User> CreateUser(User user)
     {
         try
         {
             await CreateAsync(user);
-            return new UserViewDto(
-                user.UserId,
-                user.UserName,
-                user.Email,
-                user.PhoneNumber,
-                user.Gender,
-                user.Dob,
-                user.Address,
-                user.Province,
-                user.Avatar,
-                user.Status);
+            return user;
         }
         catch (Exception e)
         {
@@ -142,22 +132,12 @@ public class UserRepo(RallywaveContext repositoryContext) : RepositoryBase<User>
         }
     }
 
-    public async Task<UserViewDto> UpdateUser(User user)
+    public async Task<User> UpdateUser(User user)
     {
         try
         {
             await UpdateAsync(user);
-            return new UserViewDto(
-                user.UserId,
-                user.UserName,
-                user.Email,
-                user.PhoneNumber,
-                user.Gender,
-                user.Dob,
-                user.Address,
-                user.Province,
-                user.Avatar,
-                user.Status);
+            return user;
         }
         catch (Exception e)
         {
@@ -165,22 +145,12 @@ public class UserRepo(RallywaveContext repositoryContext) : RepositoryBase<User>
         }
     }
 
-    public async Task<UserViewDto> DeleteUser(User user)
+    public async Task<User> DeleteUser(User user)
     {
         try
         {
             await DeleteAsync(user);
-            return new UserViewDto(
-                user.UserId,
-                user.UserName,
-                user.Email,
-                user.PhoneNumber,
-                user.Gender,
-                user.Dob,
-                user.Address,
-                user.Province,
-                user.Avatar,
-                user.Status);
+            return user;
         }
         catch (Exception e)
         {
@@ -192,28 +162,50 @@ public class UserRepo(RallywaveContext repositoryContext) : RepositoryBase<User>
     {
         try
         {
-            if (!property.IsNullOrEmpty())
+            // Validate input parameters
+            if (string.IsNullOrWhiteSpace(property) || string.IsNullOrWhiteSpace(value))
             {
-                User? exist;
-                switch (property.ToLower())
-                {
-                    case "email":
-                        exist = await _repositoryContext.Users.FirstOrDefaultAsync(x => x.Email == property);
-                        return exist;
-                    case "phoneNumber":
-                        exist = await _repositoryContext.Users.FirstOrDefaultAsync(x => x.PhoneNumber.Equals(property));
-                        return exist;
-                    default:
-                        return null;
-                }
-            } 
-            throw new Exception("Invalid property value");
+                throw new ArgumentException("Property and value must not be null or empty.");
+            }
+
+            // Normalize the property to lowercase to avoid case-sensitivity issues
+            property = property.ToLower();
+
+            // Fetch user based on the property name and value
+            return property switch
+            {
+                
+                "email" => await _repositoryContext.Users
+                    .FirstOrDefaultAsync(u => u.Email == value),
+            
+                "phone-number" => await _repositoryContext.Users
+                    .FirstOrDefaultAsync(u => u.PhoneNumber.ToString() == value),
+
+                "address" => await _repositoryContext.Users
+                    .FirstOrDefaultAsync(u => u.Address == value),
+
+                "province" => await _repositoryContext.Users
+                    .FirstOrDefaultAsync(u => u.Province == value),
+
+                "firebase-uid" => await _repositoryContext.Users
+                    .FirstOrDefaultAsync(u => u.FirebaseUid == value),
+
+                _ => throw new ArgumentException($"Invalid property name: {property}")
+            };
         }
-        catch (Exception e)
+        catch (ArgumentException ex)
         {
-            throw new Exception(e.Message);
+            // Handle invalid arguments
+            throw new Exception(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            // Handle other exceptions
+            throw new Exception($"An error occurred while retrieving the user: {ex.Message}");
         }
     }
+
+
 }
 
 

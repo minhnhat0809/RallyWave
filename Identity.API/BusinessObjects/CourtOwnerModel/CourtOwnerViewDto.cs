@@ -1,11 +1,14 @@
-﻿namespace Identity.API.BusinessObjects.UserViewModel;
+﻿namespace Identity.API.BusinessObjects.CourtOwnerModel;
 
-public class UserCreateDto
+public class CourtOwnerViewDto
 {
-    public string UserName { get; set; } = null!;
+    public int CourtOwnerId { get; set; }
+
+    public string? Name { get; set; }
+
     public string? Email { get; set; }
 
-    public int PhoneNumber { get; set; }
+    public int? PhoneNumber { get; set; }
 
     public string Gender { get; set; } = null!;
 
@@ -15,7 +18,8 @@ public class UserCreateDto
 
     public string Province { get; set; } = null!;
 
+    public string? Avatar { get; set; }
+
     public sbyte Status { get; set; }
 
-    public string Password { get; set; } = null!;
 }

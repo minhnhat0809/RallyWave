@@ -37,17 +37,19 @@ public class UserService : IUserService
                             u.UserId,
                             u.UserName,
                             u.Email,
-                            u.PhoneNumber,
+                            u.PhoneNumber,  // Ensure correct data type
                             u.Gender,
-                            u.Dob,
+                            u.Dob,  // Make sure DateOnly is handled properly
                             u.Address,
                             u.Province,
                             u.Avatar,
-                            u.Status), null);
+                            u.Status),
+                        null);
                 }
                 else
                 {
-                    users = await unitOfWork.UserRepo.GetUsers(filterField, filterValue);
+                    var userlist = await unitOfWork.UserRepo.GetUsers(filterField, filterValue);
+                    users = mapper.Map<List<UserViewDto>>(userlist);
                 }
 
                 users = Sort(users, sortField, sortValue);
