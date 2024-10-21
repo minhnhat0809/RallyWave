@@ -3,7 +3,6 @@ using Entity;
 using BookingManagement.DTOs;
 using BookingManagement.DTOs.BookingDto;
 using BookingManagement.DTOs.BookingDto.ViewDto;
-using BookingManagement.DTOs.CourtSlotDto.CourtSlotViewDto;
 using BookingManagement.Repository;
 using BookingManagement.Ultility;
 
@@ -18,7 +17,7 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
         public double Cost { get; set; } = cost;
     }
     
-    public async Task<ResponseDto> GetBookings(int userId, string? filterField, string? filterValue, string? sortField, string sortValue, int pageNumber,
+    public async Task<ResponseDto> GetBookings(string? subject, int? subjectId, string? filterField, string? filterValue, string? sortField, string sortValue, int pageNumber,
         int pageSize)
     {
         var responseDto = new ResponseDto(null, "", true, 200);
@@ -30,28 +29,37 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
             
             if (validate.IsEmptyOrWhiteSpace(filterField) || validate.IsEmptyOrWhiteSpace(filterValue))
             {
-                bookings = await unitOfWork.BookingRepo.FindByConditionAsync(b => b.UserId.HasValue && b.UserId.Value == userId,
-                    b => new BookingsViewDto(b.BookingId,
-                        b.Date,
-                        b.TimeStart,
-                        b.TimeEnd,
-                        b.Cost,
-                        b.Status
-                    ));
+                if (!validate.IsEmptyOrWhiteSpace(subject) || subjectId.HasValue)
+                {
+                    bookings = subject!.ToLower() switch
+                    {
+                        "user" => await unitOfWork.BookingRepo.FindByConditionAsync(
+                            b => b.UserId.HasValue && b.UserId.Value == subjectId!.Value,
+                            b => new BookingsViewDto(b.BookingId, b.Date, b.TimeStart, b.TimeEnd, b.Cost, b.Status)),
+                        "court" => await unitOfWork.BookingRepo.FindByConditionAsync(b => b.CourtId == subjectId!.Value,
+                            b => new BookingsViewDto(b.BookingId, b.Date, b.TimeStart, b.TimeEnd, b.Cost, b.Status)),
+                        _ => await unitOfWork.BookingRepo.FindAllAsync(b =>
+                            new BookingsViewDto(b.BookingId, b.Date, b.TimeStart, b.TimeEnd, b.Cost, b.Status), pageNumber, pageSize)
+                    };
+                }
+                else
+                {
+                    bookings = await unitOfWork.BookingRepo.FindAllAsync(b =>
+                        new BookingsViewDto(b.BookingId, b.Date, b.TimeStart, b.TimeEnd, b.Cost, b.Status), pageNumber, pageSize);
+                }
+                
 
                 total = bookings.Count;
             }
             else
             {
-                bookings = await unitOfWork.BookingRepo.GetBookings(userId, filterField, filterValue);
+                bookings = await unitOfWork.BookingRepo.GetBookings(subject, subjectId, filterField!, filterValue!, pageNumber, pageSize);
                 total = bookings.Count;
             }
             
             
             
             bookings = Sort(bookings, sortField, sortValue);
-
-            bookings = listExtensions.Paging(bookings, pageNumber, pageSize);
             
             responseDto.Result = new { bookings, total};
             responseDto.Message = "Get successfully!";

@@ -5,5 +5,5 @@ namespace MatchManagement.Repository;
 
 public interface IMatchRepo : IRepositoryBase<Match>
 {
-    Task<List<MatchViewsDto>> GetMatches(string? filterField, string? filterValue);
+    Task<List<MatchViewsDto>> GetMatches(string filterField, string filterValue, int pageNumber, int pageSize);
 }

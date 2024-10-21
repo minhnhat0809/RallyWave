@@ -4,13 +4,14 @@ using BookingManagement.Service;
 
 namespace BookingManagement.Controller
 {
-    [Route("api/[controller]")]
+    [Route("api/bookings")]
     [ApiController]
     public class BookingController(IBookingService bookingService) : ControllerBase
     {
-        [HttpGet("bookings/user/{userId:int}")]
+        [HttpGet]
         public async Task<IActionResult> GetBookings(
-            int userId,
+            [FromQuery] string? subject,
+            [FromQuery] int? subjectId,
             [FromQuery] string? filterField,
             [FromQuery] string? filterValue,
             [FromQuery] string? sortField,
@@ -19,7 +20,7 @@ namespace BookingManagement.Controller
             [FromQuery] int pageSize = 5
         )
         {
-            var response = await bookingService.GetBookings(userId, filterField, filterValue, sortField, sortValue, pageNumber, pageSize);
+            var response = await bookingService.GetBookings(subject, subjectId, filterField, filterValue, sortField, sortValue, pageNumber, pageSize);
             return StatusCode(response.StatusCode, response);
         }
         
@@ -30,14 +31,14 @@ namespace BookingManagement.Controller
             return StatusCode(response.StatusCode, response);
         }
 
-        [HttpPost("bookings")]
+        [HttpPost]
         public async Task<IActionResult> CreateBooking([FromBody] BookingCreateDto bookingCreateDto)
         {
             var response = await bookingService.CreateBooking(bookingCreateDto);
             return StatusCode(response.StatusCode, response);
         }
         
-        [HttpPut("bookings/{id:int}")]
+        [HttpPut("{id:int}")]
         public async Task<IActionResult> UpdateBooking(int id, [FromBody] BookingUpdateDto bookingUpdateDto)
         {
             var response = await bookingService.UpdateBooking(id, bookingUpdateDto);

@@ -8,7 +8,9 @@ public class RepositoryBase<T>(RallyWaveContext repositoryContext) : IRepository
     where T : class
 {
     public async Task<List<TResult>> FindAllAsync<TResult>(
-        Expression<Func<T, TResult>> selector, 
+        Expression<Func<T, TResult>> selector,
+        int pageNumber, 
+        int pageSize,
         params Expression<Func<T, object>>[]? includes)
     {
         IQueryable<T> query = repositoryContext.Set<T>();
@@ -18,7 +20,11 @@ public class RepositoryBase<T>(RallyWaveContext repositoryContext) : IRepository
             query = includes.Aggregate(query, (current, include) => current.Include(include)).AsSplitQuery();
         }
 
-        return await query.Select(selector).ToListAsync(); 
+        return await query
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .Select(selector)
+            .ToListAsync();
     }
     
     public async Task<int> CountByConditionAsync(Expression<Func<T, bool>> condition)
@@ -39,6 +45,27 @@ public class RepositoryBase<T>(RallyWaveContext repositoryContext) : IRepository
         }
 
         return await query.Select(selector).ToListAsync(); 
+    }
+    
+    public async Task<List<TResult>> FindByConditionWithPagingAsync<TResult>(
+        Expression<Func<T, bool>> expression, 
+        Expression<Func<T, TResult>> selector, 
+        int pageNumber, 
+        int pageSize, 
+        params Expression<Func<T, object>>[]? includes)
+    {
+        var query = repositoryContext.Set<T>().Where(expression);
+
+        if (includes is { Length: > 0 })
+        {
+            query = includes.Aggregate(query, (current, include) => current.Include(include)).AsSplitQuery();
+        }
+        
+        return await query
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .Select(selector)
+            .ToListAsync();
     }
 
 
