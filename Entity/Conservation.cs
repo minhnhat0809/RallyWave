@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Entity;
 
-public partial class Conservation
+public  partial class Conservation
 {
     public int ConservationId { get; set; }
 

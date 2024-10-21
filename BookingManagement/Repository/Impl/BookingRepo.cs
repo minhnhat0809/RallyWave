@@ -1,81 +1,102 @@
-﻿using BookingManagement.DTOs.BookingDto.ViewDto;
+﻿using System.Linq.Expressions;
+using BookingManagement.DTOs.BookingDto.ViewDto;
 using Entity;
 
 namespace BookingManagement.Repository.Impl;
 
 public class BookingRepo(RallyWaveContext repositoryContext) : RepositoryBase<Booking>(repositoryContext), IBookingRepo
 {
-    public async Task<List<BookingsViewDto>> GetBookings(int userId, string? filterField, string? filterValue)
+    public async Task<List<BookingsViewDto>> GetBookings(string? subject, int? subjectId, string filterField, string filterValue, int pageNumber, int pageSize)
     {
         try
         {
-            var bookings = new List<BookingsViewDto>();
-            switch (filterField!.ToLower())
-                {
-                    case "date":
-                        var date = DateOnly.Parse(filterValue!);
-                        bookings = await FindByConditionAsync(b => b.Date.Equals(date), 
-                            b => new BookingsViewDto
-                            (b.BookingId,
-                                b.Date,
-                                b.TimeStart,
-                                b.TimeEnd,
-                                b.Cost,
-                                b.Status
-                            ));
-                        break;
-                    
-                    case "timestart":
-                        var timeStart = TimeOnly.Parse(filterValue!);
-                        bookings = await FindByConditionAsync(b => b.TimeStart.Equals(timeStart), b => new BookingsViewDto
-                            (b.BookingId,
-                                b.Date,
-                                b.TimeStart,
-                                b.TimeEnd,
-                                b.Cost,
-                                b.Status
-                            ));
-                        break;
-                    
-                    case "timeend":
-                        var timeEnd = TimeOnly.Parse(filterValue!);
-                        bookings = await FindByConditionAsync(b => b.TimeStart.Equals(timeEnd), b => new BookingsViewDto
-                        (b.BookingId,
-                            b.Date,
-                            b.TimeStart,
-                            b.TimeEnd,
-                            b.Cost,
-                            b.Status
-                        ));
-                        break;
-                    
-                    case "createat":
-                        var createAt = TimeOnly.Parse(filterValue!);
-                        bookings = await FindByConditionAsync(b => b.TimeStart.Equals(createAt), b => new BookingsViewDto
-                        (b.BookingId,
-                            b.Date,
-                            b.TimeStart,
-                            b.TimeEnd,
-                            b.Cost,
-                            b.Status
-                        ));
-                        break;
-                    case "status":
-                        if (sbyte.TryParse(filterValue, out var status))
-                        {
-                            bookings = await FindByConditionAsync(b => b.Status.Equals(status),
-                                b => new BookingsViewDto
-                                (b.BookingId,
-                                    b.Date,
-                                    b.TimeStart,
-                                    b.TimeEnd,
-                                    b.Cost,
-                                    b.Status
-                                ));
-                        }
+            Expression<Func<Booking, bool>> basePredicate = b => true;
+            
+            if (!string.IsNullOrWhiteSpace(subject)  && subjectId != null)
+            {
 
-                        break;
-                }
+                // Add subject-based filtering
+                basePredicate = subject.ToLower() switch
+                {
+                    "user" => b => b.UserId.HasValue && b.UserId.Value == subjectId.Value,
+                    "court" => b => b.CourtId == subjectId.Value,
+                    _ => throw new ArgumentException($"Unknown subject '{subject}'")
+                };
+            }
+            
+            switch (filterField.ToLower())
+            {
+                case "date":
+                    var date = DateOnly.Parse(filterValue);
+                    var dateCondition = Expression.Equal(
+                        Expression.Property(basePredicate.Parameters[0], nameof(Booking.Date)),
+                        Expression.Constant(date)
+                    );
+                    basePredicate = Expression.Lambda<Func<Booking, bool>>(
+                        Expression.AndAlso(basePredicate.Body, dateCondition),
+                        basePredicate.Parameters
+                    );
+                    break;
+
+                case "timestart":
+                    if (TimeOnly.TryParse(filterValue, out var timeStart))
+                    {
+                        var timeStartCondition = Expression.Equal(
+                            Expression.Property(basePredicate.Parameters[0], nameof(Booking.TimeStart)),
+                            Expression.Constant(timeStart)
+                        );
+                        basePredicate = Expression.Lambda<Func<Booking, bool>>(
+                            Expression.AndAlso(basePredicate.Body, timeStartCondition),
+                            basePredicate.Parameters
+                        );
+                    }
+                    break;
+
+                case "timeend":
+                    var timeEnd = TimeOnly.Parse(filterValue);
+                    var timeEndCondition = Expression.Equal(
+                        Expression.Property(basePredicate.Parameters[0], nameof(Booking.TimeEnd)),
+                        Expression.Constant(timeEnd)
+                    );
+                    basePredicate = Expression.Lambda<Func<Booking, bool>>(
+                        Expression.AndAlso(basePredicate.Body, timeEndCondition),
+                        basePredicate.Parameters
+                    );
+                    break;
+
+                case "createat":
+                    if (DateTime.TryParse(filterValue, out var createdAt))
+                    {
+                        var createdAtCondition = Expression.Equal(
+                            Expression.Property(basePredicate.Parameters[0], nameof(Booking.CreateAt)),
+                            Expression.Constant(createdAt)
+                        );
+                        basePredicate = Expression.Lambda<Func<Booking, bool>>(
+                            Expression.AndAlso(basePredicate.Body, createdAtCondition),
+                            basePredicate.Parameters
+                        );
+                    }
+                    break;
+
+                case "status":
+                    if (sbyte.TryParse(filterValue, out var status))
+                    {
+                        var statusCondition = Expression.Equal(
+                            Expression.Property(basePredicate.Parameters[0], nameof(Booking.Status)),
+                            Expression.Constant(status)
+                        );
+                        basePredicate = Expression.Lambda<Func<Booking, bool>>(
+                            Expression.AndAlso(basePredicate.Body, statusCondition),
+                            basePredicate.Parameters
+                        );
+                    }
+                    break;
+            }
+            
+            var bookings = await FindByConditionWithPagingAsync(
+                basePredicate,
+                b => new BookingsViewDto(b.BookingId, b.Date, b.TimeStart, b.TimeEnd, b.Cost, b.Status),
+                pageSize, pageSize);
 
             return bookings;
         }

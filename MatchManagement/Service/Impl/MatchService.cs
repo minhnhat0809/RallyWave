@@ -15,7 +15,7 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
     private readonly Validate _validate = validate;
     private readonly ListExtensions _listExtensions = listExtensions;
     
-    public async Task<ResponseDto> GetMatches(string? filterField, string? filterValue, string? sortField, string sortValue, int pageNumber,
+    public async Task<ResponseDto> GetMatches(string? subject, int? subjectId, string? filterField, string? filterValue, string? sortField, string sortValue, int pageNumber,
         int pageSize)
     {
         var responseDto = new ResponseDto(null, "Get successfully", true, StatusCodes.Status200OK);
@@ -26,34 +26,55 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
             
             if (_validate.IsEmptyOrWhiteSpace(filterField) || _validate.IsEmptyOrWhiteSpace(filterValue))
             {
-                matches = await _unitOfWork.MatchRepo.FindAllAsync(m => 
-                    new MatchViewsDto(
-                        m.MatchId, 
-                        m.Sport.SportName, 
-                        m.MatchName, 
-                        m.CreateByNavigation.UserName,
-                        m.MatchType,
-                        m.TeamSize,
-                        m.MinLevel,
-                        m.MaxLevel,
-                        m.Date,
-                        m.TimeStart,
-                        m.TimeEnd,
-                        m.Location!,
-                        m.Status ?? 0
-                    ));
+                if (!_validate.IsEmptyOrWhiteSpace(subject) && subjectId != null)
+                {
+                    matches = await _unitOfWork.MatchRepo.FindByConditionWithPagingAsync( m => m.CreateBy == subjectId,
+                        m => 
+                        new MatchViewsDto(
+                            m.MatchId, 
+                            m.Sport.SportName, 
+                            m.MatchName, 
+                            m.CreateByNavigation.UserName,
+                            m.MatchType,
+                            m.TeamSize,
+                            m.MinLevel,
+                            m.MaxLevel,
+                            m.Date,
+                            m.TimeStart,
+                            m.TimeEnd,
+                            m.Location!,
+                            m.Status ?? 0
+                        ), pageNumber, pageSize);
+                }
+                else
+                {
+                    matches = await _unitOfWork.MatchRepo.FindAllAsync(m => 
+                        new MatchViewsDto(
+                            m.MatchId, 
+                            m.Sport.SportName, 
+                            m.MatchName, 
+                            m.CreateByNavigation.UserName,
+                            m.MatchType,
+                            m.TeamSize,
+                            m.MinLevel,
+                            m.MaxLevel,
+                            m.Date,
+                            m.TimeStart,
+                            m.TimeEnd,
+                            m.Location!,
+                            m.Status ?? 0
+                        ), pageNumber, pageSize);
+                }
 
                 total = matches.Count;
             }
             else
             {
-                matches = await _unitOfWork.MatchRepo.GetMatches(filterField, filterValue);
+                matches = await _unitOfWork.MatchRepo.GetMatches(filterField!, filterValue!, pageNumber, pageSize);
                 total = matches.Count;
             }
             
             matches = Sort(matches, sortField, sortValue);
-
-            matches = _listExtensions.Paging(matches, pageNumber, pageSize);
 
             responseDto.Result = new { matches, total};
         }
