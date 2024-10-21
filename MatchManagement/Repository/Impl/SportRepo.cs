@@ -2,7 +2,7 @@ using Entity;
 
 namespace MatchManagement.Repository.Impl;
 
-public class SportRepo(RallywaveContext repositoryContext) : RepositoryBase<Sport>(repositoryContext), ISportRepo
+public class SportRepo(RallyWaveContext repositoryContext) : RepositoryBase<Sport>(repositoryContext), ISportRepo
 {
     
 }

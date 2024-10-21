@@ -2,9 +2,9 @@
 
 namespace CourtManagement.Repository.Impl;
 
-public class CourtImageRepo(RallywaveContext repositoryContext) : RepositoryBase<CourtImage>(repositoryContext), ICourtImageRepo
+public class CourtImageRepo(RallyWaveContext repositoryContext) : RepositoryBase<CourtImage>(repositoryContext), ICourtImageRepo
 {
-    private readonly RallywaveContext _repositoryContext = repositoryContext;
+    private readonly RallyWaveContext _repositoryContext = repositoryContext;
 
     public async Task DeleteCourtImage(CourtImage courtImage)
     {

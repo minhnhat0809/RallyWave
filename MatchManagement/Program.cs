@@ -32,7 +32,7 @@ builder.Services.AddScoped(typeof(Validate));
 builder.Services.AddScoped(typeof(ListExtensions));
 
 //db context
-builder.Services.AddDbContext<RallywaveContext>(options =>
+builder.Services.AddDbContext<RallyWaveContext>(options =>
 {
     options.UseMySql(builder.Configuration.GetConnectionString("RallyWave"),
         new MySqlServerVersion(new Version(8, 0, 39))); 

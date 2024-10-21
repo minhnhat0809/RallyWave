@@ -9,10 +9,7 @@ public class BookingCreateDto
     public int? MatchId { get; set; }
     
     [Required]
-    public int? CourtId { get; set; }
-    
-    [Required]
-    public int? SlotId { get; set; }
+    public int CourtId { get; set; }
     
     [Required]
     public DateOnly Date { get; set; }

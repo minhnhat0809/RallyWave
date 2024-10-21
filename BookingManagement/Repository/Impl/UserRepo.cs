@@ -2,7 +2,7 @@
 
 namespace BookingManagement.Repository.Impl;
 
-public class UserRepo(RallywaveContext repositoryContext) : RepositoryBase<User>(repositoryContext), IUserRepo
+public class UserRepo(RallyWaveContext repositoryContext) : RepositoryBase<User>(repositoryContext), IUserRepo
 {
     
 }
