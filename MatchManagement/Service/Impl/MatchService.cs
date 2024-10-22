@@ -289,7 +289,7 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
 
     public async Task<ResponseDto> CreateMatch(int userId, MatchCreateDto matchCreateDto)
     {
-        var responseDto = new ResponseDto(null, "Create successfully", true, StatusCodes.Status201Created);
+        var responseDto = new ResponseDto(null, "", true, StatusCodes.Status201Created);
         try
         {
             //overall validation
@@ -312,6 +312,8 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
                 UserId = userId,
                 Status = 0
             });
+
+            responseDto.Message = "Create successfully";
         }
         catch (Exception e)
         {
