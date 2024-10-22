@@ -93,6 +93,19 @@ namespace Identity.API.Controllers
                 return new ResponseModel(null, ex.Message, false, StatusCodes.Status500InternalServerError);
             }
         }
+        [HttpPost("resend-verify-account")]
+        public async Task<ActionResult<ResponseModel>> ResendVerificationEmailAccount(RequestLoginModel request)
+        {
+            try
+            {
+                var result = await _authService.ResendVerificationEmailAccount(request);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return new ResponseModel(null, ex.Message, false, StatusCodes.Status500InternalServerError);
+            }
+        }
         [HttpPost("verify-password-reset")]
         public async Task<ActionResult<ResponseModel>> VerifyPasswordReset(RequestVerifyModel request)
         {
@@ -106,6 +119,7 @@ namespace Identity.API.Controllers
                 return new ResponseModel(null, ex.Message, false, StatusCodes.Status500InternalServerError);
             }
         }
+        
     }
 
 }

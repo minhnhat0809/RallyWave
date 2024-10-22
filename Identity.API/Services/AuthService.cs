@@ -1,7 +1,5 @@
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
+
 using System.Security.Cryptography;
-using System.Text;
 using AutoMapper;
 using Entity;
 using FirebaseAdmin.Auth;
@@ -11,11 +9,6 @@ using Identity.API.BusinessObjects.CourtOwnerModel;
 using Identity.API.BusinessObjects.LoginObjects;
 using Identity.API.BusinessObjects.UserViewModel;
 using Identity.API.Repository;
-using Identity.API.Repository.Impl;
-using Microsoft.IdentityModel.Tokens;
-using Twilio;
-using Twilio.Rest.Verify.V2.Service;
-using UserManagement.DTOs.UserDto;
 
 namespace Identity.API.Services;
 
@@ -28,6 +21,8 @@ public interface IAuthService
     public Task<ResponseModel> VerifyEmailAccount(RequestVerifyAccountModel requestVerifyDto);
     public Task<ResponseModel> VerifyEmailResetPassword(RequestVerifyModel requestVerifyDto);
     public Task<ResponseModel> ResetPassword(RequestLoginModel request);
+    public Task<ResponseModel> ResendVerificationEmailAccount(RequestLoginModel request);
+    
 }
 
 
@@ -126,8 +121,6 @@ public class AuthService : IAuthService
             UserRecord userRecord;
             User? user = null;
             CourtOwner? courtOwner = null;
-            string email = null;
-            string code = null;
             // Check if user exists in Firebase Authentication
             try
             {
@@ -172,10 +165,13 @@ public class AuthService : IAuthService
                         IsTwoFactorEnabled = 0,
                         TwoFactorSecret = _unitOfWork.AuthRepository.GenerateVerificationCode(),
                     };
-                    // Send Verification Email Account
+                    /*// Send Verification Email Account
                     await _unitOfWork.AuthRepository.SendEmailVerificationAsync(newUser.Email,
                         newUser.TwoFactorSecret);
-                    
+                        */
+                    // Generate and send a new verification link
+                    string emailVerificationLink = await FirebaseAuth.DefaultInstance.GenerateEmailVerificationLinkAsync(newUser.Email);
+                    await _unitOfWork.AuthRepository.SendEmailVerificationAsync(newUser.Email, emailVerificationLink);
                     user = await _unitOfWork.UserRepo.CreateUser(newUser); // Save the user to the database
                     _responseLoginModel.IsNewUser = true;
                 }else if (request.Role == new Contract().CourtOwner)
@@ -196,8 +192,12 @@ public class AuthService : IAuthService
                         IsTwoFactorEnabled = 0,
                         TwoFactorSecret = _unitOfWork.AuthRepository.GenerateVerificationCode(),
                     };
-                    // Send Verification Email Account
+                    /*// Send Verification Email Account
                     await _unitOfWork.AuthRepository.SendEmailVerificationAsync(newCourtOwner.Email, newCourtOwner.TwoFactorSecret);
+                    */
+                    string emailVerificationLink = await FirebaseAuth.DefaultInstance.GenerateEmailVerificationLinkAsync(newCourtOwner.Email);
+                    await _unitOfWork.AuthRepository.SendEmailVerificationAsync(newCourtOwner.Email, emailVerificationLink);
+
                     courtOwner = await _unitOfWork.CourtOwnerRepository.CreateCourtOwner(newCourtOwner); // Save the court owner to the database
                     _responseLoginModel.IsNewUser = true;
                 }
@@ -247,6 +247,7 @@ public class AuthService : IAuthService
                 $"An error occurred during token verification: {ex.Message}", true, StatusCodes.Status500InternalServerError);
         }
     }
+    
     // Register Account: User and Court Owner
     public async Task<ResponseModel> Register(RequestRegisterModel request)
     {
@@ -426,6 +427,7 @@ public class AuthService : IAuthService
             return new ResponseModel(null, $"An error occurred during email verification: {ex.Message}", false, StatusCodes.Status500InternalServerError);
         }
     }
+    
     // Verify Reset Password: User and Court Owner
     public async Task<ResponseModel> VerifyEmailResetPassword(RequestVerifyModel request)
     {
@@ -484,6 +486,7 @@ public class AuthService : IAuthService
             return new ResponseModel(null, $"An error occurred during email verification: {ex.Message}", false, StatusCodes.Status500InternalServerError);
         }
     }
+    
     // Reset Password: User and Court Owner
     public async Task<ResponseModel> ResetPassword(RequestLoginModel request)
     {
@@ -498,46 +501,124 @@ public class AuthService : IAuthService
                 if (courtOwner== null) 
                     return new ResponseModel(null, "Email not found!", false, StatusCodes.Status404NotFound);
                 // Hash the input password using the same salt
-                var hashedPasswordInputCourtOwner = _unitOfWork.AuthRepository.HashPassword(request.Password, courtOwner.PasswordSalt);
-                // Compare the hashed passwords in constant time to avoid timing attacks
-                if (CryptographicOperations.FixedTimeEquals(courtOwner.PasswordHash, hashedPasswordInputCourtOwner))
+                if (courtOwner.PasswordSalt != null)
                 {
-                    // Generate verification code
-                    courtOwner.TwoFactorSecret = _unitOfWork.AuthRepository.GenerateVerificationCode();
+                    var hashedPasswordInputCourtOwner = _unitOfWork.AuthRepository.HashPassword(request.Password, courtOwner.PasswordSalt);
+                    // Compare the hashed passwords in constant time to avoid timing attacks
+                    if (CryptographicOperations.FixedTimeEquals(courtOwner.PasswordHash, hashedPasswordInputCourtOwner))
+                    {
+                        // Generate verification code
+                        courtOwner.TwoFactorSecret = _unitOfWork.AuthRepository.GenerateVerificationCode();
     
-                    // Save verification code
-                    await _unitOfWork.CourtOwnerRepository.UpdateCourtOwner(courtOwner);
+                        // Save verification code
+                        await _unitOfWork.CourtOwnerRepository.UpdateCourtOwner(courtOwner);
     
-                    // Send email verification code
-                    await _unitOfWork.AuthRepository.SendEmailVerificationAsync(courtOwner.Email, courtOwner.TwoFactorSecret);
+                        // Send email verification code
+                        if (courtOwner.Email != null)
+                            await _unitOfWork.AuthRepository.SendEmailVerificationCodeAsync(courtOwner.Email,
+                                courtOwner.TwoFactorSecret);
 
-                    return new ResponseModel(null, "Email verification for reset password being sent successfully!", true, StatusCodes.Status200OK);
+                        return new ResponseModel(null, "Email verification for reset password being sent successfully!", true, StatusCodes.Status200OK);
+                    }
+                    // If the password does not match
+                    return new ResponseModel(null, "Invalid password!", false, StatusCodes.Status400BadRequest);
                 }
-
-                // If the password does not match
-                return new ResponseModel(null, "Invalid password!", false, StatusCodes.Status400BadRequest);
-                return new ResponseModel(null, "User not found!", false, StatusCodes.Status404NotFound);
             }
-
-            // Hash the input password using the same salt
-            var hashedPasswordInputUser = _unitOfWork.AuthRepository.HashPassword(request.Password, user.PasswordSalt);
-            // Compare the hashed passwords in constant time to avoid timing attacks
-            if (CryptographicOperations.FixedTimeEquals(user.PasswordHash, hashedPasswordInputUser))
+            else
             {
-                // Generate verification code
-                user.TwoFactorSecret = _unitOfWork.AuthRepository.GenerateVerificationCode();
+                if (user.PasswordSalt != null)
+                {
+                    var hashedPasswordInputUser = _unitOfWork.AuthRepository.HashPassword(request.Password, user.PasswordSalt);
+                    // Compare the hashed passwords in constant time to avoid timing attacks
+                    if (CryptographicOperations.FixedTimeEquals(user.PasswordHash, hashedPasswordInputUser))
+                    {
+                        // Generate verification code
+                        user.TwoFactorSecret = _unitOfWork.AuthRepository.GenerateVerificationCode();
     
-                // Save verification code
-                await _unitOfWork.UserRepo.UpdateUser(user);
+                        // Save verification code
+                        await _unitOfWork.UserRepo.UpdateUser(user);
     
-                // Send email verification code
-                await _unitOfWork.AuthRepository.SendEmailVerificationAsync(user.Email, user.TwoFactorSecret);
+                        // Send email verification code
+                        if (user.Email != null)
+                            await _unitOfWork.AuthRepository.SendEmailVerificationCodeAsync(user.Email, user.TwoFactorSecret);
 
-                return new ResponseModel(null, "Email verification for reset password being sent successfully!", true, StatusCodes.Status200OK);
+                        return new ResponseModel(null, "Email verification for reset password being sent successfully!", true, StatusCodes.Status200OK);
+                    }
+                }
             }
 
+            
             // If the password does not match
             return new ResponseModel(null, "Invalid password!", false, StatusCodes.Status400BadRequest);
+        }
+        catch (Exception ex)
+        {
+            return new ResponseModel(null, $"An error occurred during email verification: {ex.Message}", false, StatusCodes.Status500InternalServerError);
+        }
+    }
+
+    // Resending verification email
+    public async Task<ResponseModel> ResendVerificationEmailAccount(RequestLoginModel request)
+    {
+        var user = await _unitOfWork.UserRepo.GetUserByPropertyAndValue("email", request.Email);
+        if (user == null)
+        {
+            return new ResponseModel(null, "User not found!", false, StatusCodes.Status404NotFound);
+        }
+
+        // Check if the user has already verified their email
+        if (user.IsTwoFactorEnabled > 0 )
+        {
+            return new ResponseModel(null, "Email is already verified!", false, StatusCodes.Status400BadRequest);
+        }
+
+        // Generate and send a new verification link
+        string emailVerificationLink = await FirebaseAuth.DefaultInstance.GenerateEmailVerificationLinkAsync(user.Email);
+        if (user.Email != null)
+            await _unitOfWork.AuthRepository.SendEmailVerificationAsync(user.Email, emailVerificationLink);
+
+        return new ResponseModel(null, "Verification email has been resent. Please check your inbox.", true, StatusCodes.Status200OK);
+    }
+    
+    // Resending Verification Code (SecretVerificationCode)
+    public async Task<ResponseModel> ResendVerifyCode(RequestLoginModel request)
+    {
+        try
+        {
+            // Find the user by email
+            var user = await _unitOfWork.UserRepo.GetUserByPropertyAndValue("email", request.Email);
+            if (user == null)
+            {
+                // CHECK COURT OWNER LATER
+                var courtOwner = await _unitOfWork.CourtOwnerRepository.GetCourtOwnerByPropertyAndValue("email", request.Email);
+                if (courtOwner == null) 
+                    return new ResponseModel(null, "Email not found!", false, StatusCodes.Status404NotFound);
+                
+                // Generate verification code
+                courtOwner.TwoFactorSecret = _unitOfWork.AuthRepository.GenerateVerificationCode();
+    
+                // Save verification code
+                await _unitOfWork.CourtOwnerRepository.UpdateCourtOwner(courtOwner);
+    
+                // Send email verification code
+                if (courtOwner.Email != null)
+                    await _unitOfWork.AuthRepository.SendEmailVerificationCodeAsync(courtOwner.Email,
+                        courtOwner.TwoFactorSecret);
+
+                return new ResponseModel(null, "Email verification code being sent successfully!", true, StatusCodes.Status200OK);
+            }
+            // Generate verification code
+            user.TwoFactorSecret = _unitOfWork.AuthRepository.GenerateVerificationCode();
+    
+            // Save verification code
+            await _unitOfWork.UserRepo.UpdateUser(user);
+    
+            // Send email verification code
+            if (user.Email != null)
+                await _unitOfWork.AuthRepository.SendEmailVerificationCodeAsync(user.Email, user.TwoFactorSecret);
+
+            return new ResponseModel(null, "Email verification for reset password being sent successfully!", true, StatusCodes.Status200OK);
+
         }
         catch (Exception ex)
         {

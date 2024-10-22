@@ -20,7 +20,8 @@ public interface IAuthRepository
     public string GenerateCourtOwnerJwtToken(CourtOwner courtOwner, string role);
     public Task SendEmailChangeConfirmationAsync(string newEmail);
     public Task SendPasswordResetEmailAsync(string email);
-    public Task SendEmailVerificationAsync(string email, string code);
+    public Task SendEmailVerificationAsync(string email, string link);
+    public Task SendEmailVerificationCodeAsync(string email, string code);
     public string GenerateVerificationCode();
 }
 public class AuthRepository(IConfiguration configuration) : IAuthRepository 
@@ -118,13 +119,25 @@ public class AuthRepository(IConfiguration configuration) : IAuthRepository
         return random.Next(100000, 999999).ToString(); // Generate a 6-digit code
     }
     
-    // email verification reset
-    public async Task SendEmailVerificationAsync(string email, string code)
+    // email verification link
+    public async Task SendEmailVerificationAsync(string email, string link)
     {
         try
         {
-            var verificationLink = GenerateVerificationLink(email, code); // Create a link or token for verification
-            var body = $"Please verify your email by clicking on this link: <a href='{verificationLink}'>Verify Email</a>" + $"{code}";
+            var body = $@"
+                <html>
+                    <body style='font-family: Arial, sans-serif; color: #333;'>
+                        <div style='text-align: center;'>
+                            <h2 style='color: #FFA500;'>Welcome to RallyWave!</h2> <!-- Orange color -->
+                            <p style='font-size: 16px;'>Please verify your email address by clicking the button below to complete your registration.</p>
+                            <a href='{link}' style='display: inline-block; padding: 10px 20px; background-color: #007BFF; color: white; text-decoration: none; border-radius: 5px;'>Verify Email</a> <!-- Blue button -->
+                            <p style='font-size: 14px; color: #666;'>If the button doesn't work, you can also click the following link:</p>
+                            <a href='{link}' style='font-size: 14px; color: #007BFF;'>{link}</a> <!-- Blue link -->
+                            <p style='font-size: 12px; color: #999; margin-top: 20px;'>If you didn't sign up for a RallyWave account, please ignore this email.</p>
+                        </div>
+                    </body>
+                </html>";
+
             await SendVerificationEmail(email, body);
         }
         catch (Exception ex)
@@ -132,6 +145,35 @@ public class AuthRepository(IConfiguration configuration) : IAuthRepository
             Console.WriteLine($"Error during email verification process: {ex.Message}");
         }
     }
+    public async Task SendEmailVerificationCodeAsync(string email, string code)
+    {
+        try
+        {
+            var body = $@"
+                <html>
+                    <body style='font-family: Arial, sans-serif; color: #333;'>
+                        <div style='text-align: center;'>
+                            <h2 style='color: #FFA500;'>Verify Your Account</h2> <!-- Orange color heading -->
+                            <p style='font-size: 16px;'>Please use the 6-digit code below to verify your email address and complete your registration:</p>
+                            <div style='margin: 20px 0;'>
+                                <span style='font-size: 24px; font-weight: bold; color: #007BFF; padding: 10px; border: 2px dashed #FFA500;'> <!-- Blue code with orange border -->
+                                    {code}
+                                </span>
+                            </div>
+                            <p style='font-size: 14px; color: #666;'>If you didn’t request this code, please ignore this email.</p>
+                            <p style='font-size: 12px; color: #999; margin-top: 20px;'>Thank you for using RallyWave!</p>
+                        </div>
+                    </body>
+                </html>";
+
+            await SendVerificationEmail(email, body);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error during email verification process: {ex.Message}");
+        }
+    }
+
 
     private async Task SendVerificationEmail(string email, string body)
     {
@@ -159,14 +201,6 @@ public class AuthRepository(IConfiguration configuration) : IAuthRepository
             Console.WriteLine($"Error sending email: {ex.Message}");
         }
     }
-
-    // Generates a verification link for the user
-    private string GenerateVerificationLink(string email, string code)
-    {
-        // Assuming there's a frontend or API endpoint to handle this verification link
-        return $"https://rally-wave-438116.firebaseapp.com/verify-email?email={email}&code={code}";
-    }
-
     
     // password verification reset
     public async Task SendPasswordResetEmailAsync(string email)
