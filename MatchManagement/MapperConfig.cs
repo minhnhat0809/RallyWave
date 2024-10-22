@@ -13,6 +13,7 @@ public class MapperConfig : Profile
         
         CreateMap<MatchCreateDto, Match>();
 
-        CreateMap<MatchUpdateDto, Match>();
+        CreateMap<MatchUpdateDto, Match>()
+            .ForMember(dest => dest.CreateBy, opt => opt.Ignore());
     }
 }
