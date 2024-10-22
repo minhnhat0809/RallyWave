@@ -301,6 +301,9 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
 
             var match = _mapper.Map<Match>(matchCreateDto);
 
+            match.CreateBy = userId;
+            match.Status = 0;
+
             await _unitOfWork.MatchRepo.CreateAsync(match);
 
             await _unitOfWork.UserMatchRepo.CreateAsync(new UserMatch
