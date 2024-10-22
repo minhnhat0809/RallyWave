@@ -21,7 +21,9 @@ public interface IAuthService
     public Task<ResponseModel> VerifyEmailAccount(RequestVerifyAccountModel requestVerifyDto);
     public Task<ResponseModel> VerifyEmailResetPassword(RequestVerifyModel requestVerifyDto);
     public Task<ResponseModel> ResetPassword(RequestLoginModel request);
+    public Task<ResponseModel> ForgetPassword(string email);
     public Task<ResponseModel> ResendVerificationEmailAccount(RequestLoginModel request);
+    public Task<ResponseModel> UpdateProfile(ProfileModel request);
     
 }
 
@@ -557,6 +559,51 @@ public class AuthService : IAuthService
         }
     }
 
+    public async Task<ResponseModel> ForgetPassword(string email)
+    {
+        try
+        {
+            // Find the user by email
+            var user = await _unitOfWork.UserRepo.GetUserByPropertyAndValue("email", email);
+            if (user == null)
+            {
+                // CHECK COURT OWNER LATER
+                var courtOwner = await _unitOfWork.CourtOwnerRepository.GetCourtOwnerByPropertyAndValue("email", email);
+                if (courtOwner== null) 
+                    return new ResponseModel(null, "Email not found!", false, StatusCodes.Status404NotFound);
+                
+                // Generate verification code
+                courtOwner.TwoFactorSecret = _unitOfWork.AuthRepository.GenerateVerificationCode();
+    
+                // Save verification code
+                await _unitOfWork.CourtOwnerRepository.UpdateCourtOwner(courtOwner);
+    
+                // Send email verification code
+                if (courtOwner.Email != null)
+                    await _unitOfWork.AuthRepository.SendEmailVerificationCodeAsync(courtOwner.Email,
+                        courtOwner.TwoFactorSecret);
+
+                return new ResponseModel(null, "Email verification for password being sent successfully!", true, StatusCodes.Status200OK);
+
+            }
+            // Generate verification code
+            user.TwoFactorSecret = _unitOfWork.AuthRepository.GenerateVerificationCode();
+    
+            // Save verification code
+            await _unitOfWork.UserRepo.UpdateUser(user);
+    
+            // Send email verification code
+            if (user.Email != null)
+                await _unitOfWork.AuthRepository.SendEmailVerificationCodeAsync(user.Email, user.TwoFactorSecret);
+
+            return new ResponseModel(null, "Email verification for reset password being sent successfully!", true, StatusCodes.Status200OK);
+        }
+        catch (Exception ex)
+        {
+            return new ResponseModel(null, $"An error occurred during email verification: {ex.Message}", false, StatusCodes.Status500InternalServerError);
+        }
+    }
+
     // Resending verification email
     public async Task<ResponseModel> ResendVerificationEmailAccount(RequestLoginModel request)
     {
@@ -579,7 +626,99 @@ public class AuthService : IAuthService
 
         return new ResponseModel(null, "Verification email has been resent. Please check your inbox.", true, StatusCodes.Status200OK);
     }
-    
+
+    public async Task<ResponseModel> UpdateProfile(ProfileModel request)
+    {
+        try
+        {
+            // Check if the email is provided
+            if (string.IsNullOrEmpty(request.Email))
+            {
+                return new ResponseModel(null, "Email must be provided.", false, StatusCodes.Status400BadRequest);
+            }
+
+            // Try to find the user by email
+            var user = await _unitOfWork.UserRepo.GetUserByPropertyAndValue("email", request.Email);
+            
+            if (user != null)
+            {
+                // Update Firebase user profile if FirebaseUid is available
+                if (!string.IsNullOrEmpty(user.FirebaseUid))
+                {
+                    var updateRequest = new UserRecordArgs()
+                    {
+                        Uid = user.FirebaseUid,
+                        DisplayName = request.UserName,
+                        PhoneNumber = $"+84{request.PhoneNumber}", 
+                        Disabled = false,
+                        PhotoUrl = request.Avatar,
+                    };
+
+                    await FirebaseAuth.DefaultInstance.UpdateUserAsync(updateRequest);
+                }
+
+                // User found, update their profile locally
+                user.UserName = request.UserName;
+                user.PhoneNumber = request.PhoneNumber;
+                user.Gender = request.Gender;
+                user.Dob = request.Dob;
+                user.Address = request.Address;
+                user.Province = request.Province;
+                user.Avatar = request.Avatar;
+
+                user = await _unitOfWork.UserRepo.UpdateUser(user);
+
+                return new ResponseModel(user, "User profile updated successfully!", true, StatusCodes.Status200OK);
+            }
+
+            // If user is not found, check for court owner
+            var courtOwner = await _unitOfWork.CourtOwnerRepository.GetCourtOwnerByPropertyAndValue("email", request.Email);
+            
+            if (courtOwner != null)
+            {
+                // Update Firebase court owner profile if FirebaseUid is available
+                if (!string.IsNullOrEmpty(courtOwner.FirebaseUid))
+                {
+                    var updateRequest = new UserRecordArgs()
+                    {
+                        Uid = courtOwner.FirebaseUid,
+                        DisplayName = request.UserName,
+                        PhoneNumber = $"+84{request.PhoneNumber}", 
+                        Disabled = false,
+                        PhotoUrl = request.Avatar,
+                    };
+
+                    await FirebaseAuth.DefaultInstance.UpdateUserAsync(updateRequest);
+                }
+
+                // Court owner found, update their profile locally
+                courtOwner.Name = request.UserName;
+                courtOwner.PhoneNumber = request.PhoneNumber;
+                courtOwner.Gender = request.Gender;
+                courtOwner.Dob = request.Dob;
+                courtOwner.Address = request.Address;
+                courtOwner.Province = request.Province;
+                courtOwner.Avatar = request.Avatar;
+
+                courtOwner = await _unitOfWork.CourtOwnerRepository.UpdateCourtOwner(courtOwner);
+
+                return new ResponseModel(courtOwner, "Court owner profile updated successfully!", true, StatusCodes.Status200OK);
+            }
+
+            // If neither user nor court owner is found
+            return new ResponseModel(null, "Email not found!", false, StatusCodes.Status404NotFound);
+        }
+        catch (FirebaseAuthException ex)
+        {
+            return new ResponseModel(null, $"Error updating Firebase user: {ex.Message}", false, StatusCodes.Status500InternalServerError);
+        }
+        catch (Exception ex)
+        {
+            return new ResponseModel(null, $"An error occurred while updating profile: {ex.Message}", false, StatusCodes.Status500InternalServerError);
+        }
+    }
+
+
     // Resending Verification Code (SecretVerificationCode)
     public async Task<ResponseModel> ResendVerifyCode(RequestLoginModel request)
     {
