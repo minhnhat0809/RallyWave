@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MatchManagement.Repository.Impl;
 
-public class RepositoryBase<T>(RallywaveContext repositoryContext) : IRepositoryBase<T>
+public class RepositoryBase<T>(RallyWaveContext repositoryContext) : IRepositoryBase<T>
     where T : class
 {
     public async Task<List<TResult>> FindAllAsync<TResult>(

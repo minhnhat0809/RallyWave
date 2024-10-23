@@ -8,8 +8,8 @@ public class BookingUpdateDto
     
     public int? MatchId { get; set; }
     
-    public int? CourtId { get; set; }
-    public int? SlotId { get; set; }
+    [Required]
+    public int CourtId { get; set; }
     
     [Required]
     public DateOnly Date { get; set; }

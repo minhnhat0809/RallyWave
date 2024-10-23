@@ -15,7 +15,7 @@ using UserManagement.DTOs.UserDto.ViewDto;
 using UserManagement.Repository;
 using UserManagement.Repository.Impl;
 
-public class UserRepo(RallywaveContext repositoryContext) : RepositoryBase<User>(repositoryContext), IUserRepo
+public class UserRepo(RallyWaveContext repositoryContext) : RepositoryBase<User>(repositoryContext), IUserRepo
 {
     // Get users with optional filtering
     public async Task<List<User>> GetUsers(string? filterField, string? filterValue)

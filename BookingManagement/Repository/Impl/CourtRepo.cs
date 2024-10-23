@@ -2,7 +2,7 @@
 
 namespace BookingManagement.Repository.Impl;
 
-public class CourtRepo(RallywaveContext repositoryContext) : RepositoryBase<Court>(repositoryContext),ICourtRepo
+public class CourtRepo(RallyWaveContext repositoryContext) : RepositoryBase<Court>(repositoryContext),ICourtRepo
 {
     public async Task<Court?> GetCourtById(int id)
     {

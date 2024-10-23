@@ -2,7 +2,7 @@
 
 namespace BookingManagement.Repository.Impl;
 
-public class UnitOfWork(RallywaveContext context) : IUnitOfWork
+public class UnitOfWork(RallyWaveContext context) : IUnitOfWork
 {
     public IBookingRepo BookingRepo { get; } = new BookingRepo(context);
 

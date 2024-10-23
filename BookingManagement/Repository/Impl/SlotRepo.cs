@@ -2,7 +2,7 @@
 
 namespace BookingManagement.Repository.Impl;
 
-public class SlotRepo(RallywaveContext repositoryContext) : RepositoryBase<Slot>(repositoryContext), ISlotRepo
+public class SlotRepo(RallyWaveContext repositoryContext) : RepositoryBase<Slot>(repositoryContext), ISlotRepo
 {
     
 }
