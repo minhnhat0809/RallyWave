@@ -26,11 +26,16 @@ public class RepositoryBase<T>(RallyWaveContext repositoryContext) : IRepository
             .Select(selector)
             .ToListAsync();
     }
-    
-    public async Task<int> CountByConditionAsync(Expression<Func<T, bool>> condition)
+    public async Task<int> CountByConditionAsync(Expression<Func<T, bool>>? condition = null)
     {
+        if (condition == null)
+        {
+            return await repositoryContext.Set<T>().CountAsync();
+        }
+        
         return await repositoryContext.Set<T>().CountAsync(condition);
     }
+
     
     public async Task<List<TResult>> FindByConditionAsync<TResult>(
         Expression<Func<T, bool>> expression, 

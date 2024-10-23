@@ -1,7 +1,4 @@
-﻿using BookingManagement.DTOs.PaymentDto.ViewDto;
-using Entity;
-
-namespace BookingManagement.DTOs.BookingDto.ViewDto;
+﻿namespace BookingManagement.DTOs.BookingDto.ViewDto;
 
 public class BookingsViewDto(
     int bookingId,

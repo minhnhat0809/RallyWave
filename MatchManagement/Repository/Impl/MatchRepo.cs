@@ -1,246 +1,117 @@
-﻿using Entity;
+﻿using System.Linq.Expressions;
+using Entity;
+using MatchManagement.DTOs;
 using MatchManagement.DTOs.MatchDto.ViewDto;
 
 namespace MatchManagement.Repository.Impl;
 
 public class MatchRepo(RallyWaveContext repositoryContext) : RepositoryBase<Match>(repositoryContext),IMatchRepo
 {
-    public async Task<List<MatchViewsDto>> GetMatches(string filterField, string filterValue, int pageNumber, int pageSize)
+    public async Task<ResponseListDto<MatchViewsDto>> GetMatches(string filterField, string filterValue, int pageNumber, int pageSize)
     {
-        var matches = new List<MatchViewsDto>();
         try
         {
+            Expression<Func<Match, bool>> basePredicate = m => true;
+            
             switch (filterField.ToLower())
-                {
-                    case "teamsize":
-                        matches = await FindByConditionWithPagingAsync(m => m.TeamSize == sbyte.Parse(filterValue!), m => 
-                            new MatchViewsDto(
-                                m.MatchId, 
-                                m.Sport.SportName, 
-                                m.MatchName, 
-                                m.CreateByNavigation.UserName,
-                                m.MatchType,
-                                m.TeamSize,
-                                m.MinLevel,
-                                m.MaxLevel,
-                                m.Date,
-                                m.TimeStart,
-                                m.TimeEnd,
-                                m.Location!,
-                                m.Status ?? 0
-                            ), pageNumber, pageSize);
-                        break;
-                    case "minlevel":
-                        if (sbyte.TryParse(filterValue, out var minLevel))
-                        {
-                            matches = await FindByConditionWithPagingAsync(m => m.MinLevel == minLevel,m => 
-                                new MatchViewsDto(
-                                    m.MatchId, 
-                                    m.Sport.SportName, 
-                                    m.MatchName, 
-                                    m.CreateByNavigation.UserName,
-                                    m.MatchType,
-                                    m.TeamSize,
-                                    m.MinLevel,
-                                    m.MaxLevel,
-                                    m.Date,
-                                    m.TimeStart,
-                                    m.TimeEnd,
-                                    m.Location!,
-                                    m.Status ?? 0
-                                ), pageNumber, pageSize);
-                        }
-                        break;
-                    case "maxlevel":
-                        if (sbyte.TryParse(filterValue, out var maxLevel))
-                        {
-                            matches = await FindByConditionWithPagingAsync(m => m.MinLevel == maxLevel,m => 
-                                new MatchViewsDto(
-                                    m.MatchId, 
-                                    m.Sport.SportName, 
-                                    m.MatchName, 
-                                    m.CreateByNavigation.UserName,
-                                    m.MatchType,
-                                    m.TeamSize,
-                                    m.MinLevel,
-                                    m.MaxLevel,
-                                    m.Date,
-                                    m.TimeStart,
-                                    m.TimeEnd,
-                                    m.Location!,
-                                    m.Status ?? 0
-                                ), pageNumber, pageSize);
-                        }
-                        break;
-                    case "mode":
-                        if (sbyte.TryParse(filterValue, out var mode))
-                        {
-                            matches = await FindByConditionWithPagingAsync(m => m.Mode == mode,m => 
-                                new MatchViewsDto(
-                                    m.MatchId, 
-                                    m.Sport.SportName, 
-                                    m.MatchName, 
-                                    m.CreateByNavigation.UserName,
-                                    m.MatchType,
-                                    m.TeamSize,
-                                    m.MinLevel,
-                                    m.MaxLevel,
-                                    m.Date,
-                                    m.TimeStart,
-                                    m.TimeEnd,
-                                    m.Location!,
-                                    m.Status ?? 0
-                                ), pageNumber, pageSize);
-                        }
-                        break;
-                    case "minage":
-                        matches = await FindByConditionWithPagingAsync(m =>
-                            m.MinAge != null && m.MinAge.Equals(sbyte.Parse(filterValue!)),m => 
-                            new MatchViewsDto(
-                                m.MatchId, 
-                                m.Sport.SportName, 
-                                m.MatchName, 
-                                m.CreateByNavigation.UserName,
-                                m.MatchType,
-                                m.TeamSize,
-                                m.MinLevel,
-                                m.MaxLevel,
-                                m.Date,
-                                m.TimeStart,
-                                m.TimeEnd,
-                                m.Location!,
-                                m.Status ?? 0
-                            ), pageNumber, pageSize);
-                        break;
-                    case "maxage":
-                        matches = await FindByConditionWithPagingAsync(m =>
-                                m.MinAge != null && m.MaxAge.Equals(sbyte.Parse(filterValue!)),m => 
-                            new MatchViewsDto(
-                                m.MatchId, 
-                                m.Sport.SportName, 
-                                m.MatchName, 
-                                m.CreateByNavigation.UserName,
-                                m.MatchType,
-                                m.TeamSize,
-                                m.MinLevel,
-                                m.MaxLevel,
-                                m.Date,
-                                m.TimeStart,
-                                m.TimeEnd,
-                                m.Location!,
-                                m.Status ?? 0
-                            ), pageNumber, pageSize);
-                        break;
-                    case "gender":
-                        matches = await FindByConditionWithPagingAsync(m => m.Gender != null && m.Gender.Equals(filterValue),m => 
-                            new MatchViewsDto(
-                                m.MatchId, 
-                                m.Sport.SportName, 
-                                m.MatchName, 
-                                m.CreateByNavigation.UserName,
-                                m.MatchType,
-                                m.TeamSize,
-                                m.MinLevel,
-                                m.MaxLevel,
-                                m.Date,
-                                m.TimeStart,
-                                m.TimeEnd,
-                                m.Location!,
-                                m.Status ?? 0
-                            ), pageNumber, pageSize);
-                        break;
-                    case "date":
-                        if (DateOnly.TryParse(filterValue, out var date))
-                        {
-                            matches = await FindByConditionWithPagingAsync(m => m.Date.Equals(date),m => 
-                                new MatchViewsDto(
-                                    m.MatchId, 
-                                    m.Sport.SportName, 
-                                    m.MatchName, 
-                                    m.CreateByNavigation.UserName,
-                                    m.MatchType,
-                                    m.TeamSize,
-                                    m.MinLevel,
-                                    m.MaxLevel,
-                                    m.Date,
-                                    m.TimeStart,
-                                    m.TimeEnd,
-                                    m.Location!,
-                                    m.Status ?? 0
-                                ), pageNumber, pageSize);
-                        }
-                        break;
-                    case "timestart":
-                        if (TimeOnly.TryParse(filterValue, out var timeStart))
-                        {
-                            matches = await FindByConditionWithPagingAsync(m => m.TimeStart.Equals(timeStart),m => 
-                                new MatchViewsDto(
-                                    m.MatchId, 
-                                    m.Sport.SportName, 
-                                    m.MatchName, 
-                                    m.CreateByNavigation.UserName,
-                                    m.MatchType,
-                                    m.TeamSize,
-                                    m.MinLevel,
-                                    m.MaxLevel,
-                                    m.Date,
-                                    m.TimeStart,
-                                    m.TimeEnd,
-                                    m.Location!,
-                                    m.Status ?? 0
-                                ), pageNumber, pageSize);
-                        }
-                        break;
-                    case "timeend":
-                        if (TimeOnly.TryParse(filterValue, out var timeEnd))
-                        {
-                            matches = await FindByConditionWithPagingAsync(m => m.TimeStart.Equals(timeEnd),m => 
-                                new MatchViewsDto(
-                                    m.MatchId, 
-                                    m.Sport.SportName, 
-                                    m.MatchName, 
-                                    m.CreateByNavigation.UserName,
-                                    m.MatchType,
-                                    m.TeamSize,
-                                    m.MinLevel,
-                                    m.MaxLevel,
-                                    m.Date,
-                                    m.TimeStart,
-                                    m.TimeEnd,
-                                    m.Location!,
-                                    m.Status ?? 0
-                                ), pageNumber, pageSize);
-                        }
-                        break;
-                    case "matchtype":
-                        if (sbyte.TryParse(filterValue, out var type))
-                        {
-                            matches = await FindByConditionWithPagingAsync(m => m.MatchType.Equals(type),m => 
-                                new MatchViewsDto(
-                                    m.MatchId, 
-                                    m.Sport.SportName, 
-                                    m.MatchName, 
-                                    m.CreateByNavigation.UserName,
-                                    m.MatchType,
-                                    m.TeamSize,
-                                    m.MinLevel,
-                                    m.MaxLevel,
-                                    m.Date,
-                                    m.TimeStart,
-                                    m.TimeEnd,
-                                    m.Location!,
-                                    m.Status ?? 0
-                                ), pageNumber, pageSize);
-                        }
-                        break;
-                }
+            {
+                case "teamsize":
+                    var teamSize = sbyte.Parse(filterValue!);
+                    basePredicate = m => m.TeamSize == teamSize;
+                    break;
+
+                case "minlevel":
+                    if (sbyte.TryParse(filterValue, out var minLevel))
+                    {
+                        basePredicate = m => m.MinLevel == minLevel;
+                    }
+                    break;
+
+                case "maxlevel":
+                    if (sbyte.TryParse(filterValue, out var maxLevel))
+                    {
+                        basePredicate = m => m.MaxLevel == maxLevel;
+                    }
+                    break;
+
+                case "mode":
+                    if (sbyte.TryParse(filterValue, out var mode))
+                    {
+                        basePredicate = m => m.Mode == mode;
+                    }
+                    break;
+
+                case "minage":
+                    var minAge = sbyte.Parse(filterValue);
+                    basePredicate = m => m.MinAge != null && m.MinAge == minAge;
+                    break;
+
+                case "maxage":
+                    var maxAge = sbyte.Parse(filterValue);
+                    basePredicate = m => m.MaxAge != null && m.MaxAge == maxAge;
+                    break;
+
+                case "gender":
+                    basePredicate = m => m.Gender != null && m.Gender == filterValue;
+                    break;
+
+                case "date":
+                    if (DateOnly.TryParse(filterValue, out var date))
+                    {
+                        basePredicate = m => m.Date == date;
+                    }
+                    break;
+
+                case "timestart":
+                    if (TimeOnly.TryParse(filterValue, out var timeStart))
+                    {
+                        basePredicate = m => m.TimeStart == timeStart;
+                    }
+                    break;
+
+                case "timeend":
+                    if (TimeOnly.TryParse(filterValue, out var timeEnd))
+                    {
+                        basePredicate = m => m.TimeEnd == timeEnd;
+                    }
+                    break;
+
+                case "matchtype":
+                    if (sbyte.TryParse(filterValue, out var matchType))
+                    {
+                        basePredicate = m => m.MatchType == matchType;
+                    }
+                    break;
+            }
+            
+            var matches = await FindByConditionWithPagingAsync(
+                basePredicate,
+                m => new MatchViewsDto(
+                    m.MatchId, 
+                    m.Sport.SportName, 
+                    m.MatchName, 
+                    m.CreateByNavigation.UserName,
+                    m.MatchType,
+                    m.TeamSize,
+                    m.MinLevel,
+                    m.MaxLevel,
+                    m.Date,
+                    m.TimeStart,
+                    m.TimeEnd,
+                    m.Location!,
+                    m.Status ?? 0
+                ), pageNumber, pageSize);
+            
+            var total = await CountByConditionAsync(basePredicate);
+            
+            var responseDto = new ResponseListDto<MatchViewsDto>(matches, total);
+            
+            return responseDto;
             
         }
         catch (Exception e)
         {
             throw new Exception(e.Message);
         }
-
-        return matches;
     }
 }

@@ -10,7 +10,7 @@ public interface IRepositoryBase<T>
         int pageSize,
         params Expression<Func<T, object>>[]? includes);
 
-    Task<int> CountByConditionAsync(Expression<Func<T, bool>> condition);
+    Task<int> CountByConditionAsync(Expression<Func<T, bool>>? condition);
 
     Task<List<TResult>> FindByConditionAsync<TResult>(
         Expression<Func<T, bool>> expression,
