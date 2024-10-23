@@ -1,4 +1,5 @@
-﻿using AutoMapper;
+﻿using System.Linq.Expressions;
+using AutoMapper;
 using Entity;
 using MatchManagement.DTOs;
 using MatchManagement.DTOs.MatchDto;
@@ -26,52 +27,42 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
             
             if (_validate.IsEmptyOrWhiteSpace(filterField) || _validate.IsEmptyOrWhiteSpace(filterValue))
             {
+                Expression<Func<Match, bool>> basePredicate = m => true;
+                
                 if (!_validate.IsEmptyOrWhiteSpace(subject) && subjectId != null)
                 {
-                    matches = await _unitOfWork.MatchRepo.FindByConditionWithPagingAsync( m => m.CreateBy == subjectId,
-                        m => 
-                        new MatchViewsDto(
-                            m.MatchId, 
-                            m.Sport.SportName, 
-                            m.MatchName, 
-                            m.CreateByNavigation.UserName,
-                            m.MatchType,
-                            m.TeamSize,
-                            m.MinLevel,
-                            m.MaxLevel,
-                            m.Date,
-                            m.TimeStart,
-                            m.TimeEnd,
-                            m.Location!,
-                            m.Status ?? 0
-                        ), pageNumber, pageSize);
-                }
-                else
-                {
-                    matches = await _unitOfWork.MatchRepo.FindAllAsync(m => 
-                        new MatchViewsDto(
-                            m.MatchId, 
-                            m.Sport.SportName, 
-                            m.MatchName, 
-                            m.CreateByNavigation.UserName,
-                            m.MatchType,
-                            m.TeamSize,
-                            m.MinLevel,
-                            m.MaxLevel,
-                            m.Date,
-                            m.TimeStart,
-                            m.TimeEnd,
-                            m.Location!,
-                            m.Status ?? 0
-                        ), pageNumber, pageSize);
+                    basePredicate = m => m.CreateBy == subjectId;
                 }
 
-                total = matches.Count;
+                matches = await _unitOfWork.MatchRepo.FindByConditionWithPagingAsync(
+                    basePredicate,
+                    m => 
+                        new MatchViewsDto(
+                            m.MatchId, 
+                            m.Sport.SportName, 
+                            m.MatchName, 
+                            m.CreateByNavigation.UserName,
+                            m.MatchType,
+                            m.TeamSize,
+                            m.MinLevel,
+                            m.MaxLevel,
+                            m.Date,
+                            m.TimeStart,
+                            m.TimeEnd,
+                            m.Location!,
+                            m.Status ?? 0
+                        ), pageNumber, pageSize);
+
+                total = await _unitOfWork.MatchRepo.CountByConditionAsync(basePredicate);
+
             }
             else
             {
-                matches = await _unitOfWork.MatchRepo.GetMatches(filterField!, filterValue!, pageNumber, pageSize);
-                total = matches.Count;
+                var responseList = await _unitOfWork.MatchRepo.GetMatches(filterField!, filterValue!, pageNumber, pageSize);
+
+                matches = responseList.Data;
+
+                total = responseList.TotalCount;
             }
             
             matches = Sort(matches, sortField, sortValue);
@@ -90,7 +81,7 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
 
     public async Task<ResponseDto> EnrollInMatch(int userId, int matchId)
     {
-        var responseDto = new ResponseDto(null, "Enroll successfully", true, StatusCodes.Status302Found);
+        var responseDto = new ResponseDto(null, "", true, StatusCodes.Status302Found);
         try
         {
             //check user in database
@@ -115,8 +106,8 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
                 m.Gender,
                 m.MaxAge,
                 m.MinAge,
-                m.MaxLevel,
-                m.MinLevel
+                m.MinLevel,
+                m.MaxLevel
             ));
             
             if (matchEnroll == null)
@@ -127,26 +118,30 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
                 return responseDto;
             }
 
-            if (matchEnroll.Mode == 1)
+            switch (matchEnroll.Mode)
             {
-                var check = _unitOfWork.FriendShipRepo.AnyAsync(fs => 
-                                                                      fs.User1Id == userId && 
-                                                                      fs.User2Id == matchEnroll.UserId ||
-                                                                      fs.User1Id == matchEnroll.UserId && 
-                                                                      fs.User2Id == userId)
-                    
-                    .Result;
-                if (!check)
+                case 1:
                 {
-                    responseDto.Message = "This match is only for friends of the match owner.";
-                    responseDto.StatusCode = StatusCodes.Status400BadRequest;
-                    responseDto.IsSucceed = false;
-                    return responseDto;
+                    var check = _unitOfWork.FriendShipRepo.AnyAsync(fs => 
+                            fs.User1Id == userId && 
+                            fs.User2Id == matchEnroll.UserId ||
+                            fs.User1Id == matchEnroll.UserId && 
+                            fs.User2Id == userId)
+                    
+                        .Result;
+                    if (!check)
+                    {
+                        responseDto.Message = "This match is only for friends of the match owner.";
+                        responseDto.StatusCode = StatusCodes.Status400BadRequest;
+                        responseDto.IsSucceed = false;
+                        return responseDto;
+                    }
+
+                    break;
                 }
-                
-            }else if (matchEnroll.Mode == 2)
-            {
-                
+                case 2:
+                    
+                    break;
             }
 
             //overall validation
@@ -156,6 +151,8 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
 
             //enroll user into match
             await _unitOfWork.UserMatchRepo.CreateAsync(new UserMatch(){UserId = userId, MatchId = matchId, Status = 0});
+
+            responseDto.Message = "Enroll successfully";
         }
         catch (Exception e)
         {
@@ -276,6 +273,8 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
                 responseDto.Message = "There are no matches with this id";
                 responseDto.StatusCode = StatusCodes.Status404NotFound;
             }
+
+            responseDto.Result = _mapper.Map<MatchViewDto>(match);
         }
         catch (Exception e)
         {
@@ -347,7 +346,7 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
                 return responseDto;
             }
 
-            match = _mapper.Map<Match>(matchUpdateDto);
+            match = _mapper.Map(matchUpdateDto, match);
 
             await _unitOfWork.MatchRepo.UpdateAsync(match);
         }
@@ -432,7 +431,7 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
                     return response;
                 }
                 
-                if (matchEnrollDto.MinLevel > level.Value )
+                if (matchEnrollDto.MinLevel >= level.Value )
                 {
                     response.Message = "User level is not suitable";
                     response.StatusCode = StatusCodes.Status400BadRequest;
@@ -571,7 +570,7 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
                 m => m.CreateBy);
 
             //check overlap matches
-            var checkOverlap = await IsOverlap(userId, matchUpdateDto.Date, matchUpdateDto.TimeStart,
+            var checkOverlap = await IsOverlapForUpdate(id, userId, matchUpdateDto.Date, matchUpdateDto.TimeStart,
                 matchUpdateDto.TimeEnd);
             
             if (checkOverlap)
@@ -597,6 +596,16 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
     {
         return await _unitOfWork.UserMatchRepo.AnyAsync(
             um => um.UserId == userId &&
+                  um.Match.Date == date &&
+                  um.Match.TimeStart < newTimeEnd &&
+                  um.Match.TimeEnd > newTimeStart);
+    }
+    
+    private async Task<bool> IsOverlapForUpdate(int id, int userId, DateOnly date, TimeOnly newTimeStart, TimeOnly newTimeEnd)
+    {
+        return await _unitOfWork.UserMatchRepo.AnyAsync(
+            um => um.MatchId != id &&
+                  um.UserId == userId &&
                   um.Match.Date == date &&
                   um.Match.TimeStart < newTimeEnd &&
                   um.Match.TimeEnd > newTimeStart);

@@ -1,4 +1,5 @@
 ﻿using System.Linq.Expressions;
+using BookingManagement.DTOs;
 using BookingManagement.DTOs.BookingDto.ViewDto;
 using Entity;
 
@@ -6,7 +7,7 @@ namespace BookingManagement.Repository.Impl;
 
 public class BookingRepo(RallyWaveContext repositoryContext) : RepositoryBase<Booking>(repositoryContext), IBookingRepo
 {
-    public async Task<List<BookingsViewDto>> GetBookings(string? subject, int? subjectId, string filterField, string filterValue, int pageNumber, int pageSize)
+    public async Task<ResponseListDto<BookingsViewDto>> GetBookings(string? subject, int? subjectId, string filterField, string filterValue, int pageNumber, int pageSize)
     {
         try
         {
@@ -14,8 +15,6 @@ public class BookingRepo(RallyWaveContext repositoryContext) : RepositoryBase<Bo
             
             if (!string.IsNullOrWhiteSpace(subject)  && subjectId != null)
             {
-
-                // Add subject-based filtering
                 basePredicate = subject.ToLower() switch
                 {
                     "user" => b => b.UserId.HasValue && b.UserId.Value == subjectId.Value,
@@ -92,13 +91,17 @@ public class BookingRepo(RallyWaveContext repositoryContext) : RepositoryBase<Bo
                     }
                     break;
             }
+
+            var total = await CountByConditionAsync(basePredicate);
             
             var bookings = await FindByConditionWithPagingAsync(
                 basePredicate,
                 b => new BookingsViewDto(b.BookingId, b.Date, b.TimeStart, b.TimeEnd, b.Cost, b.Status),
                 pageSize, pageSize);
 
-            return bookings;
+            var responseDto = new ResponseListDto<BookingsViewDto>(bookings, total);
+
+            return responseDto;
         }
         catch (Exception e)
         {

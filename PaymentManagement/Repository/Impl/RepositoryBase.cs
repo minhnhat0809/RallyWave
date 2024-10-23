@@ -2,13 +2,13 @@
 using Entity;
 using Microsoft.EntityFrameworkCore;
 
-namespace MatchManagement.Repository.Impl;
+namespace PaymentManagement.Repository.Impl;
 
 public class RepositoryBase<T>(RallyWaveContext repositoryContext) : IRepositoryBase<T>
     where T : class
 {
     public async Task<List<TResult>> FindAllAsync<TResult>(
-        Expression<Func<T, TResult>> selector, 
+        Expression<Func<T, TResult>> selector,
         int pageNumber, 
         int pageSize,
         params Expression<Func<T, object>>[]? includes)
@@ -26,14 +26,9 @@ public class RepositoryBase<T>(RallyWaveContext repositoryContext) : IRepository
             .Select(selector)
             .ToListAsync();
     }
-
-    public async Task<int> CountByConditionAsync(Expression<Func<T, bool>>? condition = null)
+    
+    public async Task<int> CountByConditionAsync(Expression<Func<T, bool>> condition)
     {
-        if (condition == null)
-        {
-            return await repositoryContext.Set<T>().CountAsync();
-        }
-        
         return await repositoryContext.Set<T>().CountAsync(condition);
     }
     
@@ -74,7 +69,6 @@ public class RepositoryBase<T>(RallyWaveContext repositoryContext) : IRepository
     }
 
 
-
     
     public async Task<TResult?> GetByConditionAsync<TResult>(
         Expression<Func<T, bool>> condition,
@@ -92,13 +86,12 @@ public class RepositoryBase<T>(RallyWaveContext repositoryContext) : IRepository
             .Select(selector)
             .FirstOrDefaultAsync();
     }
-
     
     public async Task<bool> AnyAsync(Expression<Func<T, bool>> predicate)
     {
         return await repositoryContext.Set<T>().AnyAsync(predicate);
     }
-
+    
 
     public async Task<bool> CreateAsync(T entity)
     {
