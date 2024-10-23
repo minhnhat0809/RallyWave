@@ -7,51 +7,51 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Entity;
 
-namespace ChattingManagement.Controller
+namespace UserManagement.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class MessageController : ControllerBase
+    public class TeamController : ControllerBase
     {
         private readonly RallywaveContext _context;
 
-        public MessageController(RallywaveContext context)
+        public TeamController(RallywaveContext context)
         {
             _context = context;
         }
 
-        // GET: api/Message
+        // GET: api/Team
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Message>>> GetMessages()
+        public async Task<ActionResult<IEnumerable<Team>>> GetTeams()
         {
-            return await _context.Messages.ToListAsync();
+            return await _context.Teams.ToListAsync();
         }
 
-        // GET: api/Message/5
+        // GET: api/Team/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Message>> GetMessage(int id)
+        public async Task<ActionResult<Team>> GetTeam(int id)
         {
-            var message = await _context.Messages.FindAsync(id);
+            var team = await _context.Teams.FindAsync(id);
 
-            if (message == null)
+            if (team == null)
             {
                 return NotFound();
             }
 
-            return message;
+            return team;
         }
 
-        // PUT: api/Message/5
+        // PUT: api/Team/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutMessage(int id, Message message)
+        public async Task<IActionResult> PutTeam(int id, Team team)
         {
-            if (id != message.MessageId)
+            if (id != team.TeamId)
             {
                 return BadRequest();
             }
 
-            _context.Entry(message).State = EntityState.Modified;
+            _context.Entry(team).State = EntityState.Modified;
 
             try
             {
@@ -59,7 +59,7 @@ namespace ChattingManagement.Controller
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!MessageExists(id))
+                if (!TeamExists(id))
                 {
                     return NotFound();
                 }
@@ -72,36 +72,36 @@ namespace ChattingManagement.Controller
             return NoContent();
         }
 
-        // POST: api/Message
+        // POST: api/Team
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Message>> PostMessage(Message message)
+        public async Task<ActionResult<Team>> PostTeam(Team team)
         {
-            _context.Messages.Add(message);
+            _context.Teams.Add(team);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetMessage", new { id = message.MessageId }, message);
+            return CreatedAtAction("GetTeam", new { id = team.TeamId }, team);
         }
 
-        // DELETE: api/Message/5
+        // DELETE: api/Team/5
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteMessage(int id)
+        public async Task<IActionResult> DeleteTeam(int id)
         {
-            var message = await _context.Messages.FindAsync(id);
-            if (message == null)
+            var team = await _context.Teams.FindAsync(id);
+            if (team == null)
             {
                 return NotFound();
             }
 
-            _context.Messages.Remove(message);
+            _context.Teams.Remove(team);
             await _context.SaveChangesAsync();
 
             return NoContent();
         }
 
-        private bool MessageExists(int id)
+        private bool TeamExists(int id)
         {
-            return _context.Messages.Any(e => e.MessageId == id);
+            return _context.Teams.Any(e => e.TeamId == id);
         }
     }
 }
