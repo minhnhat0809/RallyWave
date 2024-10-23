@@ -10,17 +10,17 @@ namespace UserManagement.Service.Impl;
 
 public class UserService : IUserService
     {
-        private readonly IUnitOfWork unitOfWork;
-        private readonly IMapper mapper;
-        private readonly Validate validate;
-        private readonly ListExtensions listExtensions;
+        private readonly IUnitOfWork _unitOfWork;
+        private readonly IMapper _mapper;
+        private readonly Validate _validate;
+        private readonly ListExtensions _listExtensions;
 
         public UserService(IUnitOfWork unitOfWork, IMapper mapper, Validate validate, ListExtensions listExtensions)
         {
-            this.unitOfWork = unitOfWork;
-            this.mapper = mapper;
-            this.validate = validate;
-            this.listExtensions = listExtensions;
+            _unitOfWork = unitOfWork;
+            _mapper = mapper;
+            _validate = validate;
+            _listExtensions = listExtensions;
         }
 
         public async Task<ResponseDto> GetUser(string? filterField, string? filterValue, string? sortField, string sortValue, int pageNumber, int pageSize)
@@ -30,9 +30,9 @@ public class UserService : IUserService
             {
                 List<UserViewDto>? users;
 
-                if (validate.IsEmptyOrWhiteSpace(filterField) || validate.IsEmptyOrWhiteSpace(filterValue))
+                if (_validate.IsEmptyOrWhiteSpace(filterField) || _validate.IsEmptyOrWhiteSpace(filterValue))
                 {
-                    users = await unitOfWork.UserRepo.FindAllAsync(
+                    users = await _unitOfWork.UserRepo.FindAllAsync(
                         u => new UserViewDto(
                             u.UserId,
                             u.UserName,
@@ -48,12 +48,12 @@ public class UserService : IUserService
                 }
                 else
                 {
-                    var userlist = await unitOfWork.UserRepo.GetUsers(filterField, filterValue);
-                    users = mapper.Map<List<UserViewDto>>(userlist);
+                    var userlist = await _unitOfWork.UserRepo.GetUsers(filterField, filterValue);
+                    users = _mapper.Map<List<UserViewDto>>(userlist);
                 }
 
                 users = Sort(users, sortField, sortValue);
-                users = listExtensions.Paging(users, pageNumber, pageSize);
+                users = _listExtensions.Paging(users, pageNumber, pageSize);
 
                 responseDto.Result = users;
                 responseDto.Message = "Get successfully!";
@@ -78,23 +78,23 @@ public class UserService : IUserService
             users = sortField.ToLower() switch
             {
                 "username" => sortValue.Equals("asc", StringComparison.OrdinalIgnoreCase)
-                    ? listExtensions.Sort(users, u => u.UserName, true)
-                    : listExtensions.Sort(users, u => u.UserName, false),
+                    ? _listExtensions.Sort(users, u => u.UserName, true)
+                    : _listExtensions.Sort(users, u => u.UserName, false),
                 "email" => sortValue.Equals("asc", StringComparison.OrdinalIgnoreCase)
-                    ? listExtensions.Sort(users, u => u.Email, true)
-                    : listExtensions.Sort(users, u => u.Email, false),
+                    ? _listExtensions.Sort(users, u => u.Email, true)
+                    : _listExtensions.Sort(users, u => u.Email, false),
                 "phonenumber" => sortValue.Equals("asc", StringComparison.OrdinalIgnoreCase)
-                    ? listExtensions.Sort(users, u => u.PhoneNumber, true)
-                    : listExtensions.Sort(users, u => u.PhoneNumber, false),
+                    ? _listExtensions.Sort(users, u => u.PhoneNumber, true)
+                    : _listExtensions.Sort(users, u => u.PhoneNumber, false),
                 "gender" => sortValue.Equals("asc", StringComparison.OrdinalIgnoreCase)
-                    ? listExtensions.Sort(users, u => u.Gender, true)
-                    : listExtensions.Sort(users, u => u.Gender, false),
+                    ? _listExtensions.Sort(users, u => u.Gender, true)
+                    : _listExtensions.Sort(users, u => u.Gender, false),
                 "dob" => sortValue.Equals("asc", StringComparison.OrdinalIgnoreCase)
-                    ? listExtensions.Sort(users, u => u.Dob, true)
-                    : listExtensions.Sort(users, u => u.Dob, false),
+                    ? _listExtensions.Sort(users, u => u.Dob, true)
+                    : _listExtensions.Sort(users, u => u.Dob, false),
                 "status" => sortValue.Equals("asc", StringComparison.OrdinalIgnoreCase)
-                    ? listExtensions.Sort(users, u => u.Status, true)
-                    : listExtensions.Sort(users, u => u.Status, false),
+                    ? _listExtensions.Sort(users, u => u.Status, true)
+                    : _listExtensions.Sort(users, u => u.Status, false),
                 _ => users
             };
 
@@ -108,7 +108,7 @@ public class UserService : IUserService
             var responseDto = new ResponseDto(null, "", true, StatusCodes.Status200OK);
             try
             {
-                var user = await unitOfWork.UserRepo.GetUserById(userId);
+                var user = await _unitOfWork.UserRepo.GetUserById(userId);
                 if (user == null)
                 {
                     responseDto.Message = "There are no users with this id";
@@ -141,9 +141,9 @@ public class UserService : IUserService
                     return responseDto;
                 }
 
-                var user = mapper.Map<User>(userCreateDto);
+                var user = _mapper.Map<User>(userCreateDto);
 
-                await unitOfWork.UserRepo.CreateUser(user);
+                await _unitOfWork.UserRepo.CreateUser(user);
 
                 responseDto.Message = "Create successfully!";
             }
@@ -162,7 +162,7 @@ public class UserService : IUserService
             var responseDto = new ResponseDto(null, "", true, 200);
             try
             {
-                var user = await unitOfWork.UserRepo.GetUserById(id);
+                var user = await _unitOfWork.UserRepo.GetUserById(id);
                 if (user == null)
                 {
                     responseDto.IsSucceed = false;
@@ -178,10 +178,10 @@ public class UserService : IUserService
                     return responseDto;
                 }
 
-                var userModel = mapper.Map<User>(userUpdateDto);
+                var userModel = _mapper.Map<User>(userUpdateDto);
                 userModel.UserId = user.UserId;
             
-                responseDto.Result = await unitOfWork.UserRepo.UpdateUser(userModel);
+                responseDto.Result = await _unitOfWork.UserRepo.UpdateUser(userModel);
                 responseDto.Message = "Update successfully!";
 
             }
@@ -200,7 +200,7 @@ public class UserService : IUserService
             var responseDto = new ResponseDto(null, "", true, 200);
             try
             {
-                var user = await unitOfWork.UserRepo.GetUserById(id);
+                var user = await _unitOfWork.UserRepo.GetUserById(id);
                 if (user == null)
                 {
                     responseDto.IsSucceed = false;
@@ -209,8 +209,8 @@ public class UserService : IUserService
                 }
                 else
                 {
-                    User userModel = mapper.Map<User>(user);
-                    user = await unitOfWork.UserRepo.DeleteUser(userModel);
+                    User userModel = _mapper.Map<User>(user);
+                    user = await _unitOfWork.UserRepo.DeleteUser(userModel);
                     responseDto.Result = user;
                     responseDto.Message = "Delete successfully!";
                 }
@@ -231,7 +231,7 @@ public class UserService : IUserService
 
             // Add your validation logic here
             // Example: Check if user already exists
-            var existingUser = await unitOfWork.UserRepo.GetUsers("email",userCreateDto.Email);
+            var existingUser = await _unitOfWork.UserRepo.GetUsers("email",userCreateDto.Email);
             if (existingUser != null)
             {
                 response.IsSucceed = false;
@@ -249,7 +249,7 @@ public class UserService : IUserService
 
             // Add your validation logic here
             // Example: Check if user exists
-            var existingUser = await unitOfWork.UserRepo.GetUserById(id);
+            var existingUser = await _unitOfWork.UserRepo.GetUserById(id);
             if (existingUser == null)
             {
                 response.IsSucceed = false;

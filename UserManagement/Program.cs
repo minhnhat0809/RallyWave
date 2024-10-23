@@ -20,10 +20,13 @@ builder.Services.AddAutoMapper(typeof(MapperConfig).Assembly);
 
 //service
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<ITeamService, TeamService>();
 
 //repo
 builder.Services.AddScoped<IUserRepo, UserRepo>();
+builder.Services.AddScoped<ITeamRepository, TeamRepository>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
 
 //utilities
 builder.Services.AddScoped(typeof(Validate));

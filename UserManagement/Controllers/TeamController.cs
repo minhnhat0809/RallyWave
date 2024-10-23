@@ -1,11 +1,8 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Entity;
+using UserManagement.DTOs;
+using UserManagement.DTOs.TeamDto;
+using UserManagement.Service;
+using UserManagement.Service.Impl;
 
 namespace UserManagement.Controllers
 {
@@ -13,95 +10,83 @@ namespace UserManagement.Controllers
     [ApiController]
     public class TeamController : ControllerBase
     {
-        private readonly RallywaveContext _context;
+        private readonly ITeamService _teamService;
 
-        public TeamController(RallywaveContext context)
+        public TeamController(ITeamService teamService)
         {
-            _context = context;
+            _teamService = teamService;
         }
 
-        // GET: api/Team
+        /// <summary>
+        /// Gets a list of teams with optional filtering and sorting.
+        /// </summary>
+        /// <param name="filterField">Field to filter by.</param>
+        /// <param name="filterValue">Value to filter by.</param>
+        /// <param name="sortField">Field to sort by.</param>
+        /// <param name="sortValue">Sort order (asc or desc).</param>
+        /// <param name="pageNumber">Page number for pagination.</param>
+        /// <param name="pageSize">Number of teams per page.</param>
+        /// <returns>A ResponseDto containing the list of teams.</returns>
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Team>>> GetTeams()
+        public async Task<ActionResult<ResponseDto>> GetTeams(
+            [FromQuery] string? filterField,
+            [FromQuery] string? filterValue,
+            [FromQuery] string? sortField,
+            [FromQuery] string sortValue = "asc",
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 10)
         {
-            return await _context.Teams.ToListAsync();
+            var response = await _teamService.GetTeam(filterField, filterValue, sortField, sortValue, pageNumber, pageSize);
+            return Ok(response);
         }
 
-        // GET: api/Team/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Team>> GetTeam(int id)
+        /// <summary>
+        /// Gets a team by their ID.
+        /// </summary>
+        /// <param name="teamId">The ID of the team.</param>
+        /// <returns>A ResponseDto containing the team data.</returns>
+        [HttpGet("{teamId:int}")]
+        public async Task<ActionResult<ResponseDto>> GetTeamById(int teamId)
         {
-            var team = await _context.Teams.FindAsync(id);
-
-            if (team == null)
-            {
-                return NotFound();
-            }
-
-            return team;
+            var response = await _teamService.GetTeamById(teamId);
+            return response.IsSucceed ? Ok(response) : BadRequest(response);
         }
 
-        // PUT: api/Team/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutTeam(int id, Team team)
-        {
-            if (id != team.TeamId)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(team).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!TeamExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return NoContent();
-        }
-
-        // POST: api/Team
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        /// <summary>
+        /// Creates a new team.
+        /// </summary>
+        /// <param name="teamCreateDto">The team data to create.</param>
+        /// <returns>A ResponseDto indicating the result of the operation.</returns>
         [HttpPost]
-        public async Task<ActionResult<Team>> PostTeam(Team team)
+        public async Task<ActionResult<ResponseDto>> CreateTeam([FromBody] TeamCreateDto teamCreateDto)
         {
-            _context.Teams.Add(team);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetTeam", new { id = team.TeamId }, team);
+            var response = await _teamService.CreateTeam(teamCreateDto);
+            return response.IsSucceed ? CreatedAtAction(nameof(GetTeamById), new { teamId = response.Result?.ToString() }, response) : BadRequest(response);
         }
 
-        // DELETE: api/Team/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteTeam(int id)
+        /// <summary>
+        /// Updates an existing team.
+        /// </summary>
+        /// <param name="id">The ID of the team to update.</param>
+        /// <param name="teamUpdateDto">The updated team data.</param>
+        /// <returns>A ResponseDto indicating the result of the operation.</returns>
+        [HttpPut("{id:int}")]
+        public async Task<ActionResult<ResponseDto>> UpdateTeam(int id, [FromBody] TeamUpdateDto teamUpdateDto)
         {
-            var team = await _context.Teams.FindAsync(id);
-            if (team == null)
-            {
-                return NotFound();
-            }
-
-            _context.Teams.Remove(team);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
+            var response = await _teamService.UpdateTeam(id, teamUpdateDto);
+            return response.IsSucceed ? Ok(response) : BadRequest(response);
         }
 
-        private bool TeamExists(int id)
+        /// <summary>
+        /// Deletes a team by their ID.
+        /// </summary>
+        /// <param name="id">The ID of the team to delete.</param>
+        /// <returns>A ResponseDto indicating the result of the operation.</returns>
+        [HttpDelete("{id:int}")]
+        public async Task<ActionResult<ResponseDto>> DeleteTeam(int id)
         {
-            return _context.Teams.Any(e => e.TeamId == id);
+            var response = await _teamService.DeleteTeam(id);
+            return response.IsSucceed ? Ok(response) : BadRequest(response);
         }
     }
 }

@@ -13,9 +13,9 @@ namespace ChattingManagement.Controller
     [ApiController]
     public class ConservationController : ControllerBase
     {
-        private readonly RallywaveContext _context;
+        private readonly RallyWaveContext _context;
 
-        public ConservationController(RallywaveContext context)
+        public ConservationController(RallyWaveContext context)
         {
             _context = context;
         }

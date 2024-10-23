@@ -13,9 +13,9 @@ namespace ChattingManagement.Controller
     [ApiController]
     public class MessageController : ControllerBase
     {
-        private readonly RallywaveContext _context;
+        private readonly RallyWaveContext _context;
 
-        public MessageController(RallywaveContext context)
+        public MessageController(RallyWaveContext context)
         {
             _context = context;
         }

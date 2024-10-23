@@ -18,7 +18,7 @@ public interface ICourtOwnerRepository : IRepositoryBase<CourtOwner>
     Task<CourtOwner> DeleteCourtOwner(CourtOwner courtOwner);
     public Task<CourtOwner?> GetCourtOwnerByPropertyAndValue(string property, string value);
 }
-public class CourtOwnerRepository(RallywaveContext repositoryContext) : RepositoryBase<CourtOwner>(repositoryContext), ICourtOwnerRepository
+public class CourtOwnerRepository(RallyWaveContext repositoryContext) : RepositoryBase<CourtOwner>(repositoryContext), ICourtOwnerRepository
 {
      // Get a list of court owners with optional filtering based on field and value
     public async Task<List<CourtOwner>> GetUsers(string? filterField, string? filterValue)

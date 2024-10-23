@@ -1,7 +1,11 @@
 ﻿using AutoMapper;
 using Entity;
+using UserManagement.DTOs.ConservationDto;
+using UserManagement.DTOs.SportDto;
+using UserManagement.DTOs.TeamDto;
 using UserManagement.DTOs.UserDto;
 using UserManagement.DTOs.UserDto.ViewDto;
+using UserManagement.DTOs.UserTeamDto;
 
 namespace UserManagement;
 
@@ -14,5 +18,15 @@ public class MapperConfig : Profile
 
         CreateMap<UserCreateDto, User>();
         CreateMap<UserUpdateDto, User>();
+        
+        CreateMap<UserTeam, UserTeamViewDto>().ReverseMap();
+        
+        CreateMap<Team, TeamViewDto>().ReverseMap();
+        CreateMap<TeamCreateDto, Team>();
+        CreateMap<TeamUpdateDto, Team>();
+        
+        
+        CreateMap<Conservation, ConservationViewDto>().ReverseMap();
+        CreateMap<Sport, SportViewDto>().ReverseMap();
     }
 }
