@@ -1,20 +1,12 @@
-using System.Security.Claims;
-using Entity;
-using FirebaseAdmin.Auth;
 using Identity.API.BusinessObjects;
 using Identity.API.BusinessObjects.LoginObjects;
 using Identity.API.Services;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication.Google;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using UserManagement.DTOs.UserDto;
 
 namespace Identity.API.Controllers
 {
     [ApiController]
-    [Route("api/login")]
+    [Route("api/auth")]
     public class LoginController : ControllerBase
     {
         private readonly IAuthService _authService;
@@ -24,7 +16,7 @@ namespace Identity.API.Controllers
             _authService = authService;
         }
         
-        [HttpPost("google")]
+        [HttpPost("login-google")]
         public async Task<ActionResult<ResponseModel>> LoginByGoogle(RequestGoogleLoginModel request)
         {
             try
@@ -80,6 +72,20 @@ namespace Identity.API.Controllers
             }
         }
         
+        [HttpPost("forget-password")]
+        public async Task<ActionResult<ResponseModel>> ForgetPassword(string email)
+        {
+            try
+            {
+                var result = await _authService.ForgetPassword(email);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return new ResponseModel(null, ex.Message, false, StatusCodes.Status500InternalServerError);
+            }
+        }
+        
         [HttpPost("verify-account")]
         public async Task<ActionResult<ResponseModel>> VerifyAccount(RequestVerifyAccountModel request)
         {
@@ -93,7 +99,20 @@ namespace Identity.API.Controllers
                 return new ResponseModel(null, ex.Message, false, StatusCodes.Status500InternalServerError);
             }
         }
-        [HttpPost("verify-password-reset")]
+        [HttpPost("resend-verify-account")]
+        public async Task<ActionResult<ResponseModel>> ResendVerificationEmailAccount(RequestLoginModel request)
+        {
+            try
+            {
+                var result = await _authService.ResendVerificationEmailAccount(request);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return new ResponseModel(null, ex.Message, false, StatusCodes.Status500InternalServerError);
+            }
+        }
+        [HttpPost("verify-password")]
         public async Task<ActionResult<ResponseModel>> VerifyPasswordReset(RequestVerifyModel request)
         {
             try
@@ -106,6 +125,21 @@ namespace Identity.API.Controllers
                 return new ResponseModel(null, ex.Message, false, StatusCodes.Status500InternalServerError);
             }
         }
+        
+        [HttpPost("profile")]
+        public async Task<ActionResult<ResponseModel>> UpdateProfile(ProfileModel request)
+        {
+            try
+            {
+                var result = await _authService.UpdateProfile(request);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return new ResponseModel(null, ex.Message, false, StatusCodes.Status500InternalServerError);
+            }
+        }
+        
     }
 
 }

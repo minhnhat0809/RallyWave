@@ -2,8 +2,7 @@
 using Entity;
 using Identity.API.BusinessObjects.CourtOwnerModel;
 using Identity.API.BusinessObjects.UserViewModel;
-using UserManagement.DTOs.UserDto;
-using UserManagement.DTOs.UserDto.ViewDto;
+
 
 namespace Identity.API;
 
@@ -15,8 +14,9 @@ public class MapperConfig : Profile
          
         CreateMap<UserCreateDto, User>();
         CreateMap<UserUpdateDto, User>();
-
+        
         CreateMap<CourtOwner, CourtOwnerViewDto>().ReverseMap();
+        CreateMap<CourtOwnerUpdateDto, CourtOwner>();
         
     }
 }

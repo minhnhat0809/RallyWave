@@ -1,6 +1,6 @@
-﻿namespace Identity.API.BusinessObjects.UserViewModel;
+namespace Identity.API.BusinessObjects.LoginObjects;
 
-public class UserUpdateDto
+public class ProfileModel
 {
     public string UserName { get; set; } = null!;
 
@@ -17,5 +17,4 @@ public class UserUpdateDto
     public string Province { get; set; } = null!;
 
     public string? Avatar { get; set; }
-    
 }
