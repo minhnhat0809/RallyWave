@@ -11,6 +11,8 @@ namespace MatchManagement.Controller
     {
         [HttpGet]
         public async Task<ResponseDto> GetMatches(
+            [FromQuery] string? subject,
+            [FromQuery] int? subjectId,
             [FromQuery] string? filterField,
             [FromQuery] string? filterValue,
             [FromQuery] string? sortField,
@@ -19,7 +21,7 @@ namespace MatchManagement.Controller
             [FromQuery] int pageSize = 5
             )
         {
-            var response = await matchService.GetMatches(filterField, filterValue, sortField, sortValue, pageNumber, pageSize);
+            var response = await matchService.GetMatches(subject, subjectId, filterField, filterValue, sortField, sortValue, pageNumber, pageSize);
             
             return response;
         }
