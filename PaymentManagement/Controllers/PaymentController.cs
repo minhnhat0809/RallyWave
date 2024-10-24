@@ -16,7 +16,7 @@ namespace PaymentManagement.Controllers
         {
             var response = await _paymentService.ProcessPayment(paymentCreateDto);
             
-            return null;
+            return response;
         }
     }
 }

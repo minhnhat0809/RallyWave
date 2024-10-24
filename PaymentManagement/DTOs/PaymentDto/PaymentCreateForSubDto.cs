@@ -9,4 +9,6 @@ public class PaymentCreateForSubDto()
     
     [Required]
     public int SubId { get; set; }
+
+    [Required] public string UserType { get; set; } = null!;
 }
