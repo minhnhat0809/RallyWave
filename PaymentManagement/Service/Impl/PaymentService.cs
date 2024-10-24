@@ -92,10 +92,15 @@ public class PaymentService(IMapper mapper, IUnitOfWork unitOfWork, GetSecret ge
         var response = new ResponseDto(null, "", true, StatusCodes.Status200OK);
         try
         {
-            //get subscription in database
+            //get subscription 
             var sub = await _unitOfWork.SubscriptionRepo.GetByConditionAsync(
                 s => s.SubId == paymentCreateDto.PaymentCreateForSub!.SubId,
                 s => s);
+            
+            //get user
+            var checkUser =
+                await _unitOfWork.UserRepo.GetByConditionAsync(
+                    u => u.UserId == paymentCreateDto.PaymentCreateForSub!.UserId, u => u);
 
             if (sub == null)
             {
@@ -104,11 +109,6 @@ public class PaymentService(IMapper mapper, IUnitOfWork unitOfWork, GetSecret ge
                 response.StatusCode = StatusCodes.Status404NotFound;
                 return response;
             }
-        
-            //check user in database
-            var checkUser =
-                await _unitOfWork.UserRepo.GetByConditionAsync(
-                    u => u.UserId == paymentCreateDto.PaymentCreateForSub!.UserId, u => u);
 
             if (checkUser == null)
             {
@@ -122,7 +122,7 @@ public class PaymentService(IMapper mapper, IUnitOfWork unitOfWork, GetSecret ge
 
             var userId = paymentCreateDto.PaymentCreateForSub!.UserId;
 
-            if (!type.Equals("cash") || !type.Equals("banking"))
+            if (!type.Equals("cash") && !type.Equals("banking"))
             {
                 type = "banking";
             }
@@ -137,36 +137,49 @@ public class PaymentService(IMapper mapper, IUnitOfWork unitOfWork, GetSecret ge
             };
 
             await _unitOfWork.PaymentRepo.CreateAsync(paymentDetail);
-        
-            var payOsCredentials =  await _getSecret.GetPayOsCredentials();
 
-            if (payOsCredentials == null)
+            try
             {
-                response.Message = "There is an error in processing payment with pay-os";
-                response.IsSucceed = false;
+                //get pay-os credentials
+                var payOsCredentials =  await _getSecret.GetPayOsCredentials();
+                
+                if (payOsCredentials == null)
+                {
+                    response.Message = "There is an error in processing payment with pay-os";
+                    response.IsSucceed = false;
+                    response.StatusCode = StatusCodes.Status500InternalServerError;
+                    return response;
+                }
+
+                var payOs = new PayOS(payOsCredentials.ClientId, payOsCredentials.ApiKey, payOsCredentials.CheckSumKey);
+
+                //add item 
+                var item = new ItemData(sub.SubName, 1, (int) sub.Price);
+
+                var items = new List<ItemData> { item };
+
+                //start create payment
+                var paymentData = new PaymentData(paymentDetail.PaymentId, 1000, "Dang ki premium",
+                    items, paymentCreateDto.SuccessUrl, paymentCreateDto.CancelUrl, null, checkUser.UserName, 
+                    checkUser.Email, checkUser.PhoneNumber.ToString());
+                
+                var createPayment = await payOs.createPaymentLink(paymentData);
+            
+                //update sub in table user
+                checkUser.SubId = paymentCreateDto.PaymentCreateForSub.SubId;
+                await _unitOfWork.UserRepo.UpdateAsync(checkUser);
+
+                response.Message = createPayment.status;
+            }
+            catch (Exception e)
+            {
+                await _unitOfWork.PaymentRepo.DeletePayment(paymentDetail);
+                
+                response.Message = e.Message;
                 response.StatusCode = StatusCodes.Status500InternalServerError;
+                response.IsSucceed = false;
                 return response;
             }
-
-            var payOs = new PayOS(payOsCredentials.ClientId, payOsCredentials.ApiKey, payOsCredentials.CheckSumKey);
-
-            //add item 
-            var item = new ItemData(sub.SubName, 1, (int) sub.Price);
-
-            var items = new List<ItemData> { item };
-
-            //start create payment
-            var paymentData = new PaymentData(paymentDetail.PaymentId, 1000, "Dang ki thanh vien cao cap",
-                items, paymentCreateDto.SuccessUrl, paymentCreateDto.CancelUrl, null, checkUser.UserName, 
-                checkUser.Email, checkUser.PhoneNumber.ToString());
-                
-            var createPayment = await payOs.createPaymentLink(paymentData);
-            
-            //update sub in table user
-            checkUser.SubId = paymentCreateDto.PaymentCreateForSub.SubId;
-            await _unitOfWork.UserRepo.UpdateAsync(checkUser);
-
-            response.Message = createPayment.status;
 
             return response;
         }
@@ -184,10 +197,15 @@ public class PaymentService(IMapper mapper, IUnitOfWork unitOfWork, GetSecret ge
         var response = new ResponseDto(null, "", true, StatusCodes.Status200OK);
         try
         {
-            //get subscription in database
+            //get subscription 
             var sub = await _unitOfWork.SubscriptionRepo.GetByConditionAsync(
                 s => s.SubId == paymentCreateDto.PaymentCreateForSub!.SubId,
                 s => s);
+            
+            //get user
+            var checkUser =
+                await _unitOfWork.CourtOwnerRepo.GetByConditionAsync(
+                    u => u.CourtOwnerId == paymentCreateDto.PaymentCreateForSub!.UserId, u => u);
 
             if (sub == null)
             {
@@ -196,11 +214,6 @@ public class PaymentService(IMapper mapper, IUnitOfWork unitOfWork, GetSecret ge
                 response.StatusCode = StatusCodes.Status404NotFound;
                 return response;
             }
-        
-            //check user in database
-            var checkUser =
-                await _unitOfWork.CourtOwnerRepo.GetByConditionAsync(
-                    u => u.CourtOwnerId == paymentCreateDto.PaymentCreateForSub!.UserId, u => u);
 
             if (checkUser == null)
             {
@@ -214,7 +227,7 @@ public class PaymentService(IMapper mapper, IUnitOfWork unitOfWork, GetSecret ge
 
             var userId = paymentCreateDto.PaymentCreateForSub!.UserId;
 
-            if (!type.Equals("cash") || !type.Equals("banking"))
+            if (!type.Equals("cash") && !type.Equals("banking"))
             {
                 type = "banking";
             }
@@ -229,36 +242,48 @@ public class PaymentService(IMapper mapper, IUnitOfWork unitOfWork, GetSecret ge
             };
 
             await _unitOfWork.PaymentRepo.CreateAsync(paymentDetail);
-        
-            var payOsCredentials =  await _getSecret.GetPayOsCredentials();
 
-            if (payOsCredentials == null)
+            try
             {
-                response.Message = "There is an error in processing payment with pay-os";
-                response.IsSucceed = false;
+                var payOsCredentials =  await _getSecret.GetPayOsCredentials();
+
+                if (payOsCredentials == null)
+                {
+                    response.Message = "There is an error in processing payment with pay-os";
+                    response.IsSucceed = false;
+                    response.StatusCode = StatusCodes.Status500InternalServerError;
+                    return response;
+                }
+
+                var payOs = new PayOS(payOsCredentials.ClientId, payOsCredentials.ApiKey, payOsCredentials.CheckSumKey);
+
+                //add item
+                var item = new ItemData(sub.SubName, 1, (int) sub.Price);
+
+                var items = new List<ItemData> { item };
+
+                //start create payment
+                var paymentData = new PaymentData(paymentDetail.PaymentId, 1000, "Dang ki premium",
+                    items, paymentCreateDto.SuccessUrl, paymentCreateDto.CancelUrl, null, checkUser.Name, 
+                    checkUser.Email, checkUser.PhoneNumber.ToString());
+                
+                var createPayment = await payOs.createPaymentLink(paymentData);
+            
+                //add subId in table court owner
+                checkUser.SubId = paymentCreateDto.PaymentCreateForSub.SubId;
+                await _unitOfWork.CourtOwnerRepo.UpdateAsync(checkUser);
+
+                response.Message = createPayment.status;
+            }
+            catch (Exception e)
+            {
+                await _unitOfWork.PaymentRepo.DeletePayment(paymentDetail);
+                
+                response.Message = e.Message;
                 response.StatusCode = StatusCodes.Status500InternalServerError;
+                response.IsSucceed = false;
                 return response;
             }
-
-            var payOs = new PayOS(payOsCredentials.ClientId, payOsCredentials.ApiKey, payOsCredentials.CheckSumKey);
-
-            //add item
-            var item = new ItemData(sub.SubName, 1, (int) sub.Price);
-
-            var items = new List<ItemData> { item };
-
-            //start create payment
-            var paymentData = new PaymentData(paymentDetail.PaymentId, 1000, "Dang ki thanh vien cao cap",
-                items, paymentCreateDto.SuccessUrl, paymentCreateDto.CancelUrl, null, checkUser.Name, 
-                checkUser.Email, checkUser.PhoneNumber.ToString());
-                
-            var createPayment = await payOs.createPaymentLink(paymentData);
-            
-            //add subId in table court owner
-            checkUser.SubId = paymentCreateDto.PaymentCreateForSub.SubId;
-            await _unitOfWork.CourtOwnerRepo.UpdateAsync(checkUser);
-
-            response.Message = createPayment.status;
 
             return response;
         }
@@ -300,7 +325,7 @@ public class PaymentService(IMapper mapper, IUnitOfWork unitOfWork, GetSecret ge
 
             var userId = paymentCreateDto.PaymentCreateForSub!.UserId;
 
-            if (!type.Equals("cash") || !type.Equals("banking"))
+            if (!type.Equals("cash") && !type.Equals("banking"))
             {
                 type = "banking";
             }
@@ -314,83 +339,95 @@ public class PaymentService(IMapper mapper, IUnitOfWork unitOfWork, GetSecret ge
             };
 
             await _unitOfWork.PaymentRepo.CreateAsync(paymentDetail);
-            
-            var payOsCredentials =  await _getSecret.GetPayOsCredentials();
 
-            if (payOsCredentials == null)
+            try
             {
-                response.Message = "There is an error in processing payment with pay-os";
-                response.IsSucceed = false;
-                response.StatusCode = StatusCodes.Status500InternalServerError;
-                return response;
-            }
-            
-            //add item
-            var item = new ItemData(courtName!, 1, (int) booking.Cost);
+                var payOsCredentials =  await _getSecret.GetPayOsCredentials();
 
-            var items = new List<ItemData> { item };
-            
-            //initiate payos
-            var payOs = new PayOS(payOsCredentials.ClientId, payOsCredentials.ApiKey, payOsCredentials.CheckSumKey);
-
-            if (booking.MatchId.HasValue)
-            {
-                //get match name and owner of match
-                var match =
-                    await _unitOfWork.MatchRepo.GetByConditionAsync(m => m.MatchId == booking.MatchId.Value,
-                        m => new
-                        {
-                            m.MatchName,
-                            m.CreateBy
-                        });
-
-                //get user 
-                var user = await _unitOfWork.UserRepo.GetByConditionAsync(u => u.UserId == match!.CreateBy, u => new
+                if (payOsCredentials == null)
                 {
-                    u.UserName,
-                    u.Email,
-                    u.PhoneNumber
-                });
-                
-                var paymentData = new PaymentData(paymentDetail.PaymentId, 1000, "Thanh toan tien san",
-                    items, paymentCreateDto.SuccessUrl, paymentCreateDto.CancelUrl, null, user!.UserName, 
-                    user.Email, user.PhoneNumber.ToString()); 
-                
-                var createPayment = await payOs.createPaymentLink(paymentData);
+                    response.Message = "There is an error in processing payment with pay-os";
+                    response.IsSucceed = false;
+                    response.StatusCode = StatusCodes.Status500InternalServerError;
+                    return response;
+                }
+            
+                //add item
+                var item = new ItemData(courtName!, 1, (int) booking.Cost);
 
-                response.Message = createPayment.status;
+                var items = new List<ItemData> { item };
+            
+                //initiate payos
+                var payOs = new PayOS(payOsCredentials.ClientId, payOsCredentials.ApiKey, payOsCredentials.CheckSumKey);
 
+                if (booking.MatchId.HasValue)
+                {
+                    //get match name and owner of match
+                    var match =
+                        await _unitOfWork.MatchRepo.GetByConditionAsync(m => m.MatchId == booking.MatchId.Value,
+                            m => new
+                            {
+                                m.MatchName,
+                                m.CreateBy
+                            });
+
+                    //get user 
+                    var user = await _unitOfWork.UserRepo.GetByConditionAsync(u => u.UserId == match!.CreateBy, u => new
+                    {
+                        u.UserName,
+                        u.Email,
+                        u.PhoneNumber
+                    });
+                
+                    var paymentData = new PaymentData(paymentDetail.PaymentId, 1000, "Thanh toan tien san",
+                        items, paymentCreateDto.SuccessUrl, paymentCreateDto.CancelUrl, null, user!.UserName, 
+                        user.Email, user.PhoneNumber.ToString()); 
+                
+                    var createPayment = await payOs.createPaymentLink(paymentData);
+
+                    response.Message = createPayment.status;
+
+                }
+                else if (booking.UserId.HasValue)
+                {
+                    //get user in database
+                    var user = await _unitOfWork.UserRepo.GetByConditionAsync(u => u.UserId == booking.UserId.Value, 
+                        u => new {
+                            u.UserName,
+                            u.Email,
+                            u.PhoneNumber
+                        });
+                
+                    var paymentData = new PaymentData(paymentDetail.PaymentId, 1000, "Thanh toan tien san",
+                        items, paymentCreateDto.SuccessUrl, paymentCreateDto.CancelUrl, null, user!.UserName, 
+                        user.Email, user.PhoneNumber.ToString()); 
+                
+                    var createPayment = await payOs.createPaymentLink(paymentData);
+                
+                    response.Message = createPayment.status;
+                }
+                else
+                {
+                    response.Message = "This booking is created by court owner";
+                    response.StatusCode = StatusCodes.Status400BadRequest;
+                    response.IsSucceed = false;
+                    return response;
+                }
+            
+                //update status after paid
+                booking.Status = 2;
+                await _unitOfWork.BookingRepo.UpdateAsync(booking);
+            
             }
-            else if (booking.UserId.HasValue)
+            catch (Exception e)
             {
-                //get user in database
-                var user = await _unitOfWork.UserRepo.GetByConditionAsync(u => u.UserId == booking.UserId.Value, 
-                u => new {
-                    u.UserName,
-                    u.Email,
-                    u.PhoneNumber
-                });
+                await _unitOfWork.PaymentRepo.DeletePayment(paymentDetail);
                 
-                var paymentData = new PaymentData(paymentDetail.PaymentId, 1000, "Thanh toan tien san",
-                    items, paymentCreateDto.SuccessUrl, paymentCreateDto.CancelUrl, null, user!.UserName, 
-                    user.Email, user.PhoneNumber.ToString()); 
-                
-                var createPayment = await payOs.createPaymentLink(paymentData);
-                
-                response.Message = createPayment.status;
-            }
-            else
-            {
-                response.Message = "This booking is created by court owner";
-                response.StatusCode = StatusCodes.Status400BadRequest;
+                response.Message = e.Message;
+                response.StatusCode = StatusCodes.Status500InternalServerError;
                 response.IsSucceed = false;
                 return response;
             }
-            
-            //update status after paid
-            booking.Status = 2;
-            await _unitOfWork.BookingRepo.UpdateAsync(booking);
-            
             
             return response;
         }
