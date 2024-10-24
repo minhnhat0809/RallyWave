@@ -6,8 +6,6 @@ using Identity.API.Repository;
 using Identity.API.Ultility;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using UserManagement.DTOs.UserDto;
-using UserManagement.DTOs.UserDto.ViewDto;
 
 namespace Identity.API.Services;
 
