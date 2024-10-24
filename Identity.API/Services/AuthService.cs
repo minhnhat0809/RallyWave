@@ -167,13 +167,12 @@ public class AuthService : IAuthService
                         IsTwoFactorEnabled = 0,
                         TwoFactorSecret = _unitOfWork.AuthRepository.GenerateVerificationCode(),
                     };
-                    /*// Send Verification Email Account
-                    await _unitOfWork.AuthRepository.SendEmailVerificationAsync(newUser.Email,
+                    // Send Verification Email Account
+                    await _unitOfWork.AuthRepository.SendEmailVerificationCodeAsync(newUser.Email,
                         newUser.TwoFactorSecret);
-                        */
                     // Generate and send a new verification link
-                    string emailVerificationLink = await FirebaseAuth.DefaultInstance.GenerateEmailVerificationLinkAsync(newUser.Email);
-                    await _unitOfWork.AuthRepository.SendEmailVerificationAsync(newUser.Email, emailVerificationLink);
+                    /*string emailVerificationLink = await FirebaseAuth.DefaultInstance.GenerateEmailVerificationLinkAsync(newUser.Email);
+                    await _unitOfWork.AuthRepository.SendEmailVerificationAsync(newUser.Email, emailVerificationLink);*/
                     user = await _unitOfWork.UserRepo.CreateUser(newUser); // Save the user to the database
                     _responseLoginModel.IsNewUser = true;
                 }else if (request.Role == new Contract().CourtOwner)
@@ -194,11 +193,11 @@ public class AuthService : IAuthService
                         IsTwoFactorEnabled = 0,
                         TwoFactorSecret = _unitOfWork.AuthRepository.GenerateVerificationCode(),
                     };
-                    /*// Send Verification Email Account
-                    await _unitOfWork.AuthRepository.SendEmailVerificationAsync(newCourtOwner.Email, newCourtOwner.TwoFactorSecret);
-                    */
-                    string emailVerificationLink = await FirebaseAuth.DefaultInstance.GenerateEmailVerificationLinkAsync(newCourtOwner.Email);
+                    // Send Verification Email Account
+                    await _unitOfWork.AuthRepository.SendEmailVerificationCodeAsync(newCourtOwner.Email, newCourtOwner.TwoFactorSecret);
+                    /*string emailVerificationLink = await FirebaseAuth.DefaultInstance.GenerateEmailVerificationLinkAsync(newCourtOwner.Email);
                     await _unitOfWork.AuthRepository.SendEmailVerificationAsync(newCourtOwner.Email, emailVerificationLink);
+                    */
 
                     courtOwner = await _unitOfWork.CourtOwnerRepository.CreateCourtOwner(newCourtOwner); // Save the court owner to the database
                     _responseLoginModel.IsNewUser = true;

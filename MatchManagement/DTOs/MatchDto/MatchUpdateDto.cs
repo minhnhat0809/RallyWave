@@ -2,7 +2,7 @@
 
 namespace MatchManagement.DTOs.MatchDto;
 
-public abstract class MatchUpdateDto
+public class MatchUpdateDto
 {
     [Required(ErrorMessage = "Sport ID is required.")]
     public int SportId { get; set; }

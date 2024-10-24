@@ -68,3 +68,9 @@ networks:
   rallywave: 
     driver: bridge
   
+
+  paymentmanagement:
+    image: paymentmanagement
+    build:
+      context: .
+      dockerfile: PaymentManagement/Dockerfile

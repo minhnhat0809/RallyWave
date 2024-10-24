@@ -1,9 +1,9 @@
-﻿using AutoMapper;
+﻿using System.Linq.Expressions;
+using AutoMapper;
 using Entity;
 using BookingManagement.DTOs;
 using BookingManagement.DTOs.BookingDto;
 using BookingManagement.DTOs.BookingDto.ViewDto;
-using BookingManagement.DTOs.CourtSlotDto.CourtSlotViewDto;
 using BookingManagement.Repository;
 using BookingManagement.Ultility;
 
@@ -18,7 +18,7 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
         public double Cost { get; set; } = cost;
     }
     
-    public async Task<ResponseDto> GetBookings(int userId, string? filterField, string? filterValue, string? sortField, string sortValue, int pageNumber,
+    public async Task<ResponseDto> GetBookings(string? subject, int? subjectId, string? filterField, string? filterValue, string? sortField, string sortValue, int pageNumber,
         int pageSize)
     {
         var responseDto = new ResponseDto(null, "", true, 200);
@@ -30,28 +30,40 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
             
             if (validate.IsEmptyOrWhiteSpace(filterField) || validate.IsEmptyOrWhiteSpace(filterValue))
             {
-                bookings = await unitOfWork.BookingRepo.FindByConditionAsync(b => b.UserId.HasValue && b.UserId.Value == userId,
-                    b => new BookingsViewDto(b.BookingId,
-                        b.Date,
-                        b.TimeStart,
-                        b.TimeEnd,
-                        b.Cost,
-                        b.Status
-                    ));
+                Expression<Func<Booking, bool>> basePredicate = b => true;
+                
+                if (!validate.IsEmptyOrWhiteSpace(subject) || subjectId.HasValue)
+                {
+                    basePredicate = subject!.ToLower() switch
+                    {
+                        "user" => b => b.UserId.HasValue && b.UserId.Value == subjectId!.Value,
+                        "court" => b => b.CourtId == subjectId!.Value,
+                        _ => throw new ArgumentException($"Unknown subject '{subject}'")
+                    };
+                    
+                    
+                }
 
-                total = bookings.Count;
+                bookings = await unitOfWork.BookingRepo.FindByConditionWithPagingAsync(
+                    basePredicate, 
+                    b => new BookingsViewDto(b.BookingId, b.Date, b.TimeStart, b.TimeEnd, b.Cost, b.Status),
+                    pageSize, pageSize);
+
+                total = await unitOfWork.BookingRepo.CountByConditionAsync(basePredicate);
+
             }
             else
             {
-                bookings = await unitOfWork.BookingRepo.GetBookings(userId, filterField, filterValue);
-                total = bookings.Count;
+                var listResponse = await unitOfWork.BookingRepo.GetBookings(subject, subjectId, filterField!, filterValue!, pageNumber, pageSize);
+                
+                bookings = listResponse.Data;
+                
+                total = listResponse.TotalCount;
             }
             
             
             
             bookings = Sort(bookings, sortField, sortValue);
-
-            bookings = listExtensions.Paging(bookings, pageNumber, pageSize);
             
             responseDto.Result = new { bookings, total};
             responseDto.Message = "Get successfully!";

@@ -5,7 +5,7 @@ namespace MatchManagement.Service;
 
 public interface IMatchService
 {
-    Task<ResponseDto> GetMatches(string? filterField, string? filterValue, string? sortField, string sortValue , int pageNumber, int pageSize);
+    Task<ResponseDto> GetMatches(string? subject, int? subjectId, string? filterField, string? filterValue, string? sortField, string sortValue , int pageNumber, int pageSize);
 
     Task<ResponseDto> EnrollInMatch(int userId, int matchId);
 
