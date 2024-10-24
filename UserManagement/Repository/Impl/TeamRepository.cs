@@ -1,4 +1,5 @@
 using Entity;
+using Microsoft.EntityFrameworkCore;
 
 namespace UserManagement.Repository.Impl;
 
@@ -23,7 +24,13 @@ public class TeamRepository(RallyWaveContext repositoryContext) : RepositoryBase
             // If no filter is provided, return all teams
             if (string.IsNullOrEmpty(filterField) || string.IsNullOrEmpty(filterValue))
             {
-                return await FindAllAsync(t => t);
+                return await repositoryContext.Teams
+                    .Include(team => team.Sport)
+                    .Include(team => team.UserTeams)
+                    .Include(team => team.Conservation)
+                    .Include(team => team.CreateByNavigation)
+                    .ToListAsync();
+                    
             }
 
             // Handle dynamic filtering based on the provided filterField and filterValue
@@ -51,7 +58,13 @@ public class TeamRepository(RallyWaveContext repositoryContext) : RepositoryBase
         // Get a team by ID
         public async Task<Team?> GetTeamById(int teamId)
         {
-            return await GetByIdAsync(teamId, t => t);
+            var team = await repositoryContext.Teams
+                .Include(x=>x.CreateByNavigation)
+                .Include(x=>x.UserTeams)
+                .Include(x=>x.Conservation)
+                .Include(x=>x.Sport)
+                .FirstOrDefaultAsync(x=>x.TeamId == teamId);
+            return team;
         }
 
         // Create a new team

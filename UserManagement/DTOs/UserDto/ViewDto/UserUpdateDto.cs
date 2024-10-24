@@ -4,8 +4,6 @@ public class UserUpdateDto
 {
     public string UserName { get; set; } = null!;
 
-    public string? Email { get; set; }
-
     public int PhoneNumber { get; set; }
 
     public string Gender { get; set; } = null!;
@@ -17,6 +15,4 @@ public class UserUpdateDto
     public string Province { get; set; } = null!;
 
     public string? Avatar { get; set; }
-
-    public sbyte Status { get; set; }
 }

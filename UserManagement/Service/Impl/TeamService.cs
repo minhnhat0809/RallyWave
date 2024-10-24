@@ -109,7 +109,7 @@ public class TeamService : ITeamService
             }
             else
             {
-                responseDto.Result = team;
+                responseDto.Result = _mapper.Map<TeamViewDto>(team);
                 responseDto.Message = "Get successfully!";
             }
         }
@@ -122,25 +122,96 @@ public class TeamService : ITeamService
 
         return responseDto;
     }
-
     public async Task<ResponseDto> CreateTeam(TeamCreateDto teamCreateDto)
+{
+    var responseDto = new ResponseDto(null, "", true, 201);
+    List<User> listUserInTeam = new List<User>();
+    List<UserTeam> userTeamInTeam = new List<UserTeam>();
+
+    try
     {
-        var responseDto = new ResponseDto(null, "", true, 201);
-        try
+        // Get sport and creating user
+        var sport = await _unitOfWork.SportRepository.GetSportById(teamCreateDto.SportId);
+        var user = await _unitOfWork.UserRepo.GetUserById(teamCreateDto.CreateBy);
+
+        if (sport != null && user != null)
         {
-            var team = _mapper.Map<Team>(teamCreateDto);
-            await _unitOfWork.TeamRepository.CreateTeam(team);
+            var team = new Team()
+            {
+                TeamName = teamCreateDto.TeamName,
+                Status = 1,
+                SportId = sport.SportId,
+                CreateBy = user.UserId,
+                Sport = sport,
+                CreateByNavigation = user,
+            };
+
+            // Loop through team members to add them to the team
+            foreach (var x in teamCreateDto.UserTeams)
+            {
+                var u = await _unitOfWork.UserRepo.GetUserById(x.UserId);
+
+                if (u != null)
+                {
+                    // Check if the user already exists in the team
+                    if (u == user) throw new Exception("User already exists!");
+
+                    // Add user for the conversation
+                    listUserInTeam.Add(u);
+
+                    // Check if the UserTeam entity is already being tracked
+                    var existingUserTeam = userTeamInTeam.FirstOrDefault(ut => ut.UserId == u.UserId);
+
+                    if (existingUserTeam == null)
+                    {
+                        // Add user to the team only if it's not already being tracked
+                        userTeamInTeam.Add(new UserTeam
+                        {
+                            UserId = u.UserId,
+                            User = u,
+                            Status = 1
+                        });
+                    }
+                }
+            }
+
+            // Assign UserTeams to the team
+            team.UserTeams = userTeamInTeam;
+
+            // Create a conversation associated with the team
+            var conservation = new Conservation()
+            {
+                ConservationName = team.TeamName,
+                Status = 1,
+                Users = listUserInTeam
+            };
+
+            team.Conservation = conservation;
+
+            // Set team size if it's not specified
+            if (teamCreateDto.TeamSize == null)
+                team.TeamSize = sbyte.Parse(listUserInTeam.Count.ToString());
+
+            // Save team to database
+            team = await _unitOfWork.TeamRepository.CreateTeam(team);
+            await _unitOfWork.SaveChangesAsync(); // Save changes to persist entities
+
+            // Set response
             responseDto.Message = "Create successfully!";
-        }
-        catch (Exception e)
-        {
-            responseDto.IsSucceed = false;
-            responseDto.Message = e.Message;
-            responseDto.StatusCode = 500;
+            responseDto.Result = _mapper.Map<TeamViewDto>(team);
         }
 
-        return responseDto;
     }
+    catch (Exception e)
+    {
+        responseDto.IsSucceed = false;
+        responseDto.Message = e.Message;
+        responseDto.StatusCode = 500;
+    }
+
+    return responseDto;
+}
+
 
     public async Task<ResponseDto> UpdateTeam(int id, TeamUpdateDto teamUpdateDto)
     {

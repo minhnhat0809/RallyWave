@@ -61,8 +61,22 @@ namespace UserManagement.Controllers
         public async Task<ActionResult<ResponseDto>> CreateTeam([FromBody] TeamCreateDto teamCreateDto)
         {
             var response = await _teamService.CreateTeam(teamCreateDto);
-            return response.IsSucceed ? CreatedAtAction(nameof(GetTeamById), new { teamId = response.Result?.ToString() }, response) : BadRequest(response);
+
+            if (response.IsSucceed)
+            {
+                // Assuming response.Result contains a TeamViewDto with a TeamId property
+                var teamView = response.Result as TeamViewDto;
+                if (teamView == null || teamView.TeamId == null)
+                {
+                    return BadRequest("Failed to retrieve team ID.");
+                }
+
+                return Ok(response);
+            }
+
+            return BadRequest(response);
         }
+
 
         /// <summary>
         /// Updates an existing team.

@@ -15,7 +15,8 @@ public class MapperConfig : Profile
     {
         CreateMap<User, UserViewDto>()
             .ForMember(dest => dest.Dob, opt => opt.MapFrom(src => src.Dob.ToString("yyyy-MM-dd"))); // Example for `DateOnly`
-
+        CreateMap<UserViewDto, User>()
+            .ForMember(dest => dest.UserId, opt => opt.Ignore());
         CreateMap<UserCreateDto, User>();
         CreateMap<UserUpdateDto, User>();
         
@@ -27,6 +28,7 @@ public class MapperConfig : Profile
         
         
         CreateMap<Conservation, ConservationViewDto>().ReverseMap();
+        
         CreateMap<Sport, SportViewDto>().ReverseMap();
     }
 }

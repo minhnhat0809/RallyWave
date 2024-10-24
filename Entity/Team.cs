@@ -21,7 +21,7 @@ public partial class Team
 
     public virtual User CreateByNavigation { get; set; } = null!;
 
-    public virtual Sport Sport { get; set; } = null!;
+    public virtual Sport? Sport { get; set; } = null!;
 
     public virtual ICollection<UserTeam> UserTeams { get; set; } = new List<UserTeam>();
 }

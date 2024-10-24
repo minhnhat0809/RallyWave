@@ -178,10 +178,14 @@ public class UserService : IUserService
                     return responseDto;
                 }
 
-                var userModel = _mapper.Map<User>(userUpdateDto);
-                userModel.UserId = user.UserId;
-            
-                responseDto.Result = await _unitOfWork.UserRepo.UpdateUser(userModel);
+                user.UserName = userUpdateDto.UserName;
+                user.Address = userUpdateDto.Address;
+                user.Dob = userUpdateDto.Dob;
+                user.Avatar = user.Avatar;
+                user.Gender = userUpdateDto.Gender;
+                user.Province = userUpdateDto.Province;
+                
+                responseDto.Result = await _unitOfWork.UserRepo.UpdateUser(user);
                 responseDto.Message = "Update successfully!";
 
             }
@@ -210,6 +214,7 @@ public class UserService : IUserService
                 else
                 {
                     User userModel = _mapper.Map<User>(user);
+                    userModel.Status = 0;
                     user = await _unitOfWork.UserRepo.DeleteUser(userModel);
                     responseDto.Result = user;
                     responseDto.Message = "Delete successfully!";
