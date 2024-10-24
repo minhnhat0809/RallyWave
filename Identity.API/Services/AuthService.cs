@@ -126,8 +126,6 @@ public class AuthService : IAuthService
             UserRecord userRecord;
             User? user = null;
             CourtOwner? courtOwner = null;
-            string email = null;
-            string code = null;
             // Check if user exists in Firebase Authentication
             try
             {

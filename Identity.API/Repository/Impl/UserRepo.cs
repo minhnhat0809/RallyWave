@@ -5,9 +5,9 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace Identity.API.Repository.Impl;
 
-public class UserRepo(RallywaveContext repositoryContext) : RepositoryBase<User>(repositoryContext), IUserRepo
+public class UserRepo(RallyWaveContext repositoryContext) : RepositoryBase<User>(repositoryContext), IUserRepo
 {
-    private readonly RallywaveContext _repositoryContext = repositoryContext;
+    private readonly RallyWaveContext _repositoryContext = repositoryContext;
 
     public async Task<List<UserViewDto>> GetUsers(string? filterField, string? filterValue)
     {
