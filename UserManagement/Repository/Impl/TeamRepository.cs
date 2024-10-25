@@ -62,6 +62,7 @@ public class TeamRepository(RallyWaveContext repositoryContext) : RepositoryBase
                 .Include(x=>x.CreateByNavigation)
                 .Include(x=>x.UserTeams)
                 .Include(x=>x.Conservation)
+                .ThenInclude(x=>x.Users)
                 .Include(x=>x.Sport)
                 .FirstOrDefaultAsync(x=>x.TeamId == teamId);
             return team;

@@ -6,7 +6,7 @@ using UserManagement.Service.Impl;
 
 namespace UserManagement.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/team")]
     [ApiController]
     public class TeamController : ControllerBase
     {
@@ -88,6 +88,13 @@ namespace UserManagement.Controllers
         public async Task<ActionResult<ResponseDto>> UpdateTeam(int id, [FromBody] TeamUpdateDto teamUpdateDto)
         {
             var response = await _teamService.UpdateTeam(id, teamUpdateDto);
+            return response.IsSucceed ? Ok(response) : BadRequest(response);
+        }
+        
+        [HttpPut("{teamId:int}/user/{userId:int}")]
+        public async Task<ActionResult<ResponseDto>> AddUserToTeam(int teamId, int userId)
+        {
+            var response = await _teamService.AddUserToTeam(teamId, userId);
             return response.IsSucceed ? Ok(response) : BadRequest(response);
         }
 
