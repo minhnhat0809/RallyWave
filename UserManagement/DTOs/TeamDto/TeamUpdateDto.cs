@@ -13,8 +13,4 @@ public class TeamUpdateDto
     public string TeamName { get; set; } = null!;
 
     public sbyte? TeamSize { get; set; }
-
-    public sbyte Status { get; set; }
-    
-    public virtual ICollection<UserCreateTeamDto> UserTeams { get; set; } = new List<UserCreateTeamDto>();
 }

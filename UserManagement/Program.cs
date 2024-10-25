@@ -28,7 +28,7 @@ builder.Services.AddScoped<ITeamRepository, TeamRepository>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<ISportRepository, SportRepository>();
 builder.Services.AddScoped<IConservationRepository, ConservationRepository>();
-
+builder.Services.AddScoped<IUserTeamRepository, UserTeamRepository>();
 
 //utilities
 builder.Services.AddScoped(typeof(Validate));

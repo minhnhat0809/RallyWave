@@ -20,12 +20,10 @@ public class MapperConfig : Profile
         CreateMap<UserCreateDto, User>();
         CreateMap<UserUpdateDto, User>();
         
+        //
         CreateMap<UserTeam, UserTeamViewDto>().ReverseMap();
         
         CreateMap<Team, TeamViewDto>().ReverseMap();
-        CreateMap<TeamCreateDto, Team>();
-        CreateMap<TeamUpdateDto, Team>();
-        
         
         CreateMap<Conservation, ConservationViewDto>().ReverseMap();
         

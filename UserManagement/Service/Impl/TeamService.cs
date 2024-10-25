@@ -170,6 +170,7 @@ public class TeamService : ITeamService
             }
             else
             {
+                team.Status = 0;
                 await _unitOfWork.TeamRepository.DeleteTeam(team);
                 responseDto.Message = "Delete successfully!";
             }
@@ -206,64 +207,53 @@ public class TeamService : ITeamService
                     Sport = sport,
                     CreateByNavigation = user,
                 };
-                // if user > 0 : Create Conservation & Team's Users
-                if(teamCreateDto.UserTeams.Count > 0){
-                    // Loop through team members to add them to the team
-                    foreach (var x in teamCreateDto.UserTeams)
+                var userIds = teamCreateDto.UserTeams.Select(x => x.UserId).ToList();
+                var users = await _unitOfWork.UserRepo.GetUsersByIds(userIds); // team's users
+                var validUsers = users.Where(u => u.UserId != user.UserId).ToList(); // without created
+
+                if (validUsers.Count > 0)
+                {
+                    foreach (var u in validUsers)
                     {
-                        var u = await _unitOfWork.UserRepo.GetUserById(x.UserId);
+                        // Add user for the conversation
+                        listUserInTeam.Add(u);
 
-                        if (u != null)
+                        userTeamInTeam.Add(new UserTeam
                         {
-                            // Check if the user already exists in the team
-                            if (u == user) throw new Exception("User already exists!");
-
-                            // Add user for the conversation
-                            listUserInTeam.Add(u);
-
-                            // Check if the UserTeam entity is already being tracked
-                            var existingUserTeam = userTeamInTeam.FirstOrDefault(ut => ut.UserId == u.UserId);
-
-                            if (existingUserTeam == null)
-                            {
-                                // Add user to the team only if it's not already being tracked
-                                userTeamInTeam.Add(new UserTeam
-                                {
-                                    UserId = u.UserId,
-                                    User = u,
-                                    Status = 1
-                                });
-                            }
-                        }
+                            UserId = u.UserId,
+                            User = u,
+                            Status = 1
+                        });
                     }
 
-                    // Assign UserTeams to the team
-                    // including Team's Created 
-                    userTeamInTeam.Add(new UserTeam() 
+                    // Add the creating user to the conversation and team members
+                    listUserInTeam.Add(user);
+                    userTeamInTeam.Add(new UserTeam()
                     {
                         UserId = user.UserId,
                         Status = 1,
                         User = user
                     });
+
                     team.UserTeams = userTeamInTeam;
 
                     // Create a conversation associated with the team
-                    listUserInTeam.Add(user);
                     var conservation = new Conservation()
                     {
                         ConservationName = team.TeamName,
                         Status = 1,
-                        Users = listUserInTeam!
+                        Users = listUserInTeam
                     };
 
                     team.Conservation = conservation;
 
                     // Set team size if it's not specified
                     if (teamCreateDto.TeamSize == null)
-                        team.TeamSize = sbyte.Parse(listUserInTeam.Count.ToString());
-                    
+                        team.TeamSize = (sbyte)listUserInTeam.Count;
                 }
-
+                else
+                    team.TeamSize = 1;
+                
                 // Save team to database
                 team = await _unitOfWork.TeamRepository.CreateTeam(team);
                 await _unitOfWork.SaveChangesAsync(); // Save changes to persist entities
@@ -272,7 +262,6 @@ public class TeamService : ITeamService
                 responseDto.Message = "Create successfully!";
                 responseDto.Result = _mapper.Map<TeamViewDto>(team);
             }
-
         }
         catch (Exception e)
         {
@@ -283,7 +272,6 @@ public class TeamService : ITeamService
 
         return responseDto;
     }
-   
     public async Task<ResponseDto> DeleteUserToTeam(int teamId, int userId)
     {
         var responseDto = new ResponseDto(null, "", true, 200);
@@ -306,8 +294,6 @@ public class TeamService : ITeamService
         }
         return responseDto;
     }
-
-
     public async Task<ResponseDto> AddUserToTeam(int teamId, int userId)
     {
         var responseDto = new ResponseDto(null, "", true, 201);
@@ -315,70 +301,38 @@ public class TeamService : ITeamService
         {
             var user = await _unitOfWork.UserRepo.GetUserById(userId);
             var team = await _unitOfWork.TeamRepository.GetTeamById(teamId);
+            
             if (user != null && team != null)
             {
+                var creator = await _unitOfWork.UserRepo.GetUserById(team.CreateBy);
+                if (team.UserTeams.Any(ut => ut.UserId == userId) || team.CreateBy == userId)
+                    throw new Exception("User already in this team!");
+                    
+                // Team's Users
+                team.UserTeams.Add(new UserTeam { UserId = userId, User = user, Status = 1 });
+                if(team.UserTeams.Count == 1) team.UserTeams.Add(new UserTeam { UserId = creator!.UserId, User = creator!, Status = 1 });
                 
-                var userInTeam = team.UserTeams.Where(ut => ut.UserId == userId).ToList();
-                var userExist = userInTeam.FirstOrDefault(ut => ut.UserId == userId);
-                if (userExist != null)
-                {
-                    return new ResponseDto(null, "User already in this team!", false, StatusCodes.Status500InternalServerError);
-                }
-                // User -> Team
-                team.UserTeams.Add(new UserTeam()
-                {
-                    UserId = userId,
-                    User = user,
-                    Status = 1
-                }); // If have no Team's users + 2
-                if (team.UserTeams.Count == 1)
-                {
-                    var created = await _unitOfWork.UserRepo.GetUserById(team.CreateBy);
-                    if (created != null)
-                        team.UserTeams.Add(new UserTeam()
-                        {
-                            UserId = created.UserId,
-                            User = created,
-                            Status = 1
-                        });
-                }
-                
-                // User -> Team's Conservation
-                Conservation? conservation;
+                // Team's Conservation
                 if (team.Conservation != null)
                 {
-                    conservation =
-                        await _unitOfWork.ConservationRepository
-                            .GetConservationByIdAsync(team.Conservation.ConservationId);
-                    conservation?.Users.Add(user);
-                }
-                else // if no Team's User +2 in Conservation
+                    team.Conservation.Users.Add(user);
+                }else
                 {
-                    var userList = new List<User?>
-                    {
-                        user,
-                        await _unitOfWork.UserRepo.GetUserById(team.CreateBy)
-                    };
-                    conservation = new Conservation()
+                    team.Conservation = new Conservation
                     {
                         ConservationName = team.TeamName,
                         Status = 1,
-                        Users = userList
+                        Users = [user, creator]
                     };
                 }
-                team.Conservation = conservation;
-                
-                // Set team size if it's not specified
-                if (team.UserTeams.Count > team.TeamSize)
-                {
-                    team.TeamSize += 1;
-                } else if(team.TeamSize >= 100) throw new Exception("Can not add more than 100 members");
+                // Set Size
+                team.TeamSize = (team.UserTeams.Count > team.TeamSize) 
+                    ? (sbyte)(team.TeamSize + 1) 
+                    : team.TeamSize;
 
-                // Save team to database
                 team = await _unitOfWork.TeamRepository.UpdateTeam(team);
                 await _unitOfWork.SaveChangesAsync();
-
-                // Set response
+                
                 responseDto.Message = "Add User to Team successfully!";
                 responseDto.Result = _mapper.Map<TeamViewDto>(team);
             }
