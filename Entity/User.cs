@@ -39,9 +39,9 @@ public partial class User
 
     public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
 
-    public virtual ICollection<Friendship> FriendshipUser1s { get; set; } = new List<Friendship>();
+    public virtual ICollection<Friendship> FriendshipReceivers { get; set; } = new List<Friendship>();
 
-    public virtual ICollection<Friendship> FriendshipUser2s { get; set; } = new List<Friendship>();
+    public virtual ICollection<Friendship> FriendshipSenders { get; set; } = new List<Friendship>();
 
     public virtual ICollection<Match> Matches { get; set; } = new List<Match>();
 
