@@ -53,6 +53,11 @@ public partial class RallyWaveContext : DbContext
     public virtual DbSet<UserSport> UserSports { get; set; }
 
     public virtual DbSet<UserTeam> UserTeams { get; set; }
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
+        => optionsBuilder.UseMySql("server=localhost;database=rally_wave;user=root;password=N@hat892003.", Microsoft.EntityFrameworkCore.ServerVersion.Parse("8.0.39-mysql"));
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder
@@ -243,27 +248,28 @@ public partial class RallyWaveContext : DbContext
 
         modelBuilder.Entity<Friendship>(entity =>
         {
-            entity.HasKey(e => new { e.User1Id, e.User2Id })
+            entity.HasKey(e => new { e.SenderId, e.ReceiverId })
                 .HasName("PRIMARY")
                 .HasAnnotation("MySql:IndexPrefixLength", new[] { 0, 0 });
 
             entity.ToTable("friendship");
 
-            entity.HasIndex(e => e.User2Id, "FK_Friend_Ship_User2");
+            entity.HasIndex(e => e.ReceiverId, "FK_Friend_Ship_Receiver");
 
-            entity.Property(e => e.User1Id).HasColumnName("user1_id");
-            entity.Property(e => e.User2Id).HasColumnName("user2_id");
+            entity.Property(e => e.SenderId).HasColumnName("sender_id");
+            entity.Property(e => e.ReceiverId).HasColumnName("receiver_id");
             entity.Property(e => e.Level).HasColumnName("level");
+            entity.Property(e => e.Status).HasColumnName("status");
 
-            entity.HasOne(d => d.User1).WithMany(p => p.FriendshipUser1s)
-                .HasForeignKey(d => d.User1Id)
+            entity.HasOne(d => d.Receiver).WithMany(p => p.FriendshipReceivers)
+                .HasForeignKey(d => d.ReceiverId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Friend_Ship_User1");
+                .HasConstraintName("FK_Friend_Ship_Receiver");
 
-            entity.HasOne(d => d.User2).WithMany(p => p.FriendshipUser2s)
-                .HasForeignKey(d => d.User2Id)
+            entity.HasOne(d => d.Sender).WithMany(p => p.FriendshipSenders)
+                .HasForeignKey(d => d.SenderId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Friend_Ship_User2");
+                .HasConstraintName("FK_Friend_Ship_Sender");
         });
 
         modelBuilder.Entity<Match>(entity =>

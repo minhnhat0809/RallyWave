@@ -123,10 +123,10 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
                 case 1:
                 {
                     var check = _unitOfWork.FriendShipRepo.AnyAsync(fs => 
-                            fs.User1Id == userId && 
-                            fs.User2Id == matchEnroll.UserId ||
-                            fs.User1Id == matchEnroll.UserId && 
-                            fs.User2Id == userId)
+                            fs.SenderId == userId && 
+                            fs.ReceiverId == matchEnroll.UserId ||
+                            fs.SenderId == matchEnroll.UserId && 
+                            fs.ReceiverId == userId)
                     
                         .Result;
                     if (!check)

@@ -91,13 +91,13 @@ namespace UserManagement.Controllers
             return response.IsSucceed ? Ok(response) : BadRequest(response);
         }
         
-        [HttpPut("{teamId:int}/user/{userId:int}/add")]
+        [HttpPut("{teamId:int}/user/{userId:int}")]
         public async Task<ActionResult<ResponseDto>> AddUserToTeam(int teamId, int userId)
         {
             var response = await _teamService.AddUserToTeam(teamId, userId);
             return response.IsSucceed ? Ok(response) : BadRequest(response);
         }
-        [HttpPut("{teamId:int}/user/{userId:int}/delete")]
+        [HttpDelete("{teamId:int}/user/{userId:int}")]
         public async Task<ActionResult<ResponseDto>> DeleteUserFromTeam(int teamId, int userId)
         {
             var response = await _teamService.DeleteUserToTeam(teamId, userId);

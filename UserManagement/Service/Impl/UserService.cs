@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Entity;
 using UserManagement.DTOs;
+using UserManagement.DTOs.FriendDto;
 using UserManagement.DTOs.UserDto;
 using UserManagement.DTOs.UserDto.ViewDto;
 using UserManagement.Repository;
@@ -229,7 +230,6 @@ public class UserService : IUserService
 
             return responseDto;
         }
-
         private async Task<ResponseDto> ValidateForCreating(UserCreateDto userCreateDto)
         {
             var response = new ResponseDto(null, "", true, 200);
@@ -265,4 +265,173 @@ public class UserService : IUserService
 
             return response;
         }
+        
+        // Friend Service
+        public async Task<ResponseDto> GetAllFriendRequestByProperties(int userId, string filter, string value)
+        {
+            var responseDto = new ResponseDto(null, "", true, 200);
+            try
+            {
+                var user = await _unitOfWork.UserRepo.GetUserById(userId);
+                List<Friendship?> response = null;
+                if (user == null)
+                {
+                    responseDto.IsSucceed = false;
+                    responseDto.Message = "There are no users with this id";
+                    responseDto.StatusCode = StatusCodes.Status400BadRequest;
+                    return responseDto;
+                }
+                
+
+                if (filter.ToLower() == "friends")
+                {
+                    response = await _unitOfWork.FriendRepository.GetFriendShipByProperties(userId, "all-friends", null);
+                    return new ResponseDto(_mapper.Map<List<FriendshipViewDto>>(response), "Get Friends Successfully", true, StatusCodes.Status200OK);
+                }else if (filter.ToLower() == "friends-request")
+                {
+                    response = await _unitOfWork.FriendRepository.GetFriendShipByProperties(userId, "received-requests",
+                        null);
+                    return new ResponseDto(_mapper.Map<List<FriendshipViewDto>>(response), "Get Friends Request Successfully", true, StatusCodes.Status200OK);
+                }
+
+                responseDto.Result = response;
+                responseDto.Message = "Filter string error!";
+
+            }
+            catch (Exception e)
+            {
+                responseDto.IsSucceed = false;
+                responseDto.Message = e.Message;
+                responseDto.StatusCode = StatusCodes.Status500InternalServerError;
+            }
+
+            return responseDto;
+        }
+
+        public async Task<ResponseDto> CreateFriendRequest(int senderId, int receiverId)
+        {
+            var responseDto = new ResponseDto(null, "", true, 200);
+            try
+            {
+                var sender = await _unitOfWork.UserRepo.GetUserById(senderId);
+                var receiver = await _unitOfWork.UserRepo.GetUserById(receiverId);
+
+                if (sender != null && receiver != null && sender != receiver)
+                {
+                    var friendShipExist = await _unitOfWork.FriendRepository.GetFriendShip(senderId, receiverId);
+                    if(friendShipExist == null)
+                    {
+                        var friendRequest = new Friendship()
+                        {
+                            Sender = sender,
+                            Receiver = receiver,
+                            ReceiverId = receiverId,
+                            SenderId = senderId,
+                            Level = 0,
+                            Status = 0
+                        };
+                        friendShipExist = await _unitOfWork.FriendRepository.CreateFriendShip(friendRequest);
+                        return new ResponseDto(_mapper.Map<FriendshipViewDto>(friendShipExist), "Send Friend Request successfully!", true, StatusCodes.Status200OK);
+                    }
+                    return new ResponseDto(null, "Friend Request Already Exist!", false, StatusCodes.Status400BadRequest);
+
+                }
+                return new ResponseDto(null, "User not found!", false, StatusCodes.Status404NotFound);
+            }
+            catch (Exception e)
+            {
+                responseDto.IsSucceed = false;
+                responseDto.Message = e.Message;
+                responseDto.StatusCode = StatusCodes.Status500InternalServerError;
+            }
+
+            return responseDto;
+        }
+
+        public async Task<ResponseDto> AcceptFriendRequest(int senderId, int receiverId)
+        {
+            var responseDto = new ResponseDto(null, "", true, 200);
+            try
+            {
+                var sender = await _unitOfWork.UserRepo.GetUserById(senderId);
+                var receiver = await _unitOfWork.UserRepo.GetUserById(receiverId);
+
+                if (sender != null && receiver != null)
+                {
+                    var friendShipExist = await _unitOfWork.FriendRepository.GetFriendShip(senderId, receiverId);
+                    if(friendShipExist != null)
+                    {
+                        if(receiverId == friendShipExist.ReceiverId){
+                            if (friendShipExist.Status == 1) throw new Exception("You already be friends");
+                            friendShipExist.Status = 1;
+                            friendShipExist = await _unitOfWork.FriendRepository.AcceptedFriendShip(friendShipExist);
+                            return new ResponseDto(_mapper.Map<FriendshipViewDto>(friendShipExist), "Accept Request successfully!", true,
+                                StatusCodes.Status200OK);
+                        }
+                        return new ResponseDto(null, "You are sent Friend Request, Can not edit!", false, StatusCodes.Status400BadRequest);
+                    }
+                    return new ResponseDto(null, "Friend Request not found!", false, StatusCodes.Status400BadRequest);
+
+                }
+                return new ResponseDto(null, "User not found!", false, StatusCodes.Status404NotFound);
+            }
+            catch (Exception e)
+            {
+                responseDto.IsSucceed = false;
+                responseDto.Message = e.Message;
+                responseDto.StatusCode = StatusCodes.Status500InternalServerError;
+            }
+
+            return responseDto;
+        }
+
+        public async Task<ResponseDto> DenyFriendRequest(int senderId, int receiverId)
+        {
+            var responseDto = new ResponseDto(null, "", true, 200);
+            try
+            {
+                var sender = await _unitOfWork.UserRepo.GetUserById(senderId);
+                var receiver = await _unitOfWork.UserRepo.GetUserById(receiverId);
+
+                if (sender != null && receiver != null)
+                {
+                    var friendShipExist = await _unitOfWork.FriendRepository.GetFriendShip(senderId, receiverId);
+                    
+                    if(friendShipExist != null)
+                    {
+                        // denied requets
+                        if(friendShipExist.Status == 0){
+                            if (friendShipExist.ReceiverId == receiverId)
+                            {
+                                friendShipExist = await _unitOfWork.FriendRepository.DeniedFriendShip(friendShipExist);
+                                return new ResponseDto(friendShipExist, "Denied Successfully successfully!", true,
+                                    StatusCodes.Status200OK);
+                            }
+
+                            return new ResponseDto(null, "You are sent Friend Request, Can not edit!", false,
+                                StatusCodes.Status400BadRequest);
+                        }
+                        // removed friend
+                        if (friendShipExist.Status == 1)
+                        {
+                            friendShipExist = await _unitOfWork.FriendRepository.DeniedFriendShip(friendShipExist);
+                            return new ResponseDto(friendShipExist, "Delete Friend Successfully!", true,
+                                StatusCodes.Status200OK);
+                        }
+                    }
+                    return new ResponseDto(null, "Friend Request not found!", false, StatusCodes.Status400BadRequest);
+
+                }
+                return new ResponseDto(null, "User not found!", false, StatusCodes.Status404NotFound);
+            }
+            catch (Exception e)
+            {
+                responseDto.IsSucceed = false;
+                responseDto.Message = e.Message;
+                responseDto.StatusCode = StatusCodes.Status500InternalServerError;
+            }
+
+            return responseDto;
+        }
+        
     }

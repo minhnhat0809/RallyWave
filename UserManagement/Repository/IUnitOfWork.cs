@@ -9,5 +9,6 @@ public interface IUnitOfWork : IDisposable
     ISportRepository SportRepository { get; }
     IConservationRepository ConservationRepository { get; }
     IUserTeamRepository UserTeamRepository { get; }
+    IFriendRepository FriendRepository { get; }
     Task<int> SaveChangesAsync();
 }
