@@ -2,6 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using ChattingManagement.DTOs;
+using ChattingManagement.DTOs.ConservationDto;
+using ChattingManagement.Service;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -9,99 +12,67 @@ using Entity;
 
 namespace ChattingManagement.Controller
 {
-    [Route("api/[controller]")]
+    [Route("api/conservation")]
     [ApiController]
     public class ConservationController : ControllerBase
     {
-        private readonly RallyWaveContext _context;
+        private readonly IConservationService _conservationService;
 
-        public ConservationController(RallyWaveContext context)
+        public ConservationController(IConservationService conservationService)
         {
-            _context = context;
+            _conservationService = conservationService;
         }
-
-        // GET: api/Conservation
+        
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Conservation>>> GetConservations()
+        public async Task<ActionResult<ResponseDto>> GetConservations(
+            [FromQuery] string? filterField,
+            [FromQuery] string? filterValue)
         {
-            return await _context.Conservations.ToListAsync();
+            var response = await _conservationService.GetConservationsByProperties(filterField, filterValue);
+            return Ok(response);
         }
 
-        // GET: api/Conservation/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Conservation>> GetConservation(int id)
+        [HttpGet("{conservationId:int}")]
+        public async Task<ActionResult<ResponseDto>> GetConservationById(int conservationId)
         {
-            var conservation = await _context.Conservations.FindAsync(id);
-
-            if (conservation == null)
-            {
-                return NotFound();
-            }
-
-            return conservation;
+            var response = await _conservationService.GetConservationByProperties("ConservationId",conservationId.ToString());
+            return response!.IsSucceed ? Ok(response) : BadRequest(response);
         }
 
-        // PUT: api/Conservation/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutConservation(int id, Conservation conservation)
-        {
-            if (id != conservation.ConservationId)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(conservation).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!ConservationExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return NoContent();
-        }
-
-        // POST: api/Conservation
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Conservation>> PostConservation(Conservation conservation)
+        public async Task<ActionResult<ResponseDto>> CreateConservation([FromBody] ConservationCreateDto createDto)
         {
-            _context.Conservations.Add(conservation);
-            await _context.SaveChangesAsync();
+            var response = await _conservationService.CreateConservationAsync(createDto);
 
-            return CreatedAtAction("GetConservation", new { id = conservation.ConservationId }, conservation);
+            return response.IsSucceed ? Ok(response) : BadRequest(response);
         }
 
-        // DELETE: api/Conservation/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteConservation(int id)
+
+        [HttpPut("{id:int}")]
+        public async Task<ActionResult<ResponseDto>> UpdateConservation(int id, [FromBody] ConservationUpdateDto updateDto)
         {
-            var conservation = await _context.Conservations.FindAsync(id);
-            if (conservation == null)
-            {
-                return NotFound();
-            }
-
-            _context.Conservations.Remove(conservation);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
+            var response = await _conservationService.UpdateConservationAsync(updateDto);
+            return response.IsSucceed ? Ok(response) : BadRequest(response);
         }
-
-        private bool ConservationExists(int id)
+        
+        [HttpDelete("{id:int}")]
+        public async Task<ActionResult<ResponseDto>> DeleteConservation(int id)
         {
-            return _context.Conservations.Any(e => e.ConservationId == id);
+            var response = await _conservationService.DeleteConservationAsync(id);
+            return response.IsSucceed ? Ok(response) : BadRequest(response);
+        }
+        
+        [HttpPut("{conservationId:int}/user/{userId:int}")]
+        public async Task<ActionResult<ResponseDto>> AddUserToConservation(int conservationId, int userId)
+        {
+            var response = await _conservationService.AddUserToConservation(conservationId, userId);
+            return response.IsSucceed ? Ok(response) : BadRequest(response);
+        }
+        [HttpDelete("{conservationId:int}/user/{userId:int}")]
+        public async Task<ActionResult<ResponseDto>>DeleteUserFromConservation(int conservationId, int userId)
+        {
+            var response = await _conservationService.DeleteUserOfConservation(conservationId, userId);
+            return response.IsSucceed ? Ok(response) : BadRequest(response);
         }
     }
 }
