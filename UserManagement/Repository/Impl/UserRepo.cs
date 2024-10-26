@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Entity;
+using Microsoft.EntityFrameworkCore;
 using UserManagement.DTOs;
 using UserManagement.DTOs.UserDto;
 using UserManagement.DTOs.UserDto.ViewDto;
@@ -79,6 +80,13 @@ public class UserRepo(RallyWaveContext repositoryContext) : RepositoryBase<User>
             return user;
         }
         throw new Exception("Failed to delete user.");
+    }
+
+    public async Task<List<User>> GetUsersByIds(List<int> userIds)
+    {
+        return await repositoryContext.Users
+            .Where(u => userIds.Contains(u.UserId))
+            .ToListAsync();
     }
 }
 
