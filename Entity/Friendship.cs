@@ -11,6 +11,8 @@ public partial class Friendship
 
     public int? Level { get; set; }
 
+    public sbyte? Status { get; set; }
+
     public virtual User User1 { get; set; } = null!;
 
     public virtual User User2 { get; set; } = null!;
