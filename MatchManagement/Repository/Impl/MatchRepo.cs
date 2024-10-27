@@ -16,7 +16,7 @@ public class MatchRepo(RallyWaveContext repositoryContext) : RepositoryBase<Matc
             switch (filterField.ToLower())
             {
                 case "teamsize":
-                    var teamSize = sbyte.Parse(filterValue!);
+                    var teamSize = sbyte.Parse(filterValue);
                     basePredicate = m => m.TeamSize == teamSize;
                     break;
 
