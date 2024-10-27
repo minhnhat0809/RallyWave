@@ -30,6 +30,12 @@ builder.Services.AddScoped<IPaymentService, PaymentService>();
 //repo
 builder.Services.AddScoped<IPaymentRepo, PaymentRepo>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddScoped<IBookingRepo, BookingRepo>();
+builder.Services.AddScoped<ICourtOwnerRepo, CourtOwnerRepo>();
+builder.Services.AddScoped<ICourtRepo, CourtRepo>();
+builder.Services.AddScoped<IMatchRepo, MatchRepo>();
+builder.Services.AddScoped<IUserRepo, UserRepo>();
+builder.Services.AddScoped<ISubscriptionRepo, SubscriptionRepo>();
 
 //cors
 builder.Services.AddCors(opts =>
@@ -41,6 +47,7 @@ builder.Services.AddCors(opts =>
 //ultility
 builder.Services.AddScoped(typeof(Validate));
 builder.Services.AddScoped(typeof(ListExtensions));
+builder.Services.AddSingleton(typeof(GetSecret));
 
 
 //mapper 
