@@ -41,6 +41,7 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
                             m.MatchId, 
                             m.Sport.SportName, 
                             m.MatchName, 
+                            m.CreateBy,
                             m.CreateByNavigation.UserName,
                             m.MatchType,
                             m.TeamSize,
