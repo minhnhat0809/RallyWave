@@ -22,6 +22,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\Entity\Entity.csproj" />
+      <ProjectReference Include="..\Identity.API\Identity.API.csproj" />
     </ItemGroup>
 
     <ItemGroup>

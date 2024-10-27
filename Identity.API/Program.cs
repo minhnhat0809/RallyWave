@@ -1,8 +1,6 @@
 
-using System.Net.Http.Headers;
 using System.Text;
 using Entity;
-using Identity.API.BusinessObjects;
 using Identity.API.BusinessObjects.LoginObjects;
 using Identity.API.DIs;
 using Microsoft.AspNetCore.Authentication;
@@ -11,16 +9,15 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // CORS configuration
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("CORSPolicy", builder =>
+    options.AddPolicy("CORSPolicy", corsPolicyBuilder =>
     {
-        builder.WithOrigins("https://localhost:7152") // Adjust the origin to match your frontend
+        corsPolicyBuilder.WithOrigins("https://localhost:7152") // Adjust the origin to match your frontend
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials();
@@ -31,6 +28,13 @@ builder.Services.AddCors(options =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
+
+//db context
+builder.Services.AddDbContext<RallyWaveContext>(options =>
+{
+    options.UseMySql(builder.Configuration.GetConnectionString("RallyWave"),
+        new MySqlServerVersion(new Version(8, 0, 39))); 
+});
 
 // Add Services
 builder.Services.AddServices();
@@ -72,18 +76,10 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddAuthorization();
 
-
-// Configure the database context
-builder.Services.AddDbContext<RallyWaveContext>(options =>
-{
-    options.UseMySql(builder.Configuration.GetConnectionString("RallyWave"),
-        new MySqlServerVersion(new Version(8, 0, 39)));
-});
-
 var app = builder.Build();
 
 // login by google account : FOR TESTING 
-app.MapGet("/api/login/google-login", async (HttpContext context) =>
+app.MapGet("/api/login/google-login", async context =>
 {
     var redirectUrl = context.Request.PathBase + "/api/login/response-token"; 
     var properties = new AuthenticationProperties { RedirectUri = redirectUrl };
@@ -97,7 +93,7 @@ app.MapGet("/api/login/response-token", [Authorize] async (HttpContext context) 
     var result = await context.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
     var testResponse = new TestGoogleLoginModel(false, null, null, null);
 
-    if (result?.Principal == null)
+    if (result.Principal == null)
     {
         testResponse.Message = "Unable to authenticate with Google.";
         return Results.BadRequest(testResponse);
