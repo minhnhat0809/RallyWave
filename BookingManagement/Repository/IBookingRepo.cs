@@ -6,7 +6,7 @@ namespace BookingManagement.Repository;
 
 public interface IBookingRepo : IRepositoryBase<Booking>
 {
-    Task<ResponseListDto<BookingsViewDto>> GetBookings(string? subject, int? subjectId, string filterField, string filterValue, int pageNumber, int pageSize);
+    Task<ResponseListDto<BookingsViewDto>> GetBookings(string? subject, int? subjectId, BookingFilterDto bookingFilterDto, int pageNumber, int pageSize);
 
     Task<Booking?> GetBookingById(int bookingId);
 

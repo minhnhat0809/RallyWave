@@ -18,7 +18,7 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
         public double Cost { get; set; } = cost;
     }
     
-    public async Task<ResponseDto> GetBookings(string? subject, int? subjectId, string? filterField, string? filterValue, string? sortField, string sortValue, int pageNumber,
+    public async Task<ResponseDto> GetBookings(string? subject, int? subjectId, BookingFilterDto? bookingFilterDto, string? sortField, string sortValue, int pageNumber,
         int pageSize)
     {
         var responseDto = new ResponseDto(null, "", true, 200);
@@ -28,7 +28,7 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
 
             int total;
             
-            if (validate.IsEmptyOrWhiteSpace(filterField) || validate.IsEmptyOrWhiteSpace(filterValue))
+            if (bookingFilterDto == null)
             {
                 Expression<Func<Booking, bool>> basePredicate = b => true;
                 
@@ -54,7 +54,7 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
             }
             else
             {
-                var listResponse = await unitOfWork.BookingRepo.GetBookings(subject, subjectId, filterField!, filterValue!, pageNumber, pageSize);
+                var listResponse = await unitOfWork.BookingRepo.GetBookings(subject, subjectId, bookingFilterDto, pageNumber, pageSize);
                 
                 bookings = listResponse.Data;
                 
