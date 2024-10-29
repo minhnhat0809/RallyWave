@@ -16,7 +16,7 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
     private readonly Validate _validate = validate;
     private readonly ListExtensions _listExtensions = listExtensions;
     
-    public async Task<ResponseDto> GetMatches(string? subject, int? subjectId, string? filterField, string? filterValue, string? sortField, string sortValue, int pageNumber,
+    public async Task<ResponseDto> GetMatches(string? subject, int? subjectId, MatchFilterDto? matchFilterDto, string? sortField, string sortValue, int pageNumber,
         int pageSize)
     {
         var responseDto = new ResponseDto(null, "Get successfully", true, StatusCodes.Status200OK);
@@ -25,7 +25,7 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
             List<MatchViewsDto>? matches;
             int total;
             
-            if (_validate.IsEmptyOrWhiteSpace(filterField) || _validate.IsEmptyOrWhiteSpace(filterValue))
+            if (matchFilterDto == null)
             {
                 Expression<Func<Match, bool>> basePredicate = m => true;
                 
@@ -44,6 +44,7 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
                             m.CreateBy,
                             m.CreateByNavigation.UserName,
                             m.MatchType,
+                            m.UserMatches.Count,
                             m.TeamSize,
                             m.MinLevel,
                             m.MaxLevel,
@@ -59,7 +60,7 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
             }
             else
             {
-                var responseList = await _unitOfWork.MatchRepo.GetMatches(filterField!, filterValue!, pageNumber, pageSize);
+                var responseList = await _unitOfWork.MatchRepo.GetMatches(matchFilterDto, pageNumber, pageSize);
 
                 matches = responseList.Data;
 

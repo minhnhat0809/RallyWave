@@ -1,5 +1,6 @@
 ﻿using BookingManagement.DTOs;
 using BookingManagement.DTOs.BookingDto;
+using BookingManagement.DTOs.BookingDto.ViewDto;
 
 namespace BookingManagement.Service;
 
@@ -8,8 +9,7 @@ public interface IBookingService
     Task<ResponseDto> GetBookings(
         string? subject,
         int? subjectId,
-        string? filterField,
-        string? filterValue,
+        BookingFilterDto? bookingFilterDto,
         string? sortField,
         string sortValue,
         int pageNumber,

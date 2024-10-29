@@ -7,6 +7,7 @@ public class MatchViewsDto(
     int createById,
     string createBy,
     sbyte matchType,
+    int numberOfPlayers,
     sbyte teamSize,
     sbyte? minLevel,
     sbyte? maxLevel,
@@ -25,7 +26,10 @@ public class MatchViewsDto(
     public int CreateById { get; set; } = createById;
 
     public string CreateBy { get; set; } = createBy;
+    
     public sbyte MatchType { get; set; } = matchType;
+    
+    public int NumberOfPlayers { get; set; } = numberOfPlayers;
 
     public sbyte TeamSize { get; set; } = teamSize;
 
