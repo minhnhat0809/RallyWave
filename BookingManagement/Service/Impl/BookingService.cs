@@ -404,7 +404,7 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
                            b.TimeEnd > timeStart);
         
         // Check if there is any time conflict with existing bookings
-        if (overlapBooking) return response;
+        if (!overlapBooking) return response;
         
         response.IsSucceed = false;
         response.Message = "The requested time overlaps with an existing booking.";
