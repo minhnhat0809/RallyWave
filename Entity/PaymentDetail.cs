@@ -17,6 +17,8 @@ public partial class PaymentDetail
 
     public string? Note { get; set; }
 
+    public string Signature { get; set; } = null!;
+
     public double Total { get; set; }
 
     public string Type { get; set; } = null!;

@@ -1,20 +1,19 @@
-﻿using System.Linq.Expressions;
-using AutoMapper;
+﻿using AutoMapper;
 using Entity;
 using MatchManagement.DTOs;
 using MatchManagement.DTOs.MatchDto;
 using MatchManagement.DTOs.MatchDto.ViewDto;
+using MatchManagement.DTOs.UserDto.ViewDto;
 using MatchManagement.Repository;
 using MatchManagement.Ultility;
 
 namespace MatchManagement.Service.Impl;
 
-public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate validate, ListExtensions listExtensions) : IMatchService
+public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate validate) : IMatchService
 {
     private readonly IUnitOfWork _unitOfWork = unitOfWork;
     private readonly IMapper _mapper = mapper;
     private readonly Validate _validate = validate;
-    private readonly ListExtensions _listExtensions = listExtensions;
     
     public async Task<ResponseDto> GetMatches(string? subject, int? subjectId, MatchFilterDto? matchFilterDto, string? sortField, string sortValue, int pageNumber,
         int pageSize)
@@ -47,13 +46,9 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
         {
             //check user in database
             var existedUser = await _unitOfWork.UserRepo.AnyAsync(u => u.UserId == userId);
+            
             if (!existedUser)
-            {
-                responseDto.Message = "There are no users with this id";
-                responseDto.IsSucceed = false;
-                responseDto.StatusCode = StatusCodes.Status404NotFound;
-                return responseDto;
-            }
+                return new ResponseDto(null, "There are no users with this id", false, StatusCodes.Status404NotFound);
             
             //check match in database
             var matchEnroll = await _unitOfWork.MatchRepo.GetByConditionAsync(m => m.MatchId == matchId,
@@ -72,22 +67,18 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
             ));
             
             if (matchEnroll == null)
-            {
-                responseDto.Message = "There are no matches with this id";
-                responseDto.StatusCode = StatusCodes.Status404NotFound;
-                responseDto.IsSucceed = false;
-                return responseDto;
-            }
+                return new ResponseDto(null, "There are no matches with this id", false, StatusCodes.Status404NotFound);
+            
 
             switch (matchEnroll.Mode)
             {
                 case 1:
                 {
                     var check = _unitOfWork.FriendShipRepo.AnyAsync(fs => 
-                            fs.User1Id == userId && 
-                            fs.User2Id == matchEnroll.UserId ||
-                            fs.User1Id == matchEnroll.UserId && 
-                            fs.User2Id == userId)
+                            fs.SenderId == userId && 
+                            fs.ReceiverId == matchEnroll.UserId ||
+                            fs.ReceiverId == matchEnroll.UserId && 
+                            fs.SenderId == userId)
                     
                         .Result;
                     if (!check)
@@ -117,9 +108,7 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
         }
         catch (Exception e)
         {
-            responseDto.Message = e.Message;
-            responseDto.StatusCode = StatusCodes.Status500InternalServerError;
-            responseDto.IsSucceed = false;
+            return new ResponseDto(null, e.Message, false, StatusCodes.Status500InternalServerError);
         }
 
         return responseDto;
@@ -134,12 +123,7 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
             var existedUser = await _unitOfWork.UserRepo.AnyAsync(u => u.UserId == userId);
 
             if (!existedUser)
-            {
-                responseDto.Message = "There are no users with this id";
-                responseDto.IsSucceed = false;
-                responseDto.StatusCode = StatusCodes.Status404NotFound;
-                return responseDto;
-            }
+                return new ResponseDto(null, "There are no users with this id", false, StatusCodes.Status404NotFound);
             
             //get match fields in database
             var match = await _unitOfWork.MatchRepo.GetByConditionAsync(m => m.MatchId == matchId,
@@ -152,12 +136,7 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
 
             //check match is null or not
             if (match == null)
-            {
-                responseDto.Message = "There are no matches with this id";
-                responseDto.IsSucceed = false;
-                responseDto.StatusCode = StatusCodes.Status404NotFound;
-                return responseDto;
-            }
+                return new ResponseDto(null, "There are no matches with this id", false, StatusCodes.Status404NotFound);
 
             //check user is in match or not
             var userMatch =
@@ -165,30 +144,16 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
                     um => um);
 
             if (userMatch == null)
-            {
-                responseDto.Message = "This user does not enroll in the match yet.";
-                responseDto.IsSucceed = false;
-                responseDto.StatusCode = StatusCodes.Status404NotFound;
-                return responseDto;
-            }
+                return new ResponseDto(null, "This user does not enroll in the match yet.", false, StatusCodes.Status400BadRequest);
+            
 
             //check if user is an owner of the match
             if (userMatch.Status == 0)
-            {
-                responseDto.Message = "User is owner of the match. Cannot un-enroll";
-                responseDto.IsSucceed = false;
-                responseDto.StatusCode = StatusCodes.Status400BadRequest;
-                return responseDto;
-            }
+                return new ResponseDto(null, "User is owner of the match. Cannot un-enroll", false, StatusCodes.Status400BadRequest);
 
             //check match status is available or not
             if (match.Status!.Value != 0)
-            {
-                responseDto.Message = "Match must be available";
-                responseDto.IsSucceed = false;
-                responseDto.StatusCode = StatusCodes.Status400BadRequest;
-                return responseDto;
-            }
+                return new ResponseDto(null, "Match must be available", false, StatusCodes.Status400BadRequest);
             
 
             if (match.BlockingOff.HasValue)
@@ -200,12 +165,7 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
 
                 //compare now to the min time for un-enroll from the match
                 if (timeNow >= minTimeToUnEnroll)
-                {
-                    responseDto.Message = "UnEnrollment is disable because user is in blocking off period";
-                    responseDto.IsSucceed = false;
-                    responseDto.StatusCode = StatusCodes.Status400BadRequest;
-                    return responseDto;
-                }
+                    return new ResponseDto(null, "UnEnrollment is disable because user is in blocking off period", false, StatusCodes.Status400BadRequest);
             }
 
             await _unitOfWork.UserMatchRepo.UnEnrollment(userMatch);
@@ -213,9 +173,7 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
         }
         catch (Exception e)
         {
-            responseDto.Message = e.Message;
-            responseDto.StatusCode = StatusCodes.Status500InternalServerError;
-            responseDto.IsSucceed = false;
+            return new ResponseDto(null, e.Message, false, StatusCodes.Status500InternalServerError);
         }
 
         return responseDto;
@@ -228,20 +186,27 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
         {
             var match = await _unitOfWork.MatchRepo.GetByConditionAsync(m => m.MatchId == id,
                 m => m, m => m.Sport);
+
+            var users = await _unitOfWork.UserMatchRepo.FindByConditionAsync(um => um.MatchId == id, 
+                m => new UserMatchDto
+                {
+                    UserId = m.UserId,
+                    Username = m.User.UserName,
+                    Avatar = m.User.Avatar
+                });
             
             if (match == null)
-            {
-                responseDto.Message = "There are no matches with this id";
-                responseDto.StatusCode = StatusCodes.Status404NotFound;
-            }
+                return new ResponseDto(null, "There are no matches with this id", false, StatusCodes.Status404NotFound);
 
-            responseDto.Result = _mapper.Map<MatchViewDto>(match);
+            var matchDto = _mapper.Map<MatchViewDto>(match);
+
+            matchDto.Users = users;
+            
+            responseDto.Result = matchDto;
         }
         catch (Exception e)
         {
-            responseDto.Message = e.Message;
-            responseDto.StatusCode = StatusCodes.Status500InternalServerError;
-            responseDto.IsSucceed = false;
+            return new ResponseDto(null, e.Message, false, StatusCodes.Status500InternalServerError);
         }
 
         return responseDto;
@@ -249,7 +214,7 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
 
     public async Task<ResponseDto> CreateMatch(int userId, MatchCreateDto matchCreateDto)
     {
-        var responseDto = new ResponseDto(null, "", true, StatusCodes.Status201Created);
+        ResponseDto responseDto;
         try
         {
             //overall validation
@@ -272,14 +237,10 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
                 UserId = userId,
                 Status = 0
             });
-
-            responseDto.Message = "Create successfully";
         }
         catch (Exception e)
         {
-            responseDto.Message = e.Message;
-            responseDto.StatusCode = StatusCodes.Status500InternalServerError;
-            responseDto.IsSucceed = false;
+            return new ResponseDto(null, e.Message, false, StatusCodes.Status500InternalServerError);
         }
 
         return responseDto;
