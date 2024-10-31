@@ -244,25 +244,25 @@ public partial class RallyWaveContext : DbContext
 
         modelBuilder.Entity<Friendship>(entity =>
         {
-            entity.HasKey(e => new { e.User1Id, e.User2Id })
+            entity.HasKey(e => new { e.Sender, e.Receiver })
                 .HasName("PRIMARY")
                 .HasAnnotation("MySql:IndexPrefixLength", new[] { 0, 0 });
 
             entity.ToTable("friendship");
 
-            entity.HasIndex(e => e.User2Id, "FK_Friend_Ship_User2");
+            entity.HasIndex(e => e.Receiver, "FK_Friend_Ship_User2");
 
-            entity.Property(e => e.User1Id).HasColumnName("user1_id");
-            entity.Property(e => e.User2Id).HasColumnName("user2_id");
+            entity.Property(e => e.Sender).HasColumnName("user1_id");
+            entity.Property(e => e.Receiver).HasColumnName("user2_id");
             entity.Property(e => e.Level).HasColumnName("level");
 
-            entity.HasOne(d => d.User1).WithMany(p => p.FriendshipUser1s)
-                .HasForeignKey(d => d.User1Id)
+            entity.HasOne(d => d.Sender).WithMany(p => p.FriendshipSenders)
+                .HasForeignKey(d => d.Sender)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Friend_Ship_User1");
 
-            entity.HasOne(d => d.User2).WithMany(p => p.FriendshipUser2s)
-                .HasForeignKey(d => d.User2Id)
+            entity.HasOne(d => d.Receiver).WithMany(p => p.FriendshipReceivers)
+                .HasForeignKey(d => d.Receiver)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Friend_Ship_User2");
         });
