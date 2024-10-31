@@ -22,8 +22,10 @@ public class UserViewDto
 
     public sbyte Status { get; set; }
     public DateTime CreatedDate { get; set; }
+    
+    public sbyte IsTwoFactorEnabled { get; set; }
 
-    public UserViewDto(int userId, string userName, string? email, int phoneNumber, string gender, DateOnly dob, string address, string province, string? avatar, sbyte status, DateTime createdDate)
+    public UserViewDto(int userId, string userName, string? email, int phoneNumber, string gender, DateOnly dob, string address, string province, string? avatar, sbyte status, DateTime createdDate, sbyte isTwoFactorEnabled)
     {
         UserId = userId;
         UserName = userName;
@@ -36,5 +38,6 @@ public class UserViewDto
         Avatar = avatar;
         Status = status;
         CreatedDate = createdDate;
+        IsTwoFactorEnabled = isTwoFactorEnabled;
     }
 }

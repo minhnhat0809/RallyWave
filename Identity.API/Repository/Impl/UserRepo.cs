@@ -30,7 +30,8 @@ public class UserRepo(RallyWaveContext repositoryContext) : RepositoryBase<User>
                             u.Province,
                             u.Avatar,
                             u.Status,
-                            u.CreatedDate));
+                            u.CreatedDate,
+                            u.IsTwoFactorEnabled));
                     break;
 
                 case "email":
@@ -47,7 +48,8 @@ public class UserRepo(RallyWaveContext repositoryContext) : RepositoryBase<User>
                             u.Province,
                             u.Avatar,
                             u.Status,
-                            u.CreatedDate));
+                            u.CreatedDate,
+                            u.IsTwoFactorEnabled));
                     break;
 
                 case "phonenumber":
@@ -66,7 +68,8 @@ public class UserRepo(RallyWaveContext repositoryContext) : RepositoryBase<User>
                                 u.Province,
                                 u.Avatar,
                                 u.Status,
-                                u.CreatedDate));
+                                u.CreatedDate,
+                                u.IsTwoFactorEnabled));
                     }
                     break;
 
@@ -86,7 +89,8 @@ public class UserRepo(RallyWaveContext repositoryContext) : RepositoryBase<User>
                                 u.Province,
                                 u.Avatar,
                                 u.Status,
-                                u.CreatedDate));
+                                u.CreatedDate,
+                                u.IsTwoFactorEnabled));
                     }
                     break;
             }
@@ -116,7 +120,8 @@ public class UserRepo(RallyWaveContext repositoryContext) : RepositoryBase<User>
                     u.Province,
                     u.Avatar,
                     u.Status,
-                    u.CreatedDate));
+                    u.CreatedDate,
+                    u.IsTwoFactorEnabled));
         }
         catch (Exception e)
         {

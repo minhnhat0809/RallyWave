@@ -63,7 +63,8 @@ public class UserService : IUserService
                             u.Province,
                             u.Avatar,
                             u.Status,
-                            u.CreatedDate), null);
+                            u.CreatedDate,
+                            u.IsTwoFactorEnabled), null);
                 }
                 else
                 {
