@@ -29,7 +29,8 @@ public class UserRepo(RallyWaveContext repositoryContext) : RepositoryBase<User>
                             u.Address,
                             u.Province,
                             u.Avatar,
-                            u.Status));
+                            u.Status,
+                            u.CreatedDate));
                     break;
 
                 case "email":
@@ -45,7 +46,8 @@ public class UserRepo(RallyWaveContext repositoryContext) : RepositoryBase<User>
                             u.Address,
                             u.Province,
                             u.Avatar,
-                            u.Status));
+                            u.Status,
+                            u.CreatedDate));
                     break;
 
                 case "phonenumber":
@@ -63,7 +65,8 @@ public class UserRepo(RallyWaveContext repositoryContext) : RepositoryBase<User>
                                 u.Address,
                                 u.Province,
                                 u.Avatar,
-                                u.Status));
+                                u.Status,
+                                u.CreatedDate));
                     }
                     break;
 
@@ -82,7 +85,8 @@ public class UserRepo(RallyWaveContext repositoryContext) : RepositoryBase<User>
                                 u.Address,
                                 u.Province,
                                 u.Avatar,
-                                u.Status));
+                                u.Status,
+                                u.CreatedDate));
                     }
                     break;
             }
@@ -111,7 +115,8 @@ public class UserRepo(RallyWaveContext repositoryContext) : RepositoryBase<User>
                     u.Address,
                     u.Province,
                     u.Avatar,
-                    u.Status));
+                    u.Status,
+                    u.CreatedDate));
         }
         catch (Exception e)
         {

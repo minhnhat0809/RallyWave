@@ -62,7 +62,8 @@ public class UserService : IUserService
                             u.Address,
                             u.Province,
                             u.Avatar,
-                            u.Status), null);
+                            u.Status,
+                            u.CreatedDate), null);
                 }
                 else
                 {

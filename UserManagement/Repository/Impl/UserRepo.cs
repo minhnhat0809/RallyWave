@@ -88,6 +88,13 @@ public class UserRepo(RallyWaveContext repositoryContext) : RepositoryBase<User>
             .Where(u => userIds.Contains(u.UserId))
             .ToListAsync();
     }
+
+    public async Task<List<User>> GetUnverifiedUsersOlderThan(DateTime cutoffDate)
+    {
+        return await repositoryContext.Users
+            .Where(u => u.Status != 1 && u.CreatedDate < u.CreatedDate)
+            .ToListAsync();
+    }
 }
 
 

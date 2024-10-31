@@ -22,4 +22,6 @@ public class CourtOwnerViewDto
 
     public sbyte Status { get; set; }
 
+    public DateTime CreatedDate { get; set; }
+
 }

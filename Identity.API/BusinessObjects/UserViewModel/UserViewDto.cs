@@ -21,7 +21,9 @@ public class UserViewDto
     public string? Avatar { get; set; }
 
     public sbyte Status { get; set; }
-    public UserViewDto(int userId, string userName, string? email, int phoneNumber, string gender, DateOnly dob, string address, string province, string? avatar, sbyte status)
+    public DateTime CreatedDate { get; set; }
+
+    public UserViewDto(int userId, string userName, string? email, int phoneNumber, string gender, DateOnly dob, string address, string province, string? avatar, sbyte status, DateTime createdDate)
     {
         UserId = userId;
         UserName = userName;
@@ -33,5 +35,6 @@ public class UserViewDto
         Province = province;
         Avatar = avatar;
         Status = status;
+        CreatedDate = createdDate;
     }
 }
