@@ -134,7 +134,7 @@ public class BookingRepo(RallyWaveContext repositoryContext) : RepositoryBase<Bo
             var bookings = await FindByConditionWithSortingAndPagingAsync(
                 basePredicate,
                 b => new BookingsViewDto(b.BookingId, b.Date, b.TimeStart, b.TimeEnd, b.Cost, b.Status),
-                pageSize, pageSize,
+                pageNumber, pageSize,
                 orderByExpression, thenOrderByExpression, isAscending, isAscending
                 );
 
