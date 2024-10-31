@@ -8,7 +8,7 @@ public class MatchViewDto
 
     public string SportName { get; set; } = null!;
     
-    private int CreateBy { get; set; }
+    public int CreateBy { get; set; }
 
     public string MatchName { get; set; } = null!;
 
