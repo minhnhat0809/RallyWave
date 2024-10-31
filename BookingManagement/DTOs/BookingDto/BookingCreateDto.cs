@@ -20,8 +20,5 @@ public class BookingCreateDto
     [Required]
     public TimeOnly TimeEnd { get; set; }
     
-    [Required]
-    public sbyte Status { get; set; }
-    
     public string? Note { get; set; }
 }

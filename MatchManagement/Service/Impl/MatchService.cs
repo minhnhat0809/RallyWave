@@ -22,52 +22,11 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
         var responseDto = new ResponseDto(null, "Get successfully", true, StatusCodes.Status200OK);
         try
         {
-            List<MatchViewsDto>? matches;
-            int total;
-            
-            if (matchFilterDto == null)
-            {
-                Expression<Func<Match, bool>> basePredicate = m => true;
-                
-                if (!_validate.IsEmptyOrWhiteSpace(subject) && subjectId != null)
-                {
-                    basePredicate = m => m.CreateBy == subjectId;
-                }
+            var responseList = await _unitOfWork.MatchRepo.GetMatches(subject, subjectId, matchFilterDto, sortField, sortValue, pageNumber, pageSize);
 
-                matches = await _unitOfWork.MatchRepo.FindByConditionWithPagingAsync(
-                    basePredicate,
-                    m => 
-                        new MatchViewsDto(
-                            m.MatchId, 
-                            m.Sport.SportName, 
-                            m.MatchName, 
-                            m.CreateBy,
-                            m.CreateByNavigation.UserName,
-                            m.MatchType,
-                            m.UserMatches.Count,
-                            m.TeamSize,
-                            m.MinLevel,
-                            m.MaxLevel,
-                            m.Date,
-                            m.TimeStart,
-                            m.TimeEnd,
-                            m.Location!,
-                            m.Status ?? 0
-                        ), pageNumber, pageSize);
+            var matches = responseList.Data;
 
-                total = await _unitOfWork.MatchRepo.CountByConditionAsync(basePredicate);
-
-            }
-            else
-            {
-                var responseList = await _unitOfWork.MatchRepo.GetMatches(matchFilterDto, pageNumber, pageSize);
-
-                matches = responseList.Data;
-
-                total = responseList.TotalCount;
-            }
-            
-            matches = Sort(matches, sortField, sortValue);
+            var total = responseList.TotalCount;
 
             responseDto.Result = new { matches, total};
         }
@@ -611,44 +570,5 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
                   um.Match.TimeEnd > newTimeStart);
     }
 
-   private List<MatchViewsDto>? Sort(List<MatchViewsDto>? matches, string? sortField, string? sortValue)
-{
-    if (matches == null || matches.Count == 0 || string.IsNullOrEmpty(sortField) || 
-        string.IsNullOrEmpty(sortValue) || string.IsNullOrWhiteSpace(sortField) || string.IsNullOrWhiteSpace(sortValue))
-    {
-        return matches;
-    }
-
-    matches = sortField.ToLower() switch
-    {
-        "date" => sortValue.Equals("asc")
-            ? _listExtensions.Sort(matches, m => m.Date, true)
-            : _listExtensions.Sort(matches, m => m.Date, false),
-        "timestart" => sortValue.Equals("asc")
-            ? _listExtensions.Sort(matches, m => m.TimeStart, true)
-            : _listExtensions.Sort(matches, m => m.TimeStart, true),
-        "timeend" => sortValue.Equals("asc")
-            ? _listExtensions.Sort(matches, m => m.TimeEnd, true)
-            : _listExtensions.Sort(matches, m => m.TimeEnd, true),
-        "status" => sortValue.Equals("asc")
-            ? _listExtensions.Sort(matches, m => m.Status, true)
-            : _listExtensions.Sort(matches, m => m.Status, true),
-        "matchtype" => sortValue.Equals("asc")
-            ? _listExtensions.Sort(matches, m => m.MatchType, true)
-            : _listExtensions.Sort(matches, m => m.MatchType, true),
-        "teamsize" => sortValue.Equals("asc")
-            ? _listExtensions.Sort(matches, m => m.TeamSize, true)
-            : _listExtensions.Sort(matches, m => m.TeamSize, true),
-        "minlevel" => sortValue.Equals("asc")
-            ? _listExtensions.Sort(matches, m => m.MinLevel, true)
-            : _listExtensions.Sort(matches, m => m.MinLevel, true),
-        "maxlevel" => sortValue.Equals("asc")
-            ? _listExtensions.Sort(matches, m => m.MaxLevel, true)
-            : _listExtensions.Sort(matches, m => m.MaxLevel, true),
-        _ => matches 
-    };
-
-    return matches;
-}
 
 }

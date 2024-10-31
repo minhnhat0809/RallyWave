@@ -9,11 +9,11 @@ using PaymentManagement.Ultility;
 
 namespace PaymentManagement.Service.Impl;
 
-public class PaymentService(IMapper mapper, IUnitOfWork unitOfWork, GetSecret getSecret) : IPaymentService
+public class PaymentService(IMapper mapper, IUnitOfWork unitOfWork, PayOS payOs) : IPaymentService
 {
     private readonly IMapper _mapper = mapper;
     private readonly IUnitOfWork _unitOfWork = unitOfWork;
-    private readonly GetSecret _getSecret = getSecret;
+    private readonly PayOS _payOs = payOs;
     
     public async Task<ResponseDto> GetPayments()
     {
@@ -37,7 +37,14 @@ public class PaymentService(IMapper mapper, IUnitOfWork unitOfWork, GetSecret ge
         var response = new ResponseDto(null, "", true, StatusCodes.Status200OK);
         try
         {
+            var payment = await _unitOfWork.PaymentRepo.GetByConditionAsync(p => p.PaymentId == id, p => p, p => p.Booking);
 
+            if (payment == null)
+            {
+                return new ResponseDto(null, "There are no payments with this id", false, StatusCodes.Status404NotFound);
+            }
+            
+            
         }
         catch (Exception e)
         {
@@ -85,6 +92,87 @@ public class PaymentService(IMapper mapper, IUnitOfWork unitOfWork, GetSecret ge
         }
 
         return response;
+    }
+
+    public async Task<ResponseDto> HandlePayment(WebhookType webhookType)
+    {
+        var response = new ResponseDto(null, "", true, StatusCodes.Status200OK);
+        try
+        {
+            if (webhookType.success)
+            {
+                var data = _payOs.verifyPaymentWebhookData(webhookType);
+
+                var id = (int) data.orderCode;
+            
+                var payment = await _unitOfWork.PaymentRepo.GetByConditionAsync( p => p.PaymentId == id, p => p);
+
+                if (payment == null)
+                {
+                    return new ResponseDto(null, "There are no payments with this id", false,
+                        StatusCodes.Status404NotFound);
+                }
+            
+                if (payment.BookingId.HasValue)
+                {
+                    //update booking status to Reserved
+                    var booking = _unitOfWork.BookingRepo.GetByConditionAsync(b => b.BookingId == payment.BookingId.Value,
+                        b => b).Result;
+
+                    booking!.Status = 2;
+
+                    await _unitOfWork.BookingRepo.UpdateAsync(booking);
+
+                }else if (payment.UserId.HasValue)
+                {
+                    //update user status to subscribed and subId
+                    var user = _unitOfWork.UserRepo.GetByConditionAsync(u => u.UserId == payment.UserId.Value,
+                        u => u).Result;
+
+                    user!.SubId = payment.SubId!.Value;
+
+                    user.Status = 1;
+                    
+                    await _unitOfWork.UserRepo.UpdateAsync(user);
+
+                }else if (payment.CourtOwnerId.HasValue)
+                {
+                    //update court owner status to subscribed and subId
+                    var courtOwner = _unitOfWork.CourtOwnerRepo.GetByConditionAsync(co => co.CourtOwnerId == payment.CourtOwnerId.Value,
+                        co => co).Result;
+                    
+                    courtOwner!.SubId = payment.SubId!.Value;
+
+                    courtOwner.Status = 1;
+                    
+                    await _unitOfWork.CourtOwnerRepo.UpdateAsync(courtOwner);
+                }
+            }
+            
+
+        }
+        catch (Exception e)
+        {
+            response.IsSucceed = false;
+            response.Message = e.Message;
+            response.StatusCode = StatusCodes.Status500InternalServerError;
+        }
+
+        return response;
+    }
+
+    public async Task<ResponseDto> ConfirmWebHook(string url)
+    {
+        try
+        {
+            await _payOs.confirmWebhook(url);
+            
+            return new ResponseDto(null, "Ok", true, StatusCodes.Status200OK);
+        }
+        catch (Exception e)
+        {
+            return new ResponseDto(null, e.Message, true, StatusCodes.Status500InternalServerError);
+        }
     }
 
     private async Task<ResponseDto> ProcessPaymentForUser(PaymentCreateDto paymentCreateDto)
@@ -140,18 +228,6 @@ public class PaymentService(IMapper mapper, IUnitOfWork unitOfWork, GetSecret ge
 
             try
             {
-                //get pay-os credentials
-                var payOsCredentials =  await _getSecret.GetPayOsCredentials();
-                
-                if (payOsCredentials == null)
-                {
-                    response.Message = "There is an error in processing payment with pay-os";
-                    response.IsSucceed = false;
-                    response.StatusCode = StatusCodes.Status500InternalServerError;
-                    return response;
-                }
-
-                var payOs = new PayOS(payOsCredentials.ClientId, payOsCredentials.ApiKey, payOsCredentials.CheckSumKey);
 
                 //add item 
                 var item = new ItemData(sub.SubName, 1, (int) sub.Price);
@@ -159,11 +235,11 @@ public class PaymentService(IMapper mapper, IUnitOfWork unitOfWork, GetSecret ge
                 var items = new List<ItemData> { item };
 
                 //start create payment
-                var paymentData = new PaymentData(paymentDetail.PaymentId, 1000, "Dang ki premium",
+                var paymentData = new PaymentData(paymentDetail.PaymentId, 1000, "user",
                     items, paymentCreateDto.SuccessUrl, paymentCreateDto.CancelUrl, null, checkUser.UserName, 
                     checkUser.Email, checkUser.PhoneNumber.ToString());
                 
-                var createPayment = await payOs.createPaymentLink(paymentData);
+                var createPayment = await _payOs.createPaymentLink(paymentData);
             
                 //update sub in table user
                 checkUser.SubId = paymentCreateDto.PaymentCreateForSub.SubId;
@@ -245,17 +321,6 @@ public class PaymentService(IMapper mapper, IUnitOfWork unitOfWork, GetSecret ge
 
             try
             {
-                var payOsCredentials =  await _getSecret.GetPayOsCredentials();
-
-                if (payOsCredentials == null)
-                {
-                    response.Message = "There is an error in processing payment with pay-os";
-                    response.IsSucceed = false;
-                    response.StatusCode = StatusCodes.Status500InternalServerError;
-                    return response;
-                }
-
-                var payOs = new PayOS(payOsCredentials.ClientId, payOsCredentials.ApiKey, payOsCredentials.CheckSumKey);
 
                 //add item
                 var item = new ItemData(sub.SubName, 1, (int) sub.Price);
@@ -263,11 +328,11 @@ public class PaymentService(IMapper mapper, IUnitOfWork unitOfWork, GetSecret ge
                 var items = new List<ItemData> { item };
 
                 //start create payment
-                var paymentData = new PaymentData(paymentDetail.PaymentId, 1000, "Dang ki premium",
+                var paymentData = new PaymentData(paymentDetail.PaymentId, 1000, "courtOwner",
                     items, paymentCreateDto.SuccessUrl, paymentCreateDto.CancelUrl, null, checkUser.Name, 
                     checkUser.Email, checkUser.PhoneNumber.ToString());
                 
-                var createPayment = await payOs.createPaymentLink(paymentData);
+                var createPayment = await _payOs.createPaymentLink(paymentData);
             
                 //add subId in table court owner
                 checkUser.SubId = paymentCreateDto.PaymentCreateForSub.SubId;
@@ -305,7 +370,15 @@ public class PaymentService(IMapper mapper, IUnitOfWork unitOfWork, GetSecret ge
             //check booking in database
             var booking =
                 await _unitOfWork.BookingRepo.GetByConditionAsync(b => b.BookingId == paymentCreateDto.BookingId,
-                    b => b);
+                    b => 
+                        new
+                        {
+                            b.BookingId, 
+                            b.MatchId, 
+                            b.UserId, 
+                            b.CourtId,
+                            b.Cost
+                        });
             
 
             if (booking == null)
@@ -323,18 +396,17 @@ public class PaymentService(IMapper mapper, IUnitOfWork unitOfWork, GetSecret ge
             
             var type = paymentCreateDto.Type;
 
-            var userId = paymentCreateDto.PaymentCreateForSub!.UserId;
-
             if (!type.Equals("cash") && !type.Equals("banking"))
             {
                 type = "banking";
             }
             
+            
             var paymentDetail = new PaymentDetail
             {
                 BookingId = booking.BookingId,
                 Type = type,
-                Total = booking.Cost,
+                Total = Math.Round(booking.Cost * 10 / 100, 2),
                 Status = 0
             };
 
@@ -342,23 +414,10 @@ public class PaymentService(IMapper mapper, IUnitOfWork unitOfWork, GetSecret ge
 
             try
             {
-                var payOsCredentials =  await _getSecret.GetPayOsCredentials();
-
-                if (payOsCredentials == null)
-                {
-                    response.Message = "There is an error in processing payment with pay-os";
-                    response.IsSucceed = false;
-                    response.StatusCode = StatusCodes.Status500InternalServerError;
-                    return response;
-                }
-            
                 //add item
                 var item = new ItemData(courtName!, 1, (int) booking.Cost);
 
                 var items = new List<ItemData> { item };
-            
-                //initiate payos
-                var payOs = new PayOS(payOsCredentials.ClientId, payOsCredentials.ApiKey, payOsCredentials.CheckSumKey);
 
                 if (booking.MatchId.HasValue)
                 {
@@ -379,11 +438,11 @@ public class PaymentService(IMapper mapper, IUnitOfWork unitOfWork, GetSecret ge
                         u.PhoneNumber
                     });
                 
-                    var paymentData = new PaymentData(paymentDetail.PaymentId, 1000, "Thanh toan tien san",
+                    var paymentData = new PaymentData(paymentDetail.PaymentId, 1000, "booking",
                         items, paymentCreateDto.SuccessUrl, paymentCreateDto.CancelUrl, null, user!.UserName, 
                         user.Email, user.PhoneNumber.ToString()); 
                 
-                    var createPayment = await payOs.createPaymentLink(paymentData);
+                    var createPayment = await _payOs.createPaymentLink(paymentData);
 
                     response.Message = createPayment.status;
 
@@ -402,7 +461,7 @@ public class PaymentService(IMapper mapper, IUnitOfWork unitOfWork, GetSecret ge
                         items, paymentCreateDto.SuccessUrl, paymentCreateDto.CancelUrl, null, user!.UserName, 
                         user.Email, user.PhoneNumber.ToString()); 
                 
-                    var createPayment = await payOs.createPaymentLink(paymentData);
+                    var createPayment = await _payOs.createPaymentLink(paymentData);
                 
                     response.Message = createPayment.status;
                 }
@@ -413,10 +472,6 @@ public class PaymentService(IMapper mapper, IUnitOfWork unitOfWork, GetSecret ge
                     response.IsSucceed = false;
                     return response;
                 }
-            
-                //update status after paid
-                booking.Status = 2;
-                await _unitOfWork.BookingRepo.UpdateAsync(booking);
             
             }
             catch (Exception e)

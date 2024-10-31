@@ -52,11 +52,15 @@ public class RepositoryBase<T>(RallyWaveContext repositoryContext) : IRepository
         return await query.Select(selector).ToListAsync(); 
     }
     
-    public async Task<List<TResult>> FindByConditionWithPagingAsync<TResult>(
+    public async Task<List<TResult>> FindByConditionWithSortingAndPagingAsync<TResult>(
         Expression<Func<T, bool>> expression, 
         Expression<Func<T, TResult>> selector, 
         int pageNumber, 
         int pageSize, 
+        Expression<Func<T, object>> orderBy, 
+        Expression<Func<T, object>>? thenBy = null, 
+        bool isAscending = true, 
+        bool thenByAscending = true, 
         params Expression<Func<T, object>>[]? includes)
     {
         var query = repositoryContext.Set<T>().Where(expression);
@@ -65,8 +69,21 @@ public class RepositoryBase<T>(RallyWaveContext repositoryContext) : IRepository
         {
             query = includes.Aggregate(query, (current, include) => current.Include(include)).AsSplitQuery();
         }
-        
-        return await query
+
+        // Apply primary sorting based on the direction
+        var orderedQuery = isAscending 
+            ? query.OrderBy(orderBy) 
+            : query.OrderByDescending(orderBy);
+
+        // Apply secondary sorting if provided
+        if (thenBy != null)
+        {
+            orderedQuery = thenByAscending 
+                ? orderedQuery.ThenBy(thenBy) 
+                : orderedQuery.ThenByDescending(thenBy);
+        }
+
+        return await orderedQuery
             .Skip((pageNumber - 1) * pageSize)
             .Take(pageSize)
             .Select(selector)
