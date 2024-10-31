@@ -7,5 +7,8 @@ namespace MatchManagement.Repository;
 
 public interface IMatchRepo : IRepositoryBase<Match>
 {
-    Task<ResponseListDto<MatchViewsDto>> GetMatches(MatchFilterDto matchFilterDto, int pageNumber, int pageSize);
+    Task<ResponseListDto<MatchViewsDto>> GetMatches(string? subject, int? subjectId, 
+        MatchFilterDto? matchFilterDto, 
+        string? sortField, string sortValue,
+        int pageNumber, int pageSize);
 }

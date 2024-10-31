@@ -1,5 +1,6 @@
 using Entity;
 using Microsoft.EntityFrameworkCore;
+using Net.payOS;
 using PaymentManagement;
 using PaymentManagement.Repository;
 using PaymentManagement.Repository.Impl;
@@ -47,10 +48,17 @@ builder.Services.AddCors(opts =>
         .AllowAnyMethod().AllowCredentials().SetIsOriginAllowed((_) => true));
 });
 
-//ultility
+//utility
 builder.Services.AddScoped(typeof(Validate));
 builder.Services.AddScoped(typeof(ListExtensions));
 builder.Services.AddSingleton(typeof(GetSecret));
+
+//pay-os
+var secret = new GetSecret();
+var payOsCredentials = secret.GetPayOsCredentials().Result;
+var payOs = new PayOS(payOsCredentials!.ClientId, payOsCredentials.ApiKey, payOsCredentials.CheckSumKey);
+
+builder.Services.AddSingleton(payOs);
 
 
 //mapper 
