@@ -4,10 +4,15 @@
     build:
       context: .
       dockerfile: UserManagement/Dockerfile
+    volumes:
+      - ~/.aws:/root/.aws
+    environment:
+      - AWS_ACCESS_KEY_ID=AKIAXPDGUFPSQE2J2ZAK
+      - AWS_SECRET_ACCESS_KEY=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
     networks:
       - rallywave
     ports:
-      - "7001:8080"
+      - 7001:8080
     depends_on:
       - rabbitmq
 
@@ -16,30 +21,45 @@
     build:
       context: .
       dockerfile: ChattingManagement/Dockerfile
+    volumes:
+      - ~/.aws:/root/.aws
+    environment:
+      - AWS_ACCESS_KEY_ID=AKIAXPDGUFPSQE2J2ZAK
+      - AWS_SECRET_ACCESS_KEY=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
     networks:
       - rallywave
     ports:
-      - "7002:8080"
+      - 7002:8080
 
   courtmanagement:
     image: courtmanagement
     build:
       context: .
       dockerfile: CourtManagement/Dockerfile
+    volumes:
+      - ~/.aws:/root/.aws
+    environment:
+      - AWS_ACCESS_KEY_ID=AKIAXPDGUFPSQE2J2ZAK
+      - AWS_SECRET_ACCESS_KEY=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
     networks:
       - rallywave
     ports:
-      - "7003:8080"
+      - 7003:8080
 
   notificationmanagement:
     image: notificationmanagement
     build:
       context: .
       dockerfile: NotificationManagement/Dockerfile
+    volumes:
+      - ~/.aws:/root/.aws
+    environment:
+      - AWS_ACCESS_KEY_ID=AKIAXPDGUFPSQE2J2ZAK
+      - AWS_SECRET_ACCESS_KEY=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
     networks:
       - rallywave
     ports:
-      - "7004:8080"
+      - 7004:8080
     depends_on:
       - rabbitmq
 
@@ -48,10 +68,15 @@
     build:
       context: .
       dockerfile: MatchManagement/Dockerfile
+    volumes:
+      - ~/.aws:/root/.aws
+    environment:
+      - AWS_ACCESS_KEY_ID=AKIAXPDGUFPSQE2J2ZAK
+      - AWS_SECRET_ACCESS_KEY=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
     networks:
       - rallywave
     ports:
-      - "7005:8080"
+      - 7005:8080
     depends_on:
       - rabbitmq
 
@@ -60,10 +85,15 @@
     build:
       context: .
       dockerfile: BookingManagement/Dockerfile
+    volumes:
+      - ~/.aws:/root/.aws
+    environment:
+      - AWS_ACCESS_KEY_ID=AKIAXPDGUFPSQE2J2ZAK
+      - AWS_SECRET_ACCESS_KEY=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
     networks:
       - rallywave
     ports:
-      - "7006:8080"
+      - 7006:8080
     depends_on:
       - rabbitmq
       
@@ -72,10 +102,15 @@
     build:
       context: .
       dockerfile: Identity.API/Dockerfile
+    volumes:
+      - ~/.aws:/root/.aws
+    environment:
+      - AWS_ACCESS_KEY_ID=AKIAXPDGUFPSQE2J2ZAK
+      - AWS_SECRET_ACCESS_KEY=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
     networks:
       - rallywave
     ports:
-      - "7007:8080"
+      - 7007:8080
       
   rabbitmq:
     container_name: rabbitmq
@@ -93,10 +128,15 @@
     build:
       context: .
       dockerfile: PaymentManagement/Dockerfile
+    volumes:
+      - ~/.aws:/root/.aws
+    environment:
+      - AWS_ACCESS_KEY_ID=AKIAXPDGUFPSQE2J2ZAK
+      - AWS_SECRET_ACCESS_KEY=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
     networks:
       - rallywave
     ports:
-      - "7008:8080"
+      - 7008:8080
 
 networks:
   rallywave: 

@@ -113,12 +113,24 @@ app.MapGet("/api/login/response-token", [Authorize] async (HttpContext context) 
     return Results.Ok(testResponse);
 });
 
-// Middleware configuration
+// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.UseDeveloperExceptionPage();
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "User Management");
+        c.RoutePrefix = "swagger"; 
+    });
+}
+else
+{
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "User Management");
+        c.RoutePrefix = "swagger"; 
+    });
 }
 
 app.UseHttpsRedirection();

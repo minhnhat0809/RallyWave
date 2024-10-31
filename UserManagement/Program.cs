@@ -52,7 +52,20 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "User Management");
+        c.RoutePrefix = "swagger"; 
+    });
+}
+else
+{
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "User Management");
+        c.RoutePrefix = "swagger"; 
+    });
 }
 
 app.UseHttpsRedirection();
