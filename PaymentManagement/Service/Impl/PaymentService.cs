@@ -99,19 +99,20 @@ public class PaymentService(IMapper mapper, IUnitOfWork unitOfWork, PayOS payOs)
         var response = new ResponseDto(null, "", true, StatusCodes.Status200OK);
         try
         {
+            var data = _payOs.verifyPaymentWebhookData(webhookType);
+
+            var id = (int) data.orderCode;
+            
+            var payment = await _unitOfWork.PaymentRepo.GetByConditionAsync( p => p.PaymentId == id, p => p);
+
+            if (payment == null)
+            {
+                return new ResponseDto(null, "There are no payments with this id", false,
+                    StatusCodes.Status404NotFound);
+            }
+            
             if (webhookType.success)
             {
-                var data = _payOs.verifyPaymentWebhookData(webhookType);
-
-                var id = (int) data.orderCode;
-            
-                var payment = await _unitOfWork.PaymentRepo.GetByConditionAsync( p => p.PaymentId == id, p => p);
-
-                if (payment == null)
-                {
-                    return new ResponseDto(null, "There are no payments with this id", false,
-                        StatusCodes.Status404NotFound);
-                }
             
                 if (payment.BookingId.HasValue)
                 {
@@ -147,6 +148,12 @@ public class PaymentService(IMapper mapper, IUnitOfWork unitOfWork, PayOS payOs)
                     
                     await _unitOfWork.CourtOwnerRepo.UpdateAsync(courtOwner);
                 }
+            }
+            else
+            {
+                await _unitOfWork.PaymentRepo.DeletePayment(payment);
+
+                return new ResponseDto(null, "Payment has failed", false, int.Parse(webhookType.code));
             }
             
 
