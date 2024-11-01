@@ -19,7 +19,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Firebase Admin SDK initialization
 FirebaseApp.Create(new AppOptions()
 {
-    Credential = GoogleCredential.FromFile("rally-wave-438116-firebase-adminsdk-p2nf3-22311445b2.json")
+    Credential = GoogleCredential.FromFile("firebase.json")
 });
 // CORS configuration
 builder.Services.AddCors(options =>

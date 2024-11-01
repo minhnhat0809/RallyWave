@@ -1,4 +1,5 @@
-﻿using UserManagement.DTOs;
+﻿using Entity;
+using UserManagement.DTOs;
 using UserManagement.DTOs.UserDto;
 using UserManagement.DTOs.UserDto.ViewDto;
 

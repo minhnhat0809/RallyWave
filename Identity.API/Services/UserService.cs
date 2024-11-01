@@ -62,7 +62,9 @@ public class UserService : IUserService
                             u.Address,
                             u.Province,
                             u.Avatar,
-                            u.Status), null);
+                            u.Status,
+                            u.CreatedDate,
+                            u.IsTwoFactorEnabled), null);
                 }
                 else
                 {

@@ -104,7 +104,7 @@ namespace Identity.API.Controllers
         {
             try
             {
-                var result = await _authService.ResendVerificationEmailAccount(request);
+                var result = await _authService.ResendVerifyCode(request);
                 return Ok(result);
             }
             catch (Exception ex)
@@ -112,6 +112,7 @@ namespace Identity.API.Controllers
                 return new ResponseModel(null, ex.Message, false, StatusCodes.Status500InternalServerError);
             }
         }
+        
         [HttpPost("verify-password")]
         public async Task<ActionResult<ResponseModel>> VerifyPasswordReset(RequestVerifyModel request)
         {
@@ -126,7 +127,7 @@ namespace Identity.API.Controllers
             }
         }
         
-        [HttpPost("profile")]
+        [HttpPut("profile")]
         public async Task<ActionResult<ResponseModel>> UpdateProfile(ProfileModel request)
         {
             try

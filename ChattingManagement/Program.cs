@@ -29,7 +29,8 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 //utilities
 builder.Services.AddScoped(typeof(Validate));
 builder.Services.AddScoped(typeof(ListExtensions));
-
+// Host Service
+builder.Services.AddHostedService<BookingNotificationService>();
 //db context
 builder.Services.AddDbContext<RallyWaveContext>(options =>
 {
