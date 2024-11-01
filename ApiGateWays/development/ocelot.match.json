@@ -6,7 +6,7 @@
       "DownstreamHostAndPorts": [
         {
           "Host": "localhost",
-          "Port": 7005
+          "Port": 5249
         }
       ],
       "UpstreamPathTemplate": "/matches",
@@ -18,7 +18,7 @@
       "DownstreamHostAndPorts": [
         {
           "Host": "localhost",
-          "Port": 7005
+          "Port": 5249
         }
       ],
       "UpstreamPathTemplate": "/matches/{id}",
@@ -30,7 +30,7 @@
       "DownstreamHostAndPorts": [
         {
           "Host": "localhost",
-          "Port": 7005
+          "Port": 5249
         }
       ],
       "UpstreamPathTemplate": "/matches/user/{userId}",
@@ -42,26 +42,11 @@
       "DownstreamHostAndPorts": [
         {
           "Host": "localhost",
-          "Port": 7005
+          "Port": 5249
         }
       ],
       "UpstreamPathTemplate": "/matches/match/{matchId}/user/{userId}",
       "UpstreamHttpMethod": [ "POST", "PUT" ]
-    },
-    {
-      "DownstreamPathTemplate": "/api/matches",
-      "DownstreamScheme": "http",
-      "DownstreamHostAndPorts": [
-        {
-          "Host": "localhost",
-          "Port": 7005
-        }
-      ],
-      "UpstreamPathTemplate": "/matches",
-      "UpstreamHttpMethod": [ "POST" ]
     }
-  ],
-  "GlobalConfiguration": {
-    "BaseUrl": "https://localhost:7000"
-  }
+  ]
 }
