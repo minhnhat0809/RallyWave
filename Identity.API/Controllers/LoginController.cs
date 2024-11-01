@@ -1,93 +1,145 @@
-using System.Security.Claims;
-using Entity;
-using FirebaseAdmin.Auth;
 using Identity.API.BusinessObjects;
 using Identity.API.BusinessObjects.LoginObjects;
 using Identity.API.Services;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication.Google;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using UserManagement.DTOs.UserDto;
 
 namespace Identity.API.Controllers
 {
     [ApiController]
-    [Route("api/login")]
+    [Route("api/auth")]
     public class LoginController : ControllerBase
     {
-        private readonly IUserService _userService;
         private readonly IAuthService _authService;
-        private readonly ResponseModel _responseModel;
         
-        public LoginController(IUserService userService, IAuthService authService)
+        public LoginController(IAuthService authService)
         {
-            _userService = userService;
             _authService = authService;
-            _responseModel = new ResponseModel(null, null, false, StatusCodes.Status400BadRequest);
         }
         
-        [HttpPost("google")]
-        public async Task<ActionResult<ResponseModel>> GoogleResponse([FromBody] GoogleLoginModel request)
+        [HttpPost("login-google")]
+        public async Task<ActionResult<ResponseModel>> LoginByGoogle(RequestGoogleLoginModel request)
         {
-            
-            var result = await _authService.Authenticate(request);
-            
-            _responseModel.Message = result.Message;
-            _responseModel.StatusCode = StatusCodes.Status202Accepted;
-            _responseModel.IsSucceed = result.IsSuccess;
-            _responseModel.Result = result;
-            
-            if (!result.IsSuccess)
+            try
             {
-                return BadRequest(_responseModel);
+                var result = await _authService.LoginByGoogle(request);
+                return Ok(result);
             }
-
-            return Ok(_responseModel);
-        }
-
-        [HttpPost("phone")]
-        public async Task<ActionResult<ResponseModel>> LoginWithPhone([FromBody] PhoneLoginRequest request)
-        {
-            var result = await _authService.SendPhoneVerificationAsync(request);
-            if (result.IsSucceed == false)
+            catch (Exception ex)
             {
-                return BadRequest(_responseModel.Result = result);
+                return new ResponseModel(null, ex.Message, false, StatusCodes.Status500InternalServerError);
             }
-
-            // Send verification code
-            /*var verificationCode = GenerateRandomCode();
-            await _twilioService.SendSmsAsync(user.PhoneNumber, $"Your verification code is: {verificationCode}");
-            */
-
-            // Store the verification code (consider using a cache with expiration)
-            // Here, just an example, use your preferred method to store the code
-            // e.g., MemoryCache, Redis, etc.
-            //HttpContext.Session.SetString(user.PhoneNumber, verificationCode);
-
-            return Ok(new ResponseModel("Verification code sent", null, false, StatusCodes.Status200OK));
-        }
-
-        [HttpPost("sms-verify-code")]
-        public async Task<ActionResult<ResponseModel>> VerifyCode([FromBody] VerifyCodeRequest request)
-        {
-            var result = await _authService.VerifyPhoneCodeAsync(request);
-            if (result.IsSucceed == false)
-            {
-                return BadRequest(_responseModel.Result = result);
-            }
-
-
-            return Ok(new ResponseModel("Login successful", "", false, StatusCodes.Status200OK));
         }
         
-        [HttpGet("logout")]
-        public async Task<IActionResult> Logout()
+        [HttpPost("register")]
+        public async Task<ActionResult<ResponseModel>> Register(RequestRegisterModel request)
         {
-            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-            return Ok("Logged out");
+            try
+            {
+                var result = await _authService.Register(request);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return new ResponseModel(null, ex.Message, false, StatusCodes.Status500InternalServerError);
+            }
         }
+        
+        [HttpPost("login")]
+        public async Task<ActionResult<ResponseModel>> Login(RequestLoginModel request)
+        {
+            try
+            {
+                var result = await _authService.Login(request);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return new ResponseModel(null, ex.Message, false, StatusCodes.Status500InternalServerError);
+            }
+        }
+        
+        [HttpPost("reset-password")]
+        public async Task<ActionResult<ResponseModel>> ResetPassword(RequestLoginModel request)
+        {
+            try
+            {
+                var result = await _authService.ResetPassword(request);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return new ResponseModel(null, ex.Message, false, StatusCodes.Status500InternalServerError);
+            }
+        }
+        
+        [HttpPost("forget-password")]
+        public async Task<ActionResult<ResponseModel>> ForgetPassword(string email)
+        {
+            try
+            {
+                var result = await _authService.ForgetPassword(email);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return new ResponseModel(null, ex.Message, false, StatusCodes.Status500InternalServerError);
+            }
+        }
+        
+        [HttpPost("verify-account")]
+        public async Task<ActionResult<ResponseModel>> VerifyAccount(RequestVerifyAccountModel request)
+        {
+            try
+            {
+                var result = await _authService.VerifyEmailAccount(request);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return new ResponseModel(null, ex.Message, false, StatusCodes.Status500InternalServerError);
+            }
+        }
+        [HttpPost("resend-verify-account")]
+        public async Task<ActionResult<ResponseModel>> ResendVerificationEmailAccount(RequestLoginModel request)
+        {
+            try
+            {
+                var result = await _authService.ResendVerificationEmailAccount(request);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return new ResponseModel(null, ex.Message, false, StatusCodes.Status500InternalServerError);
+            }
+        }
+        [HttpPost("verify-password")]
+        public async Task<ActionResult<ResponseModel>> VerifyPasswordReset(RequestVerifyModel request)
+        {
+            try
+            {
+                var result = await _authService.VerifyEmailResetPassword(request);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return new ResponseModel(null, ex.Message, false, StatusCodes.Status500InternalServerError);
+            }
+        }
+        
+        [HttpPost("profile")]
+        public async Task<ActionResult<ResponseModel>> UpdateProfile(ProfileModel request)
+        {
+            try
+            {
+                var result = await _authService.UpdateProfile(request);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return new ResponseModel(null, ex.Message, false, StatusCodes.Status500InternalServerError);
+            }
+        }
+        
     }
 
 }

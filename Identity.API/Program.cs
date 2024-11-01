@@ -1,6 +1,10 @@
 
+using System.Net.Http.Headers;
 using System.Text;
 using Entity;
+using FirebaseAdmin;
+using Google.Apis.Auth.OAuth2;
+using Identity.API.BusinessObjects;
 using Identity.API.BusinessObjects.LoginObjects;
 using Identity.API.DIs;
 using Microsoft.AspNetCore.Authentication;
@@ -9,15 +13,20 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
-
+// Firebase Admin SDK initialization
+FirebaseApp.Create(new AppOptions()
+{
+    Credential = GoogleCredential.FromFile("rally-wave-438116-firebase-adminsdk-p2nf3-22311445b2.json")
+});
 // CORS configuration
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("CORSPolicy", corsPolicyBuilder =>
+    options.AddPolicy("CORSPolicy", builder =>
     {
-        corsPolicyBuilder.WithOrigins("https://localhost:7152") // Adjust the origin to match your frontend
+        builder.WithOrigins("https://localhost:7152") // Adjust the origin to match your frontend
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials();
@@ -28,13 +37,6 @@ builder.Services.AddCors(options =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
-
-//db context
-builder.Services.AddDbContext<RallyWaveContext>(options =>
-{
-    options.UseMySql(builder.Configuration.GetConnectionString("RallyWave"),
-        new MySqlServerVersion(new Version(8, 0, 39))); 
-});
 
 // Add Services
 builder.Services.AddServices();
@@ -58,8 +60,7 @@ builder.Services.AddAuthentication(options =>
         options.Scope.Add("profile");
         options.Scope.Add("openid");
     })
-    
-    //AC9d113f318b5c1facf55782e0d1d161fb
+    //
     .AddJwtBearer(options =>
     {
         options.RequireHttpsMetadata = false;
@@ -76,10 +77,18 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddAuthorization();
 
+
+// Configure the database context
+builder.Services.AddDbContext<RallyWaveContext>(options =>
+{
+    options.UseMySql(builder.Configuration.GetConnectionString("RallyWave"),
+        new MySqlServerVersion(new Version(8, 0, 39)));
+});
+
 var app = builder.Build();
 
 // login by google account : FOR TESTING 
-app.MapGet("/api/login/google-login", async context =>
+app.MapGet("/api/login/google-login", async (HttpContext context) =>
 {
     var redirectUrl = context.Request.PathBase + "/api/login/response-token"; 
     var properties = new AuthenticationProperties { RedirectUri = redirectUrl };
@@ -93,7 +102,7 @@ app.MapGet("/api/login/response-token", [Authorize] async (HttpContext context) 
     var result = await context.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
     var testResponse = new TestGoogleLoginModel(false, null, null, null);
 
-    if (result.Principal == null)
+    if (result?.Principal == null)
     {
         testResponse.Message = "Unable to authenticate with Google.";
         return Results.BadRequest(testResponse);

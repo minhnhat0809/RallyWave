@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Entity;
+using Microsoft.EntityFrameworkCore;
 using UserManagement.DTOs;
 using UserManagement.DTOs.UserDto;
 using UserManagement.DTOs.UserDto.ViewDto;
@@ -17,183 +18,75 @@ using UserManagement.Repository.Impl;
 
 public class UserRepo(RallyWaveContext repositoryContext) : RepositoryBase<User>(repositoryContext), IUserRepo
 {
-    public async Task<List<UserViewDto>> GetUsers(string? filterField, string? filterValue)
+    // Get users with optional filtering
+    public async Task<List<User>> GetUsers(string? filterField, string? filterValue)
     {
-        try
+        // If no filter is provided, return all users
+        if (string.IsNullOrEmpty(filterField) || string.IsNullOrEmpty(filterValue))
         {
-            var users = new List<UserViewDto>();
-            switch (filterField?.ToLower())
-            {
-                case "username":
-                    users = await FindByConditionAsync(
-                        u => u.UserName.Contains(filterValue!),
-                        u => new UserViewDto(
-                            u.UserId,
-                            u.UserName,
-                            u.Email,
-                            u.PhoneNumber,
-                            u.Gender,
-                            u.Dob,
-                            u.Address,
-                            u.Province,
-                            u.Avatar,
-                            u.Status));
-                    break;
-
-                case "email":
-                    users = await FindByConditionAsync(
-                        u => u.Email.Equals(filterValue!),
-                        u => new UserViewDto(
-                            u.UserId,
-                            u.UserName,
-                            u.Email,
-                            u.PhoneNumber,
-                            u.Gender,
-                            u.Dob,
-                            u.Address,
-                            u.Province,
-                            u.Avatar,
-                            u.Status));
-                    break;
-
-                case "phonenumber":
-                    if (int.TryParse(filterValue, out var phoneNumber))
-                    {
-                        users = await FindByConditionAsync(
-                            u => u.PhoneNumber == phoneNumber,
-                            u => new UserViewDto(
-                                u.UserId,
-                                u.UserName,
-                                u.Email,
-                                u.PhoneNumber,
-                                u.Gender,
-                                u.Dob,
-                                u.Address,
-                                u.Province,
-                                u.Avatar,
-                                u.Status));
-                    }
-                    break;
-
-                case "status":
-                    if (sbyte.TryParse(filterValue, out var status))
-                    {
-                        users = await FindByConditionAsync(
-                            u => u.Status == status,
-                            u => new UserViewDto(
-                                u.UserId,
-                                u.UserName,
-                                u.Email,
-                                u.PhoneNumber,
-                                u.Gender,
-                                u.Dob,
-                                u.Address,
-                                u.Province,
-                                u.Avatar,
-                                u.Status));
-                    }
-                    break;
-            }
-
-            return users;
+            return await FindAllAsync(u => u);
         }
-        catch (Exception e)
+
+        // Handle dynamic filtering based on the provided filterField and filterValue
+        // For simplicity, I will assume we're filtering by 'Username' or 'Email'
+        if (filterField.Equals("Username", StringComparison.OrdinalIgnoreCase))
         {
-            throw new Exception(e.Message);
+            return await FindByConditionAsync(u => u.UserName.Contains(filterValue), u => u);
+        }
+        else if (filterField.Equals("Email", StringComparison.OrdinalIgnoreCase))
+        {
+            return await FindByConditionAsync(u => u.Email.Contains(filterValue), u => u);
+        }
+        else
+        {
+            throw new ArgumentException("Invalid filter field");
         }
     }
 
-    public async Task<UserViewDto?> GetUserById(int userId)
+    // Get a user by ID
+    public async Task<User?> GetUserById(int userId)
     {
-        try
-        {
-            return await GetByIdAsync(
-                userId,
-                u => new UserViewDto(
-                    u.UserId,
-                    u.UserName,
-                    u.Email,
-                    u.PhoneNumber,
-                    u.Gender,
-                    u.Dob,
-                    u.Address,
-                    u.Province,
-                    u.Avatar,
-                    u.Status));
-        }
-        catch (Exception e)
-        {
-            throw new Exception("An error occurred while retrieving the user: " + e.Message);
-        }
+        return await GetByIdAsync(userId, u => u);
     }
 
-    public async Task<UserViewDto> CreateUser(User user)
+    // Create a new user
+    public async Task<User> CreateUser(User user)
     {
-        try
+        var isCreated = await CreateAsync(user);
+        if (isCreated)
         {
-            await CreateAsync(user);
-            return new UserViewDto(
-                user.UserId,
-                user.UserName,
-                user.Email,
-                user.PhoneNumber,
-                user.Gender,
-                user.Dob,
-                user.Address,
-                user.Province,
-                user.Avatar,
-                user.Status);
+            return user;
         }
-        catch (Exception e)
-        {
-            throw new Exception(e.Message);
-        }
+        throw new Exception("Failed to create user.");
     }
 
-    public async Task<UserViewDto> UpdateUser(User user)
+    // Update an existing user
+    public async Task<User> UpdateUser(User user)
     {
-        try
+        var isUpdated = await UpdateAsync(user);
+        if (isUpdated)
         {
-            await UpdateAsync(user);
-            return new UserViewDto(
-                user.UserId,
-                user.UserName,
-                user.Email,
-                user.PhoneNumber,
-                user.Gender,
-                user.Dob,
-                user.Address,
-                user.Province,
-                user.Avatar,
-                user.Status);
+            return user;
         }
-        catch (Exception e)
-        {
-            throw new Exception(e.Message);
-        }
+        throw new Exception("Failed to update user.");
     }
 
-    public async Task<UserViewDto> DeleteUser(User user)
+    // Delete a user
+    public async Task<User> DeleteUser(User user)
     {
-        try
+        var isDeleted = await DeleteAsync(user);
+        if (isDeleted)
         {
-            await DeleteAsync(user);
-            return new UserViewDto(
-                user.UserId,
-                user.UserName,
-                user.Email,
-                user.PhoneNumber,
-                user.Gender,
-                user.Dob,
-                user.Address,
-                user.Province,
-                user.Avatar,
-                user.Status);
+            return user;
         }
-        catch (Exception e)
-        {
-            throw new Exception(e.Message);
-        }
+        throw new Exception("Failed to delete user.");
+    }
+
+    public async Task<List<User>> GetUsersByIds(List<int> userIds)
+    {
+        return await repositoryContext.Users
+            .Where(u => userIds.Contains(u.UserId))
+            .ToListAsync();
     }
 }
 

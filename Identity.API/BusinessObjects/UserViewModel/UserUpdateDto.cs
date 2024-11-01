@@ -1,4 +1,4 @@
-﻿namespace UserManagement.DTOs.UserDto.ViewDto;
+﻿namespace Identity.API.BusinessObjects.UserViewModel;
 
 public class UserUpdateDto
 {
@@ -17,6 +17,5 @@ public class UserUpdateDto
     public string Province { get; set; } = null!;
 
     public string? Avatar { get; set; }
-
-    public sbyte Status { get; set; }
+    
 }

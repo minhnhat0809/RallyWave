@@ -20,4 +20,10 @@ public interface IUserService
     Task<ResponseDto> UpdateUser(int id, UserUpdateDto userCreateDto);
 
     Task<ResponseDto> DeleteUser(int id);
+    Task<ResponseDto> GetAllFriendRequestByProperties(int userId, string filter,string value);
+    // status 0 (delete), 1 (send request), 2 (friend)
+    // get all friend, get all friend request
+    Task<ResponseDto> CreateFriendRequest(int senderId, int receiverId);
+    Task<ResponseDto> AcceptFriendRequest(int senderId, int receiverId);
+    Task<ResponseDto> DenyFriendRequest(int senderId, int receiverId);
 }
