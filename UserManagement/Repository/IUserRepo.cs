@@ -18,5 +18,5 @@ public interface IUserRepo : IRepositoryBase<User>
     Task<User> DeleteUser(User user);
     Task<List<User>> GetUsersByIds(List<int> userIds);
 
-    Task<List<User>> GetUnverifiedUsersOlderThan(DateTime cutoffDate);
+    Task<List<User>> GetUnverifiedUsersOlderThanOneDay();
 }
