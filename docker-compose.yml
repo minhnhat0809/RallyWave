@@ -7,8 +7,8 @@
     volumes:
       - ~/.aws:/root/.aws
     environment:
-      - AWS_ACCESS_KEY_ID=AKIAXPDGUFPSQE2J2ZAK
-      - AWS_SECRET_ACCESS_KEY=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
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
     networks:
       - rallywave
     ports:
@@ -24,8 +24,8 @@
     volumes:
       - ~/.aws:/root/.aws
     environment:
-      - AWS_ACCESS_KEY_ID=AKIAXPDGUFPSQE2J2ZAK
-      - AWS_SECRET_ACCESS_KEY=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
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
     networks:
       - rallywave
     ports:
@@ -39,8 +39,8 @@
     volumes:
       - ~/.aws:/root/.aws
     environment:
-      - AWS_ACCESS_KEY_ID=AKIAXPDGUFPSQE2J2ZAK
-      - AWS_SECRET_ACCESS_KEY=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
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
     networks:
       - rallywave
     ports:
@@ -54,8 +54,8 @@
     volumes:
       - ~/.aws:/root/.aws
     environment:
-      - AWS_ACCESS_KEY_ID=AKIAXPDGUFPSQE2J2ZAK
-      - AWS_SECRET_ACCESS_KEY=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
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
     networks:
       - rallywave
     ports:
@@ -71,8 +71,8 @@
     volumes:
       - ~/.aws:/root/.aws
     environment:
-      - AWS_ACCESS_KEY_ID=AKIAXPDGUFPSQE2J2ZAK
-      - AWS_SECRET_ACCESS_KEY=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
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
     networks:
       - rallywave
     ports:
@@ -88,8 +88,8 @@
     volumes:
       - ~/.aws:/root/.aws
     environment:
-      - AWS_ACCESS_KEY_ID=AKIAXPDGUFPSQE2J2ZAK
-      - AWS_SECRET_ACCESS_KEY=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
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
     networks:
       - rallywave
     ports:
@@ -105,8 +105,8 @@
     volumes:
       - ~/.aws:/root/.aws
     environment:
-      - AWS_ACCESS_KEY_ID=AKIAXPDGUFPSQE2J2ZAK
-      - AWS_SECRET_ACCESS_KEY=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
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
     networks:
       - rallywave
     ports:
@@ -131,20 +131,26 @@
     volumes:
       - ~/.aws:/root/.aws
     environment:
-      - AWS_ACCESS_KEY_ID=AKIAXPDGUFPSQE2J2ZAK
-      - AWS_SECRET_ACCESS_KEY=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
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
     networks:
       - rallywave
     ports:
       - 7008:8080
 
-  apigateway:
-    image: apigateway
+  apigateways:
+    image: apigateways
     build:
       context: .
-      dockerfile: ApiGateWay/Dockerfile
+      dockerfile: ApiGateWays/Dockerfile
+    networks:
+      - rallywave
+    ports:
+      - 7000:8080
       
       
 networks:
   rallywave:
     driver: bridge
+
+
