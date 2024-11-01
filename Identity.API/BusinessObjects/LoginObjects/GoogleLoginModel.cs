@@ -1,23 +1,18 @@
-﻿namespace Identity.API.BusinessObjects.LoginObjects;
+using Identity.API.BusinessObjects.UserViewModel;
 
-public class GoogleLoginModel
+namespace Identity.API.BusinessObjects.LoginObjects;
+
+public class RequestGoogleLoginModel
 {
-    public string? IdToken { get; set; }
+    public required string IdToken { get; set; }
     public string? Role { get; set; }
 }
 
-public class ResponseGoogleLoginModel
+public class ResponseLoginModel(string? accessToken, string? firebaseToken, Object? user, bool isNewUser)
 {
-    public bool IsSuccess { get; set; }
-    public Object? User { get; set; }
-    public string? Message { get; set; }
-    public string? AccessToken { get; set; }
-
-    public ResponseGoogleLoginModel(bool isSuccess, object? user, string? message, string? accessToken)
-    {
-        IsSuccess = isSuccess;
-        User = user;
-        Message = message;
-        AccessToken = accessToken;
-    }
+    public string? AccessToken { get; set; } = accessToken;
+    public string? FirebaseToken { get; set; } = firebaseToken;
+    
+    public Object? User { get; set; } = user;
+    public bool IsNewUser { get; set; } = isNewUser; // Indicates if the user was just created
 }

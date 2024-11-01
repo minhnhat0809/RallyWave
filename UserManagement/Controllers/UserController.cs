@@ -7,7 +7,7 @@ using UserManagement.Service;
 
 namespace UserManagement.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/user")]
     [ApiController]
     public class UserController : ControllerBase
     {
@@ -89,5 +89,44 @@ namespace UserManagement.Controllers
             var response = await _userService.DeleteUser(id);
             return response.IsSucceed ? Ok(response) : BadRequest(response);
         }
+        
+        // FRIEND
+        
+        // get all friendship
+        // or get all friend request
+        [HttpGet("{receiverId:int}/friends")]
+        public async Task<ActionResult<ResponseDto>> GetAllFriendship(int receiverId)
+        {
+            var response = await _userService.GetAllFriendRequestByProperties(receiverId,  "friends", String.Empty);
+            return response.IsSucceed ? Ok(response) : BadRequest(response);
+        }
+        [HttpGet("{receiverId:int}/friend-requests")]
+        public async Task<ActionResult<ResponseDto>> GetAllFriendshipRequest(int receiverId)
+        {
+            var response = await _userService.GetAllFriendRequestByProperties(receiverId,  "friends-request",  String.Empty);
+            return response.IsSucceed ? Ok(response) : BadRequest(response);
+        }
+        
+        [HttpPost("{senderId:int}/friend/{receiverId:int}")]
+        public async Task<ActionResult<ResponseDto>> CreateFriendRequest(int senderId, int receiverId)
+        {
+            var response = await _userService.CreateFriendRequest(senderId, receiverId);
+            return response.IsSucceed ? Ok(response) : BadRequest(response);
+        }
+        [HttpPut("{receiverId:int}/friend/{senderId:int}")]
+        public async Task<ActionResult<ResponseDto>> AcceptFriendRequest(int senderId, int receiverId)
+        {
+            var response = await _userService.AcceptFriendRequest(senderId, receiverId);
+            return response.IsSucceed ? Ok(response) : BadRequest(response);
+        }
+        
+        [HttpDelete("{receiverId:int}/friend/{senderId:int}")]
+        public async Task<ActionResult<ResponseDto>> DenyFriendRequestOrDeleteFriend(int senderId, int receiverId)
+        {
+            var response = await _userService.DenyFriendRequest(senderId, receiverId);
+            return response.IsSucceed ? Ok(response) : BadRequest(response);
+        }
+        
+
     }
 }

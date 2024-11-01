@@ -4,8 +4,6 @@ using Identity.API.Repository;
 using Identity.API.Repository.Impl;
 using Identity.API.Services;
 using Identity.API.Ultility;
-using UserManagement;
-using UserManagement.Repository;
 
 namespace Identity.API.DIs;
 
@@ -18,6 +16,7 @@ public static class ServiceCollectionExtension
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<IAuthService, AuthService>();
         // Repositories
+        services.AddScoped<IAuthRepository, AuthRepository>();
         services.AddScoped<IUserRepo, UserRepo>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         

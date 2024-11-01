@@ -20,10 +20,16 @@ builder.Services.AddAutoMapper(typeof(MapperConfig).Assembly);
 
 //service
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<ITeamService, TeamService>();
 
 //repo
 builder.Services.AddScoped<IUserRepo, UserRepo>();
+builder.Services.AddScoped<ITeamRepository, TeamRepository>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddScoped<ISportRepository, SportRepository>();
+builder.Services.AddScoped<IConservationRepository, ConservationRepository>();
+builder.Services.AddScoped<IUserTeamRepository, UserTeamRepository>();
+builder.Services.AddScoped<IFriendRepository, FriendRepository>();
 
 //utilities
 builder.Services.AddScoped(typeof(Validate));
