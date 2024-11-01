@@ -3,17 +3,24 @@
 public class MatchViewDto
 {
     public int MatchId { get; set; }
+    
+    public int SportId { get; set; }
 
-    public int? SportId { get; set; }
+    public string SportName { get; set; } = null!;
+    
+    public int CreateBy { get; set; }
 
     public string MatchName { get; set; } = null!;
 
     public string? Note { get; set; }
-    public String MatchType { get; set; } = "";
+    
+    public string MatchType { get; set; } = "";
 
     public sbyte TeamSize { get; set; }
-    public String? MinLevel { get; set; }
-    public String? MaxLevel { get; set; }
+    
+    public string? MinLevel { get; set; }
+    
+    public string? MaxLevel { get; set; }
 
     public DateOnly Date { get; set; }
 
@@ -38,6 +45,10 @@ public class MatchViewDto
     public ulong? AddByOthers { get; set; }
 
     public ulong? Notification { get; set; }
-    public String Mode { get; set; } = "";
-    public String? Status { get; set; } = "";
+    
+    public string Mode { get; set; } = "";
+    
+    public string? Status { get; set; } = "";
+    
+    public List<UserDto.ViewDto.UserMatchDto>  Users { get; set; } = [];
 }

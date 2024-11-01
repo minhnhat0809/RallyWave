@@ -244,27 +244,28 @@ public partial class RallyWaveContext : DbContext
 
         modelBuilder.Entity<Friendship>(entity =>
         {
-            entity.HasKey(e => new { e.Sender, e.Receiver })
+            entity.HasKey(e => new { e.SenderId, e.ReceiverId })
                 .HasName("PRIMARY")
                 .HasAnnotation("MySql:IndexPrefixLength", new[] { 0, 0 });
 
             entity.ToTable("friendship");
 
-            entity.HasIndex(e => e.Receiver, "FK_Friend_Ship_User2");
+            entity.HasIndex(e => e.ReceiverId, "FK_Friend_Ship_Receiver");
 
-            entity.Property(e => e.Sender).HasColumnName("user1_id");
-            entity.Property(e => e.Receiver).HasColumnName("user2_id");
+            entity.Property(e => e.SenderId).HasColumnName("sender_id");
+            entity.Property(e => e.ReceiverId).HasColumnName("receiver_id");
             entity.Property(e => e.Level).HasColumnName("level");
-
-            entity.HasOne(d => d.Sender).WithMany(p => p.FriendshipSenders)
-                .HasForeignKey(d => d.Sender)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Friend_Ship_User1");
+            entity.Property(e => e.Status).HasColumnName("status");
 
             entity.HasOne(d => d.Receiver).WithMany(p => p.FriendshipReceivers)
-                .HasForeignKey(d => d.Receiver)
+                .HasForeignKey(d => d.ReceiverId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Friend_Ship_User2");
+                .HasConstraintName("FK_Friend_Ship_Receiver");
+
+            entity.HasOne(d => d.Sender).WithMany(p => p.FriendshipSenders)
+                .HasForeignKey(d => d.SenderId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Friend_Ship_Sender");
         });
 
         modelBuilder.Entity<Match>(entity =>
@@ -407,6 +408,9 @@ public partial class RallyWaveContext : DbContext
             entity.Property(e => e.Note)
                 .HasMaxLength(255)
                 .HasColumnName("note");
+            entity.Property(e => e.Signature)
+                .HasMaxLength(255)
+                .HasColumnName("signature");
             entity.Property(e => e.Status).HasColumnName("status");
             entity.Property(e => e.SubId).HasColumnName("sub_id");
             entity.Property(e => e.Total).HasColumnName("total");

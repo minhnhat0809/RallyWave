@@ -1,72 +1,31 @@
-﻿using System.Linq.Expressions;
-using AutoMapper;
+﻿using AutoMapper;
 using Entity;
 using MatchManagement.DTOs;
 using MatchManagement.DTOs.MatchDto;
 using MatchManagement.DTOs.MatchDto.ViewDto;
+using MatchManagement.DTOs.UserDto.ViewDto;
 using MatchManagement.Repository;
 using MatchManagement.Ultility;
 
 namespace MatchManagement.Service.Impl;
 
-public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate validate, ListExtensions listExtensions) : IMatchService
+public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate validate) : IMatchService
 {
     private readonly IUnitOfWork _unitOfWork = unitOfWork;
     private readonly IMapper _mapper = mapper;
     private readonly Validate _validate = validate;
-    private readonly ListExtensions _listExtensions = listExtensions;
     
-    public async Task<ResponseDto> GetMatches(string? subject, int? subjectId, string? filterField, string? filterValue, string? sortField, string sortValue, int pageNumber,
+    public async Task<ResponseDto> GetMatches(string? subject, int? subjectId, MatchFilterDto? matchFilterDto, string? sortField, string sortValue, int pageNumber,
         int pageSize)
     {
         var responseDto = new ResponseDto(null, "Get successfully", true, StatusCodes.Status200OK);
         try
         {
-            List<MatchViewsDto>? matches;
-            int total;
-            
-            if (_validate.IsEmptyOrWhiteSpace(filterField) || _validate.IsEmptyOrWhiteSpace(filterValue))
-            {
-                Expression<Func<Match, bool>> basePredicate = m => true;
-                
-                if (!_validate.IsEmptyOrWhiteSpace(subject) && subjectId != null)
-                {
-                    basePredicate = m => m.CreateBy == subjectId;
-                }
+            var responseList = await _unitOfWork.MatchRepo.GetMatches(subject, subjectId, matchFilterDto, sortField, sortValue, pageNumber, pageSize);
 
-                matches = await _unitOfWork.MatchRepo.FindByConditionWithPagingAsync(
-                    basePredicate,
-                    m => 
-                        new MatchViewsDto(
-                            m.MatchId, 
-                            m.Sport.SportName, 
-                            m.MatchName, 
-                            m.CreateBy,
-                            m.CreateByNavigation.UserName,
-                            m.MatchType,
-                            m.TeamSize,
-                            m.MinLevel,
-                            m.MaxLevel,
-                            m.Date,
-                            m.TimeStart,
-                            m.TimeEnd,
-                            m.Location!,
-                            m.Status ?? 0
-                        ), pageNumber, pageSize);
+            var matches = responseList.Data;
 
-                total = await _unitOfWork.MatchRepo.CountByConditionAsync(basePredicate);
-
-            }
-            else
-            {
-                var responseList = await _unitOfWork.MatchRepo.GetMatches(filterField!, filterValue!, pageNumber, pageSize);
-
-                matches = responseList.Data;
-
-                total = responseList.TotalCount;
-            }
-            
-            matches = Sort(matches, sortField, sortValue);
+            var total = responseList.TotalCount;
 
             responseDto.Result = new { matches, total};
         }
@@ -87,13 +46,9 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
         {
             //check user in database
             var existedUser = await _unitOfWork.UserRepo.AnyAsync(u => u.UserId == userId);
+            
             if (!existedUser)
-            {
-                responseDto.Message = "There are no users with this id";
-                responseDto.IsSucceed = false;
-                responseDto.StatusCode = StatusCodes.Status404NotFound;
-                return responseDto;
-            }
+                return new ResponseDto(null, "There are no users with this id", false, StatusCodes.Status404NotFound);
             
             //check match in database
             var matchEnroll = await _unitOfWork.MatchRepo.GetByConditionAsync(m => m.MatchId == matchId,
@@ -112,12 +67,8 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
             ));
             
             if (matchEnroll == null)
-            {
-                responseDto.Message = "There are no matches with this id";
-                responseDto.StatusCode = StatusCodes.Status404NotFound;
-                responseDto.IsSucceed = false;
-                return responseDto;
-            }
+                return new ResponseDto(null, "There are no matches with this id", false, StatusCodes.Status404NotFound);
+            
 
             switch (matchEnroll.Mode)
             {
@@ -126,8 +77,8 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
                     var check = _unitOfWork.FriendShipRepo.AnyAsync(fs => 
                             fs.SenderId == userId && 
                             fs.ReceiverId == matchEnroll.UserId ||
-                            fs.SenderId == matchEnroll.UserId && 
-                            fs.ReceiverId == userId)
+                            fs.ReceiverId == matchEnroll.UserId && 
+                            fs.SenderId == userId)
                     
                         .Result;
                     if (!check)
@@ -157,9 +108,7 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
         }
         catch (Exception e)
         {
-            responseDto.Message = e.Message;
-            responseDto.StatusCode = StatusCodes.Status500InternalServerError;
-            responseDto.IsSucceed = false;
+            return new ResponseDto(null, e.Message, false, StatusCodes.Status500InternalServerError);
         }
 
         return responseDto;
@@ -174,12 +123,7 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
             var existedUser = await _unitOfWork.UserRepo.AnyAsync(u => u.UserId == userId);
 
             if (!existedUser)
-            {
-                responseDto.Message = "There are no users with this id";
-                responseDto.IsSucceed = false;
-                responseDto.StatusCode = StatusCodes.Status404NotFound;
-                return responseDto;
-            }
+                return new ResponseDto(null, "There are no users with this id", false, StatusCodes.Status404NotFound);
             
             //get match fields in database
             var match = await _unitOfWork.MatchRepo.GetByConditionAsync(m => m.MatchId == matchId,
@@ -192,12 +136,7 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
 
             //check match is null or not
             if (match == null)
-            {
-                responseDto.Message = "There are no matches with this id";
-                responseDto.IsSucceed = false;
-                responseDto.StatusCode = StatusCodes.Status404NotFound;
-                return responseDto;
-            }
+                return new ResponseDto(null, "There are no matches with this id", false, StatusCodes.Status404NotFound);
 
             //check user is in match or not
             var userMatch =
@@ -205,30 +144,16 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
                     um => um);
 
             if (userMatch == null)
-            {
-                responseDto.Message = "This user does not enroll in the match yet.";
-                responseDto.IsSucceed = false;
-                responseDto.StatusCode = StatusCodes.Status404NotFound;
-                return responseDto;
-            }
+                return new ResponseDto(null, "This user does not enroll in the match yet.", false, StatusCodes.Status400BadRequest);
+            
 
             //check if user is an owner of the match
             if (userMatch.Status == 0)
-            {
-                responseDto.Message = "User is owner of the match. Cannot un-enroll";
-                responseDto.IsSucceed = false;
-                responseDto.StatusCode = StatusCodes.Status400BadRequest;
-                return responseDto;
-            }
+                return new ResponseDto(null, "User is owner of the match. Cannot un-enroll", false, StatusCodes.Status400BadRequest);
 
             //check match status is available or not
             if (match.Status!.Value != 0)
-            {
-                responseDto.Message = "Match must be available";
-                responseDto.IsSucceed = false;
-                responseDto.StatusCode = StatusCodes.Status400BadRequest;
-                return responseDto;
-            }
+                return new ResponseDto(null, "Match must be available", false, StatusCodes.Status400BadRequest);
             
 
             if (match.BlockingOff.HasValue)
@@ -240,12 +165,7 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
 
                 //compare now to the min time for un-enroll from the match
                 if (timeNow >= minTimeToUnEnroll)
-                {
-                    responseDto.Message = "UnEnrollment is disable because user is in blocking off period";
-                    responseDto.IsSucceed = false;
-                    responseDto.StatusCode = StatusCodes.Status400BadRequest;
-                    return responseDto;
-                }
+                    return new ResponseDto(null, "UnEnrollment is disable because user is in blocking off period", false, StatusCodes.Status400BadRequest);
             }
 
             await _unitOfWork.UserMatchRepo.UnEnrollment(userMatch);
@@ -253,9 +173,7 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
         }
         catch (Exception e)
         {
-            responseDto.Message = e.Message;
-            responseDto.StatusCode = StatusCodes.Status500InternalServerError;
-            responseDto.IsSucceed = false;
+            return new ResponseDto(null, e.Message, false, StatusCodes.Status500InternalServerError);
         }
 
         return responseDto;
@@ -268,20 +186,27 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
         {
             var match = await _unitOfWork.MatchRepo.GetByConditionAsync(m => m.MatchId == id,
                 m => m, m => m.Sport);
+
+            var users = await _unitOfWork.UserMatchRepo.FindByConditionAsync(um => um.MatchId == id, 
+                m => new UserMatchDto
+                {
+                    UserId = m.UserId,
+                    Username = m.User.UserName,
+                    Avatar = m.User.Avatar
+                });
             
             if (match == null)
-            {
-                responseDto.Message = "There are no matches with this id";
-                responseDto.StatusCode = StatusCodes.Status404NotFound;
-            }
+                return new ResponseDto(null, "There are no matches with this id", false, StatusCodes.Status404NotFound);
 
-            responseDto.Result = _mapper.Map<MatchViewDto>(match);
+            var matchDto = _mapper.Map<MatchViewDto>(match);
+
+            matchDto.Users = users;
+            
+            responseDto.Result = matchDto;
         }
         catch (Exception e)
         {
-            responseDto.Message = e.Message;
-            responseDto.StatusCode = StatusCodes.Status500InternalServerError;
-            responseDto.IsSucceed = false;
+            return new ResponseDto(null, e.Message, false, StatusCodes.Status500InternalServerError);
         }
 
         return responseDto;
@@ -289,7 +214,7 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
 
     public async Task<ResponseDto> CreateMatch(int userId, MatchCreateDto matchCreateDto)
     {
-        var responseDto = new ResponseDto(null, "Create successfully", true, StatusCodes.Status201Created);
+        ResponseDto responseDto;
         try
         {
             //overall validation
@@ -315,9 +240,7 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
         }
         catch (Exception e)
         {
-            responseDto.Message = e.Message;
-            responseDto.StatusCode = StatusCodes.Status500InternalServerError;
-            responseDto.IsSucceed = false;
+            return new ResponseDto(null, e.Message, false, StatusCodes.Status500InternalServerError);
         }
 
         return responseDto;
@@ -610,44 +533,5 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
                   um.Match.TimeEnd > newTimeStart);
     }
 
-   private List<MatchViewsDto>? Sort(List<MatchViewsDto>? matches, string? sortField, string? sortValue)
-{
-    if (matches == null || matches.Count == 0 || string.IsNullOrEmpty(sortField) || 
-        string.IsNullOrEmpty(sortValue) || string.IsNullOrWhiteSpace(sortField) || string.IsNullOrWhiteSpace(sortValue))
-    {
-        return matches;
-    }
-
-    matches = sortField.ToLower() switch
-    {
-        "date" => sortValue.Equals("asc")
-            ? _listExtensions.Sort(matches, m => m.Date, true)
-            : _listExtensions.Sort(matches, m => m.Date, false),
-        "timestart" => sortValue.Equals("asc")
-            ? _listExtensions.Sort(matches, m => m.TimeStart, true)
-            : _listExtensions.Sort(matches, m => m.TimeStart, true),
-        "timeend" => sortValue.Equals("asc")
-            ? _listExtensions.Sort(matches, m => m.TimeEnd, true)
-            : _listExtensions.Sort(matches, m => m.TimeEnd, true),
-        "status" => sortValue.Equals("asc")
-            ? _listExtensions.Sort(matches, m => m.Status, true)
-            : _listExtensions.Sort(matches, m => m.Status, true),
-        "matchtype" => sortValue.Equals("asc")
-            ? _listExtensions.Sort(matches, m => m.MatchType, true)
-            : _listExtensions.Sort(matches, m => m.MatchType, true),
-        "teamsize" => sortValue.Equals("asc")
-            ? _listExtensions.Sort(matches, m => m.TeamSize, true)
-            : _listExtensions.Sort(matches, m => m.TeamSize, true),
-        "minlevel" => sortValue.Equals("asc")
-            ? _listExtensions.Sort(matches, m => m.MinLevel, true)
-            : _listExtensions.Sort(matches, m => m.MinLevel, true),
-        "maxlevel" => sortValue.Equals("asc")
-            ? _listExtensions.Sort(matches, m => m.MaxLevel, true)
-            : _listExtensions.Sort(matches, m => m.MaxLevel, true),
-        _ => matches 
-    };
-
-    return matches;
-}
 
 }

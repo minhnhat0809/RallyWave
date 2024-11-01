@@ -1,5 +1,4 @@
-﻿using System.Linq.Expressions;
-using AutoMapper;
+﻿using AutoMapper;
 using Entity;
 using BookingManagement.DTOs;
 using BookingManagement.DTOs.BookingDto;
@@ -18,52 +17,17 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
         public double Cost { get; set; } = cost;
     }
     
-    public async Task<ResponseDto> GetBookings(string? subject, int? subjectId, string? filterField, string? filterValue, string? sortField, string sortValue, int pageNumber,
+    public async Task<ResponseDto> GetBookings(string? subject, int? subjectId, BookingFilterDto? bookingFilterDto, string? sortField, string sortValue, int pageNumber,
         int pageSize)
     {
         var responseDto = new ResponseDto(null, "", true, 200);
         try
         {
-            List<BookingsViewDto>? bookings;
-
-            int total;
+            var listResponse = await unitOfWork.BookingRepo.GetBookings(subject, subjectId, bookingFilterDto, sortField, sortValue, pageNumber, pageSize); 
             
-            if (validate.IsEmptyOrWhiteSpace(filterField) || validate.IsEmptyOrWhiteSpace(filterValue))
-            {
-                Expression<Func<Booking, bool>> basePredicate = b => true;
+            var bookings = listResponse.Data;
                 
-                if (!validate.IsEmptyOrWhiteSpace(subject) || subjectId.HasValue)
-                {
-                    basePredicate = subject!.ToLower() switch
-                    {
-                        "user" => b => b.UserId.HasValue && b.UserId.Value == subjectId!.Value,
-                        "court" => b => b.CourtId == subjectId!.Value,
-                        _ => throw new ArgumentException($"Unknown subject '{subject}'")
-                    };
-                    
-                    
-                }
-
-                bookings = await unitOfWork.BookingRepo.FindByConditionWithPagingAsync(
-                    basePredicate, 
-                    b => new BookingsViewDto(b.BookingId, b.Date, b.TimeStart, b.TimeEnd, b.Cost, b.Status),
-                    pageSize, pageSize);
-
-                total = await unitOfWork.BookingRepo.CountByConditionAsync(basePredicate);
-
-            }
-            else
-            {
-                var listResponse = await unitOfWork.BookingRepo.GetBookings(subject, subjectId, filterField!, filterValue!, pageNumber, pageSize);
-                
-                bookings = listResponse.Data;
-                
-                total = listResponse.TotalCount;
-            }
-            
-            
-            
-            bookings = Sort(bookings, sortField, sortValue);
+            var total = listResponse.TotalCount;
             
             responseDto.Result = new { bookings, total};
             responseDto.Message = "Get successfully!";
@@ -121,6 +85,7 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
             var booking = mapper.Map<Booking>(bookingCreateDto);
             booking.CreateAt = DateTime.Now;
             booking.Cost = responseCourtSlot.Cost!.Value;
+            booking.Status = 0;
             
             await unitOfWork.BookingRepo.CreateBooking(booking);
             
@@ -404,7 +369,7 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
                            b.TimeEnd > timeStart);
         
         // Check if there is any time conflict with existing bookings
-        if (overlapBooking) return response;
+        if (!overlapBooking) return response;
         
         response.IsSucceed = false;
         response.Message = "The requested time overlaps with an existing booking.";
@@ -431,34 +396,6 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
         response.Message = "The requested time overlaps with an existing booking.";
         response.StatusCode = StatusCodes.Status400BadRequest;
         return response;
-    }
-
-    private List<BookingsViewDto>? Sort(List<BookingsViewDto>? bookings, string? sortField, string? sortValue)
-    {
-        if (bookings == null || bookings.Count == 0 || string.IsNullOrEmpty(sortField) || 
-            string.IsNullOrEmpty(sortValue) || string.IsNullOrWhiteSpace(sortField) || string.IsNullOrWhiteSpace(sortValue))
-        {
-            return bookings;
-        }
-
-        bookings = sortField.ToLower() switch
-        {
-            "date" => sortValue.Equals("asc")
-                ? listExtensions.Sort(bookings, b => b.Date, true)
-                : listExtensions.Sort(bookings, b => b.Date, false),
-            "timestart" => sortValue.Equals("asc")
-                ? listExtensions.Sort(bookings, b => b.TimeStart, true)
-                : listExtensions.Sort(bookings, b => b.TimeStart, false),
-            "timeend" => sortValue.Equals("asc")
-                ? listExtensions.Sort(bookings, b => b.TimeEnd, true)
-                : listExtensions.Sort(bookings, b => b.TimeEnd, false),
-            "status" => sortValue.Equals("asc")
-                ? listExtensions.Sort(bookings, b => b.Status, true)
-                : listExtensions.Sort(bookings, b => b.Status, false),
-            _ => bookings
-        };
-
-        return bookings;
     }
 
     private async Task<ResponseCourtSlotDto> ValidateSlotAndCalculateCost(int courtId, TimeOnly timeStart, TimeOnly timeEnd)
@@ -513,7 +450,7 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
                 select overlapDuration * slot.Cost)
             .Sum();
 
-        response.Cost = totalCost;
+        response.Cost = Math.Round(totalCost, 2);
         
         return response;
     }

@@ -9,7 +9,8 @@ public class MapperConfig : Profile
 {
     public MapperConfig()
     {
-        CreateMap<Match, MatchViewDto>();
+        CreateMap<Match, MatchViewDto>()
+            .ForMember(dest => dest.SportName, opt => opt.MapFrom(src => src.Sport.SportName));
         
         CreateMap<MatchCreateDto, Match>();
 
