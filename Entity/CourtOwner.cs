@@ -29,6 +29,8 @@ public partial class CourtOwner
 
     public sbyte Status { get; set; }
 
+    public DateTime? CreatedDate { get; set; }
+
     public byte[]? PasswordHash { get; set; }
 
     public byte[]? PasswordSalt { get; set; }
