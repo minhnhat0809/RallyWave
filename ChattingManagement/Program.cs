@@ -1,3 +1,4 @@
+using ChattingManagement;
 using ChattingManagement.Repository;
 using ChattingManagement.Repository.Impl;
 using ChattingManagement.Service;
@@ -12,6 +13,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
+
+//mapper 
+builder.Services.AddAutoMapper(typeof(MapperConfig).Assembly);
 
 //service
 builder.Services.AddScoped<IConservationService, ConservationService>();

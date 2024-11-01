@@ -22,7 +22,9 @@ public class ConservationRepo(RallyWaveContext repositoryContext) : RepositoryBa
             .Include(x => x.Users)
             .Include(x => x.Match)
             .Include(x => x.Team)
-            .FirstOrDefaultAsync(c => EF.Property<string>(c, properties.ToLower()) == propertiesValue.ToLower());
+            .FirstOrDefaultAsync(
+                c => EF.Property<string>(c, properties.ToLower()) 
+                     == propertiesValue.ToLower());
         return conservation;
     }
 
