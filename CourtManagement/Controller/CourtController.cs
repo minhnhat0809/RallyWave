@@ -25,7 +25,7 @@ namespace CourtManagement.Controller
             return response;
         }
 
-        [HttpGet("court/{id:int}")]
+        [HttpGet("{id:int}")]
         public async Task<ResponseDto> GetCourt(int id)
         {
             var response = await courtService.GetCourtById(id);
@@ -39,14 +39,14 @@ namespace CourtManagement.Controller
             return response;
         }
 
-        [HttpPut("court/{id:int}")]
+        [HttpPut("{id:int}")]
         public async Task<ResponseDto> UpdateCourt( int id, [FromForm] CourtUpdateDto courtUpdateDto)
         {
             var response = await courtService.UpdateCourt(id, courtUpdateDto);
             return response;
         }
         
-        [HttpDelete("court/{id:int}")]
+        [HttpDelete("{id:int}")]
         public async Task<ResponseDto> DeleteCourt( int id)
         {
             var response = await courtService.DeleteCourt(id);
