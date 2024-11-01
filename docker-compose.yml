@@ -98,6 +98,13 @@
     ports:
       - "7008:8080"
 
+  apigateway:
+    image: apigateway
+    build:
+      context: .
+      dockerfile: ApiGateWay/Dockerfile
+      
+      
 networks:
-  rallywave: 
+  rallywave:
     driver: bridge
