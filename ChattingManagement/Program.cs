@@ -2,10 +2,9 @@ using ChattingManagement.Repository;
 using ChattingManagement.Repository.Impl;
 using ChattingManagement.Service;
 using ChattingManagement.Service.Impl;
+using ChattingManagement.Ultility;
 using Entity;
 using Microsoft.EntityFrameworkCore;
-using ListExtensions = ChattingManagement.Ultility.ListExtensions;
-using Validate = ChattingManagement.Ultility.Validate;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,11 +14,14 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
 
+//retrieve connection string from AWS Secrets Manager
+var getSecret = new GetSecret();
+var connectionString = await getSecret.GetConnectionString();
+
 //db context
 builder.Services.AddDbContext<RallyWaveContext>(options =>
 {
-    options.UseMySql(builder.Configuration.GetConnectionString("RallyWave"),
-        new MySqlServerVersion(new Version(8, 0, 39))); 
+    options.UseMySql(connectionString, new MySqlServerVersion(new Version(8, 0, 39))); 
 });
 
 //service
