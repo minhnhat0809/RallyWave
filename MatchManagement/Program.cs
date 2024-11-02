@@ -56,7 +56,7 @@ builder.Services.AddCors(opts =>
 });
 
 // mass transit
-builder.Services.AddMassTransit(x =>
+/*builder.Services.AddMassTransit(x =>
 {
     x.UsingRabbitMq((context, cfg) =>
     {
@@ -68,7 +68,7 @@ builder.Services.AddMassTransit(x =>
         
         cfg.ConfigureEndpoints(context);
     });
-});
+});*/
 
 var app = builder.Build();
 
