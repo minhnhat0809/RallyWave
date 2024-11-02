@@ -1,0 +1,156 @@
+﻿services:
+  usermanagement:
+    image: usermanagement
+    build:
+      context: .
+      dockerfile: public.ecr.aws/c0w8k2l1/rally-wave:usermanagement
+    volumes:
+      - ~/.aws:/root/.aws
+    environment:
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+    networks:
+      - rallywave
+    ports:
+      - 7001:8080
+    depends_on:
+      - rabbitmq
+
+  chattingmanagement:
+    image: chattingmanagement
+    build:
+      context: .
+      dockerfile: public.ecr.aws/c0w8k2l1/rally-wave:chattingmanagement
+    volumes:
+      - ~/.aws:/root/.aws
+    environment:
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+    networks:
+      - rallywave
+    ports:
+      - 7002:8080
+
+  courtmanagement:
+    image: courtmanagement
+    build:
+      context: .
+      dockerfile: public.ecr.aws/c0w8k2l1/rally-wave:courtmanagement
+    volumes:
+      - ~/.aws:/root/.aws
+    environment:
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+    networks:
+      - rallywave
+    ports:
+      - 7003:8080
+
+  notificationmanagement:
+    image: notificationmanagement
+    build:
+      context: .
+      dockerfile: public.ecr.aws/c0w8k2l1/rally-wave:notificationmanagement
+    volumes:
+      - ~/.aws:/root/.aws
+    environment:
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+    networks:
+      - rallywave
+    ports:
+      - 7004:8080
+    depends_on:
+      - rabbitmq
+
+  matchmanagement:
+    image: matchmanagement
+    build:
+      context: .
+      dockerfile: public.ecr.aws/c0w8k2l1/rally-wave:matchmanagement
+    volumes:
+      - ~/.aws:/root/.aws
+    environment:
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+    networks:
+      - rallywave
+    ports:
+      - 7005:8080
+    depends_on:
+      - rabbitmq
+
+  bookingmanagement:
+    image: bookingmanagement
+    build:
+      context: .
+      dockerfile: public.ecr.aws/c0w8k2l1/rally-wave:bookingmanagement
+    volumes:
+      - ~/.aws:/root/.aws
+    environment:
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+    networks:
+      - rallywave
+    ports:
+      - 7006:8080
+    depends_on:
+      - rabbitmq
+  
+  identity.api:
+    image: identity.api
+    build:
+      context: .
+      dockerfile: public.ecr.aws/c0w8k2l1/rally-wave:identity.api
+    volumes:
+      - ~/.aws:/root/.aws
+    environment:
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+    networks:
+      - rallywave
+    ports:
+      - 7007:8080
+  
+  rabbitmq:
+    container_name: rabbitmq
+    image: public.ecr.aws/c0w8k2l1/rally-wave:rabbitmq
+    ports:
+      - 5672:5672 # internal port
+      - 15672:15672 # access in browser port
+    networks:
+      - rallywave
+    volumes:
+      - /var/lib/rabbitmq
+  
+  paymentmanagement:
+    image: paymentmanagement
+    build:
+      context: .
+      dockerfile: public.ecr.aws/c0w8k2l1/rally-wave:paymentmanagement
+    volumes:
+      - ~/.aws:/root/.aws
+    environment:
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+    networks:
+      - rallywave
+    ports:
+      - 7008:8080
+
+  apigateways:
+    image: apigateways
+    build:
+      context: .
+      dockerfile: public.ecr.aws/c0w8k2l1/rally-wave:apigateways
+    networks:
+      - rallywave
+    ports:
+      - 7000:8080
+
+
+networks:
+  rallywave:
+    driver: bridge
+
+
