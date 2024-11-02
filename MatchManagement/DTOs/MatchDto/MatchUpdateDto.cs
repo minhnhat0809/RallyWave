@@ -44,7 +44,10 @@ public class MatchUpdateDto
     public string? Gender { get; set; }
 
     [Range(9, 70, ErrorMessage = "Age range must be between 9 and 70.")]
-    public sbyte? AgeRange { get; set; }
+    public sbyte? MinAge { get; set; }
+    
+    [Range(9, 70, ErrorMessage = "Age range must be between 9 and 70.")]
+    public sbyte? MaxAge { get; set; }
 
     [Range(0, 10, ErrorMessage = "Iteration must be between 0 and 10.")]
     public sbyte? Iteration { get; set; }
