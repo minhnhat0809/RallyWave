@@ -106,6 +106,11 @@ public class MatchRepo(RallyWaveContext repositoryContext) : RepositoryBase<Matc
             {
                 basePredicate = basePredicate.And(m => m.MatchType == matchFilterDto.MatchType);
             }
+
+            if (matchFilterDto.Status.HasValue)
+            {
+                basePredicate = basePredicate.And(m => m.Status == matchFilterDto.Status.Value);
+            }
         }
 
         // Default sorting field if not provided
