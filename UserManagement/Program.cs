@@ -15,14 +15,11 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
 
-//retrieve connection string from AWS Secrets Manager
-var getSecret = new GetSecret();
-var connectionString = await getSecret.GetConnectionString();
-
-//db context
+//dbcontext
 builder.Services.AddDbContext<RallyWaveContext>(options =>
 {
-    options.UseMySql(connectionString, new MySqlServerVersion(new Version(8, 0, 39))); 
+    options.UseMySql(builder.Configuration.GetConnectionString("RallyWave"),
+        new MySqlServerVersion(new Version(8, 0, 39))); 
 });
 
 //mapper 
