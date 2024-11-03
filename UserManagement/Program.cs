@@ -35,6 +35,7 @@ builder.Services.AddScoped<IFriendRepository, FriendRepository>();
 builder.Services.AddScoped(typeof(Validate));
 builder.Services.AddScoped(typeof(ListExtensions));
 
+builder.Services.AddHostedService<UserNotificationService>();
 //cors
 builder.Services.AddCors(opts =>
 {

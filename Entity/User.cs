@@ -27,6 +27,8 @@ public partial class User
 
     public sbyte Status { get; set; }
 
+    public DateTime CreatedDate { get; set; }
+
     public byte[]? PasswordHash { get; set; }
 
     public byte[]? PasswordSalt { get; set; }
