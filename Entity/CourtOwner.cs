@@ -43,5 +43,7 @@ public partial class CourtOwner
 
     public virtual ICollection<Court> Courts { get; set; } = new List<Court>();
 
+    public virtual PaymentDetail? PaymentDetail { get; set; }
+
     public virtual Subscription? Sub { get; set; }
 }

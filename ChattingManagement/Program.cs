@@ -1,10 +1,11 @@
-using ChattingManagement;
 using ChattingManagement.Repository;
 using ChattingManagement.Repository.Impl;
 using ChattingManagement.Service;
-using ChattingManagement.Ultility;
+using ChattingManagement.Service.Impl;
 using Entity;
 using Microsoft.EntityFrameworkCore;
+using ListExtensions = ChattingManagement.Ultility.ListExtensions;
+using Validate = ChattingManagement.Ultility.Validate;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,8 +15,12 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
 
-//mapper 
-builder.Services.AddAutoMapper(typeof(MapperConfig).Assembly);
+//db context
+builder.Services.AddDbContext<RallyWaveContext>(options =>
+{
+    options.UseMySql(builder.Configuration.GetConnectionString("RallyWave"),
+        new MySqlServerVersion(new Version(8, 0, 39))); 
+});
 
 //service
 builder.Services.AddScoped<IConservationService, ConservationService>();
@@ -29,14 +34,6 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 //utilities
 builder.Services.AddScoped(typeof(Validate));
 builder.Services.AddScoped(typeof(ListExtensions));
-// Host Service
-builder.Services.AddHostedService<BookingNotificationService>();
-//db context
-builder.Services.AddDbContext<RallyWaveContext>(options =>
-{
-    options.UseMySql(builder.Configuration.GetConnectionString("RallyWave"),
-        new MySqlServerVersion(new Version(8, 0, 39))); 
-});
 
 //cors
 builder.Services.AddCors(opts =>

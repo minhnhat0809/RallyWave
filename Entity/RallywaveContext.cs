@@ -53,11 +53,7 @@ public partial class RallyWaveContext : DbContext
     public virtual DbSet<UserSport> UserSports { get; set; }
 
     public virtual DbSet<UserTeam> UserTeams { get; set; }
-
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseMySql("server=localhost;database=rally_wave;user=root;password=N@hat892003.", Microsoft.EntityFrameworkCore.ServerVersion.Parse("8.0.39-mysql"));
-
+    
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder
@@ -403,13 +399,21 @@ public partial class RallyWaveContext : DbContext
 
             entity.HasIndex(e => e.BookingId, "booking_id").IsUnique();
 
+            entity.HasIndex(e => e.CourtOwnerId, "court_owner_id").IsUnique();
+
             entity.HasIndex(e => e.SubId, "sub_id").IsUnique();
+
+            entity.HasIndex(e => e.UserId, "user_id").IsUnique();
 
             entity.Property(e => e.PaymentId).HasColumnName("payment_id");
             entity.Property(e => e.BookingId).HasColumnName("booking_id");
+            entity.Property(e => e.CourtOwnerId).HasColumnName("court_owner_id");
             entity.Property(e => e.Note)
                 .HasMaxLength(255)
                 .HasColumnName("note");
+            entity.Property(e => e.Signature)
+                .HasMaxLength(255)
+                .HasColumnName("signature");
             entity.Property(e => e.Status).HasColumnName("status");
             entity.Property(e => e.SubId).HasColumnName("sub_id");
             entity.Property(e => e.Total).HasColumnName("total");
@@ -417,10 +421,23 @@ public partial class RallyWaveContext : DbContext
                 .HasMaxLength(10)
                 .IsFixedLength()
                 .HasColumnName("type");
+            entity.Property(e => e.UserId).HasColumnName("user_id");
 
             entity.HasOne(d => d.Booking).WithOne(p => p.PaymentDetail)
                 .HasForeignKey<PaymentDetail>(d => d.BookingId)
                 .HasConstraintName("FK_Payment_Booking");
+
+            entity.HasOne(d => d.CourtOwner).WithOne(p => p.PaymentDetail)
+                .HasForeignKey<PaymentDetail>(d => d.CourtOwnerId)
+                .HasConstraintName("FK_Payment_Court_Owner");
+
+            entity.HasOne(d => d.Sub).WithOne(p => p.PaymentDetail)
+                .HasForeignKey<PaymentDetail>(d => d.SubId)
+                .HasConstraintName("FK_Payment_Sub");
+
+            entity.HasOne(d => d.User).WithOne(p => p.PaymentDetail)
+                .HasForeignKey<PaymentDetail>(d => d.UserId)
+                .HasConstraintName("FK_Payment_User");
         });
 
         modelBuilder.Entity<Slot>(entity =>

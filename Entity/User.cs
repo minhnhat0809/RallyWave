@@ -49,6 +49,8 @@ public partial class User
 
     public virtual ICollection<Message> Messages { get; set; } = new List<Message>();
 
+    public virtual PaymentDetail? PaymentDetail { get; set; }
+
     public virtual Subscription? Sub { get; set; }
 
     public virtual ICollection<Team> Teams { get; set; } = new List<Team>();

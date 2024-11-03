@@ -13,15 +13,14 @@ namespace MatchManagement.Controller
         public async Task<ResponseDto> GetMatches(
             [FromQuery] string? subject,
             [FromQuery] int? subjectId,
-            [FromQuery] string? filterField,
-            [FromQuery] string? filterValue,
+            [FromQuery] MatchFilterDto? matchFilterDto,
             [FromQuery] string? sortField,
             [FromQuery] string sortValue = "asc",
             [FromQuery] int pageNumber = 1,
             [FromQuery] int pageSize = 5
             )
         {
-            var response = await matchService.GetMatches(subject, subjectId, filterField, filterValue, sortField, sortValue, pageNumber, pageSize);
+            var response = await matchService.GetMatches(subject, subjectId, matchFilterDto, sortField, sortValue, pageNumber, pageSize);
             
             return response;
         }

@@ -1,4 +1,5 @@
 using BookingManagement.DTOs.BookingDto;
+using BookingManagement.DTOs.BookingDto.ViewDto;
 using Microsoft.AspNetCore.Mvc;
 using BookingManagement.Service;
 
@@ -12,15 +13,14 @@ namespace BookingManagement.Controller
         public async Task<IActionResult> GetBookings(
             [FromQuery] string? subject,
             [FromQuery] int? subjectId,
-            [FromQuery] string? filterField,
-            [FromQuery] string? filterValue,
+            [FromQuery] BookingFilterDto? bookingFilterDto,
             [FromQuery] string? sortField,
             [FromQuery] string sortValue = "asc",
             [FromQuery] int pageNumber = 1,
             [FromQuery] int pageSize = 5
         )
         {
-            var response = await bookingService.GetBookings(subject, subjectId, filterField, filterValue, sortField, sortValue, pageNumber, pageSize);
+            var response = await bookingService.GetBookings(subject, subjectId, bookingFilterDto, sortField, sortValue, pageNumber, pageSize);
             return StatusCode(response.StatusCode, response);
         }
         

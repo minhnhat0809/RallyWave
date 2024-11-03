@@ -1,5 +1,6 @@
 using Entity;
 using Microsoft.EntityFrameworkCore;
+using Net.payOS;
 using PaymentManagement;
 using PaymentManagement.Repository;
 using PaymentManagement.Repository.Impl;
@@ -30,6 +31,12 @@ builder.Services.AddScoped<IPaymentService, PaymentService>();
 //repo
 builder.Services.AddScoped<IPaymentRepo, PaymentRepo>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddScoped<IBookingRepo, BookingRepo>();
+builder.Services.AddScoped<ICourtOwnerRepo, CourtOwnerRepo>();
+builder.Services.AddScoped<ICourtRepo, CourtRepo>();
+builder.Services.AddScoped<IMatchRepo, MatchRepo>();
+builder.Services.AddScoped<IUserRepo, UserRepo>();
+builder.Services.AddScoped<ISubscriptionRepo, SubscriptionRepo>();
 
 //cors
 builder.Services.AddCors(opts =>
@@ -38,9 +45,17 @@ builder.Services.AddCors(opts =>
         .AllowAnyMethod().AllowCredentials().SetIsOriginAllowed((_) => true));
 });
 
-//ultility
+//utility
 builder.Services.AddScoped(typeof(Validate));
 builder.Services.AddScoped(typeof(ListExtensions));
+builder.Services.AddSingleton(typeof(GetSecret));
+
+//pay-os
+var secret = new GetSecret();
+var payOsCredentials = secret.GetPayOsCredentials().Result;
+var payOs = new PayOS(payOsCredentials!.ClientId, payOsCredentials.ApiKey, payOsCredentials.CheckSumKey);
+
+builder.Services.AddSingleton(payOs);
 
 
 //mapper 

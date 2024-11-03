@@ -17,11 +17,15 @@ public interface IRepositoryBase<T>
         Expression<Func<T, TResult>> selector,
         params Expression<Func<T, object>>[]? includes);
 
-    Task<List<TResult>> FindByConditionWithPagingAsync<TResult>(
-        Expression<Func<T, bool>> expression,
-        Expression<Func<T, TResult>> selector,
-        int pageNumber,
-        int pageSize,
+    Task<List<TResult>> FindByConditionWithSortingAndPagingAsync<TResult>(
+        Expression<Func<T, bool>> expression, 
+        Expression<Func<T, TResult>> selector, 
+        int pageNumber, 
+        int pageSize, 
+        Expression<Func<T, object>> orderBy, 
+        Expression<Func<T, object>>? thenBy = null, 
+        bool isAscending = true, 
+        bool thenByAscending = true, 
         params Expression<Func<T, object>>[]? includes);
 
     Task<TResult?> GetByConditionAsync<TResult>(

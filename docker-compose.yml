@@ -6,6 +6,10 @@
       dockerfile: UserManagement/Dockerfile
     networks:
       - rallywave
+    ports:
+      - "7001:8080"
+    depends_on:
+      - rabbitmq
 
   chattingmanagement:
     image: chattingmanagement
@@ -14,6 +18,8 @@
       dockerfile: ChattingManagement/Dockerfile
     networks:
       - rallywave
+    ports:
+      - "7002:8080"
 
   courtmanagement:
     image: courtmanagement
@@ -22,6 +28,8 @@
       dockerfile: CourtManagement/Dockerfile
     networks:
       - rallywave
+    ports:
+      - "7003:8080"
 
   notificationmanagement:
     image: notificationmanagement
@@ -30,6 +38,10 @@
       dockerfile: NotificationManagement/Dockerfile
     networks:
       - rallywave
+    ports:
+      - "7004:8080"
+    depends_on:
+      - rabbitmq
 
   matchmanagement:
     image: matchmanagement
@@ -38,6 +50,10 @@
       dockerfile: MatchManagement/Dockerfile
     networks:
       - rallywave
+    ports:
+      - "7005:8080"
+    depends_on:
+      - rabbitmq
 
   bookingmanagement:
     image: bookingmanagement
@@ -46,6 +62,11 @@
       dockerfile: BookingManagement/Dockerfile
     networks:
       - rallywave
+    ports:
+      - "7006:8080"
+    depends_on:
+      - rabbitmq
+      
   identity.api:
     image: identity.api
     build:
@@ -53,6 +74,9 @@
       dockerfile: Identity.API/Dockerfile
     networks:
       - rallywave
+    ports:
+      - "7007:8080"
+      
   rabbitmq:
     container_name: rabbitmq
     image: rabbitmq
@@ -63,14 +87,17 @@
       - rallywave
     volumes:
       - /var/lib/rabbitmq
-
-networks:
-  rallywave: 
-    driver: bridge
-  
-
+        
   paymentmanagement:
     image: paymentmanagement
     build:
       context: .
       dockerfile: PaymentManagement/Dockerfile
+    networks:
+      - rallywave
+    ports:
+      - "7008:8080"
+
+networks:
+  rallywave: 
+    driver: bridge
