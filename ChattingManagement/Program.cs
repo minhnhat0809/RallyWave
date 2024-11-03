@@ -1,7 +1,6 @@
 using ChattingManagement.Repository;
 using ChattingManagement.Repository.Impl;
 using ChattingManagement.Service;
-using ChattingManagement.Service.Impl;
 using ChattingManagement.Ultility;
 using Entity;
 using Microsoft.EntityFrameworkCore;
