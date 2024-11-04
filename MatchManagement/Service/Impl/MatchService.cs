@@ -301,6 +301,7 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
             }
             else
             {
+                match.Status = 3;
                 await _unitOfWork.MatchRepo.DeleteAsync(match);
             }
         }
