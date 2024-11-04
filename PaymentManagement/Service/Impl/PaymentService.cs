@@ -221,7 +221,7 @@ public class PaymentService(IMapper mapper, IUnitOfWork unitOfWork, PayOS payOs)
                 
                 var createPayment = await _payOs.createPaymentLink(paymentData);
 
-                response.Message = createPayment.status;
+                response.Message = createPayment.checkoutUrl;
             }
             catch (Exception e)
             {
