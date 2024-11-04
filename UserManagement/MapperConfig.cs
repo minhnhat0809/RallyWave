@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Entity;
 using UserManagement.DTOs.ConservationDto;
+using UserManagement.DTOs.CourtOwnerDto.ViewDto;
 using UserManagement.DTOs.FriendDto;
 using UserManagement.DTOs.SportDto;
 using UserManagement.DTOs.TeamDto;
@@ -31,5 +32,7 @@ public class MapperConfig : Profile
         CreateMap<Sport, SportViewDto>().ReverseMap();
 
         CreateMap<Friendship, FriendshipViewDto>().ReverseMap();
+
+        CreateMap<CourtOwnerViewDto, CourtOwner>().ReverseMap();
     }
 }

@@ -7,11 +7,12 @@ public class UnitOfWork : IUnitOfWork
     private readonly RallyWaveContext _context;
 
     // Constructor to inject the DbContext
-    public UnitOfWork(RallyWaveContext context, IUserTeamRepository userTeamRepository, IFriendRepository friendRepository)
+    public UnitOfWork(RallyWaveContext context, IUserTeamRepository userTeamRepository, IFriendRepository friendRepository, ICourtOwnerRepository courtOwnerRepository)
     {
         _context = context;
         UserTeamRepository = userTeamRepository;
         FriendRepository = friendRepository;
+        CourtOwnerRepository = courtOwnerRepository;
 
         // Initialize repositories
         UserRepo = new UserRepo(_context);
@@ -28,6 +29,8 @@ public class UnitOfWork : IUnitOfWork
     public IConservationRepository ConservationRepository { get; }
     public IUserTeamRepository UserTeamRepository { get; }
     public IFriendRepository FriendRepository { get; }
+    
+    public ICourtOwnerRepository CourtOwnerRepository { get; }
 
     // Save changes to the database
     public async Task<int> SaveChangesAsync()

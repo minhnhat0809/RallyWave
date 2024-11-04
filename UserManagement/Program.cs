@@ -21,6 +21,7 @@ builder.Services.AddAutoMapper(typeof(MapperConfig).Assembly);
 //service
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ITeamService, TeamService>();
+builder.Services.AddScoped<ICourtOwnerService, CourtOwnerService>();
 
 //repo
 builder.Services.AddScoped<IUserRepo, UserRepo>();
@@ -30,6 +31,7 @@ builder.Services.AddScoped<ISportRepository, SportRepository>();
 builder.Services.AddScoped<IConservationRepository, ConservationRepository>();
 builder.Services.AddScoped<IUserTeamRepository, UserTeamRepository>();
 builder.Services.AddScoped<IFriendRepository, FriendRepository>();
+builder.Services.AddScoped<ICourtOwnerRepository, CourtOwnerRepository>();
 
 //utilities
 builder.Services.AddScoped(typeof(Validate));
