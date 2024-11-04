@@ -44,6 +44,9 @@ builder.Services.AddControllers();
 // Add Services
 builder.Services.AddServices();
 
+//get google credentials
+var googleCredentials = secret.GetGoogleCredentials().Result;
+
 builder.Services.AddAuthentication(options =>
     {
         options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
@@ -54,8 +57,8 @@ builder.Services.AddAuthentication(options =>
     {
         options.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
         options.Authority = "https://accounts.google.com";
-        options.ClientId = builder.Configuration["Authentication:Google:ClientId"];
-        options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
+        options.ClientId = googleCredentials.ClientId;
+        options.ClientSecret = googleCredentials.ClientSecret;
         options.ResponseType = "id_token";
         options.CallbackPath = "/google-login";
         options.SaveTokens = true;
