@@ -193,6 +193,7 @@ public class PaymentService(IMapper mapper, IUnitOfWork unitOfWork, PayOS payOs)
                 UserId = paymentCreateDto.PaymentCreateForSub!.UserId,
                 SubId = sub.SubId,
                 Type = paymentCreateDto.Type,
+                Signature = "",
                 Total = sub.Price,
                 Status = 0
             };
