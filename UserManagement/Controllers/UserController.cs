@@ -58,12 +58,12 @@ namespace UserManagement.Controllers
         /// </summary>
         /// <param name="userCreateDto">The user data to create.</param>
         /// <returns>A ResponseDto indicating the result of the operation.</returns>
-        [HttpPost]
+        /*[HttpPost]
         public async Task<ActionResult<ResponseDto>> CreateUser([FromBody] UserCreateDto userCreateDto)
         {
             var response = await _userService.CreateUser(userCreateDto);
             return response.IsSucceed ? CreatedAtAction(nameof(GetUserById), new { userId = response.Result?.ToString() }, response) : BadRequest(response);
-        }
+        }*/
 
         /// <summary>
         /// Updates an existing user.
@@ -71,24 +71,24 @@ namespace UserManagement.Controllers
         /// <param name="id">The ID of the user to update.</param>
         /// <param name="userUpdateDto">The updated user data.</param>
         /// <returns>A ResponseDto indicating the result of the operation.</returns>
-        [HttpPut("{id:int}")]
+        /*[HttpPut("{id:int}")]
         public async Task<ActionResult<ResponseDto>> UpdateUser(int id, [FromBody] UserUpdateDto userUpdateDto)
         {
             var response = await _userService.UpdateUser(id, userUpdateDto);
             return response.IsSucceed ? Ok(response) : BadRequest(response);
-        }
+        }*/
 
         /// <summary>
         /// Deletes a user by their ID.
         /// </summary>
         /// <param name="id">The ID of the user to delete.</param>
         /// <returns>A ResponseDto indicating the result of the operation.</returns>
-        [HttpDelete("{id:int}")]
+        /*[HttpDelete("{id:int}")]
         public async Task<ActionResult<ResponseDto>> DeleteUser(int id)
         {
             var response = await _userService.DeleteUser(id);
             return response.IsSucceed ? Ok(response) : BadRequest(response);
-        }
+        }*/
         
         // FRIEND
         

@@ -11,4 +11,5 @@ public interface IUnitOfWork : IDisposable
     IUserTeamRepository UserTeamRepository { get; }
     IFriendRepository FriendRepository { get; }
     Task<int> SaveChangesAsync();
+    ICourtOwnerRepository CourtOwnerRepository { get; }
 }
