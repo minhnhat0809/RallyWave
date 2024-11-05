@@ -71,12 +71,12 @@ namespace UserManagement.Controllers
         /// <param name="id">The ID of the user to update.</param>
         /// <param name="userUpdateDto">The updated user data.</param>
         /// <returns>A ResponseDto indicating the result of the operation.</returns>
-        /*[HttpPut("{id:int}")]
+        [HttpPut("{id:int}")]
         public async Task<ActionResult<ResponseDto>> UpdateUser(int id, [FromBody] UserUpdateDto userUpdateDto)
         {
             var response = await _userService.UpdateUser(id, userUpdateDto);
             return response.IsSucceed ? Ok(response) : BadRequest(response);
-        }*/
+        }
 
         /// <summary>
         /// Deletes a user by their ID.

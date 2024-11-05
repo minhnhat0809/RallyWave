@@ -2,6 +2,7 @@
 using Entity;
 using UserManagement.DTOs;
 using UserManagement.DTOs.FriendDto;
+using UserManagement.DTOs.SportUserDto;
 using UserManagement.DTOs.UserDto;
 using UserManagement.DTOs.UserDto.ViewDto;
 using UserManagement.Repository;
@@ -35,24 +36,13 @@ public class UserService : IUserService
 
                 if (_validate.IsEmptyOrWhiteSpace(filterField) || _validate.IsEmptyOrWhiteSpace(filterValue))
                 {
-                    users = await _unitOfWork.UserRepo.FindAllAsync(
-                        u => new UserViewDto(
-                            u.UserId,
-                            u.UserName,
-                            u.Email,
-                            u.PhoneNumber,  // Ensure correct data type
-                            u.Gender,
-                            u.Dob,  // Make sure DateOnly is handled properly
-                            u.Address,
-                            u.Province,
-                            u.Avatar,
-                            u.Status),
-                        null);
+                    var userList = await _unitOfWork.UserRepo.GetUsers(String.Empty, String.Empty);
+                    users = _mapper.Map<List<UserViewDto>>(userList);
                 }
                 else
                 {
-                    var userlist = await _unitOfWork.UserRepo.GetUsers(filterField, filterValue);
-                    users = _mapper.Map<List<UserViewDto>>(userlist);
+                    var userList = await _unitOfWork.UserRepo.GetUsers(filterField, filterValue);
+                    users = _mapper.Map<List<UserViewDto>>(userList);
                 }
 
                 users = Sort(users, sortField, sortValue);
@@ -119,7 +109,9 @@ public class UserService : IUserService
                 }
                 else
                 {
-                    responseDto.Result = user;
+                    var userView = _mapper.Map<UserViewDto>(user);
+                    
+                    responseDto.Result = userView;
                     responseDto.Message = "Get successfully!";
                 }
             }
@@ -174,21 +166,25 @@ public class UserService : IUserService
                     return responseDto;
                 }
 
-                responseDto = await ValidateForUpdating(id, userUpdateDto);
-
-                if (responseDto.IsSucceed == false)
+                var userSports =
+                    user.UserSports.ToList();
+                if (userUpdateDto.UserSports != null)
                 {
-                    return responseDto;
-                }
+                    var userSportUpdates = userUpdateDto.UserSports.ToList();
+                    foreach (var userSport in userSports)
+                    {
+                        var updatedSport = userSportUpdates.FirstOrDefault(us => us.SportId == userSport.SportId);
 
-                user.UserName = userUpdateDto.UserName;
-                user.Address = userUpdateDto.Address;
-                user.Dob = userUpdateDto.Dob;
-                user.Avatar = user.Avatar;
-                user.Gender = userUpdateDto.Gender;
-                user.Province = userUpdateDto.Province;
-                
-                responseDto.Result = await _unitOfWork.UserRepo.UpdateUser(user);
+                        if (updatedSport != null)
+                        {
+                            userSport.Level = updatedSport.SportLevel;
+        
+                        }
+                    }
+                }
+                user = await _unitOfWork.UserRepo.UpdateUser(user);
+
+                responseDto.Result = _mapper.Map<UserViewDto>(user);
                 responseDto.Message = "Update successfully!";
 
             }
