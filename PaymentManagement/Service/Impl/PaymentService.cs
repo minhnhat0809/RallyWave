@@ -215,7 +215,7 @@ public class PaymentService(IMapper mapper, IUnitOfWork unitOfWork, PayOS payOs)
                 await _unitOfWork.PaymentRepo.UpdateAsync(paymentDetail);
 
                 //start create payment
-                var paymentData = new PaymentData(paymentDetail.PaymentId, (int) sub.Price, "user",
+                var paymentData = new PaymentData(paymentDetail.PaymentId, (int) sub.Price, "Thanh toan goi premium",
                     items, paymentCreateDto.SuccessUrl, paymentCreateDto.CancelUrl, signature, checkUser.UserName, 
                     checkUser.Email, checkUser.PhoneNumber.ToString());
                 
@@ -290,7 +290,7 @@ public class PaymentService(IMapper mapper, IUnitOfWork unitOfWork, PayOS payOs)
                 
 
                 //start create payment
-                var paymentData = new PaymentData(paymentDetail.PaymentId, 1000, "courtOwner",
+                var paymentData = new PaymentData(paymentDetail.PaymentId, 1000, "Thanh toan goi premium",
                     items, paymentCreateDto.SuccessUrl, paymentCreateDto.CancelUrl, signature, checkUser.Name, 
                     checkUser.Email, checkUser.PhoneNumber.ToString());
                 
@@ -391,7 +391,7 @@ public class PaymentService(IMapper mapper, IUnitOfWork unitOfWork, PayOS payOs)
                     
                     try
                     {
-                        var paymentData = new PaymentData(paymentDetail.PaymentId, (int) paymentDetail.Total, "booking",
+                        var paymentData = new PaymentData(paymentDetail.PaymentId, (int) paymentDetail.Total, "Thanh toan tien san",
                             items, paymentCreateDto.SuccessUrl, paymentCreateDto.CancelUrl, signature, user.UserName, 
                             user.Email, user.PhoneNumber.ToString()); 
                 
