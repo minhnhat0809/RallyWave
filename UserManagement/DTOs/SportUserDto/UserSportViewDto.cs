@@ -12,7 +12,9 @@ public class UserSportViewDto
 
     public ulong? Status { get; set; }
 
-    public virtual SportViewDto Sport { get; set; } = null!;
+    public string? SportName { get; set; }
+
+//public virtual SportViewDto Sport { get; set; } = null!;
 }
 
 

@@ -21,7 +21,9 @@ public class MapperConfig : Profile
         CreateMap<UserViewDto, User>()
             .ForMember(dest => dest.UserId, opt => opt.Ignore());
         
-        CreateMap<UserSport, UserSportViewDto>().ReverseMap();
+        CreateMap<UserSport, UserSportViewDto>()
+            .ForMember(dest => dest.SportName, opt => opt.MapFrom(src => src.Sport.SportName))
+            .ReverseMap();
         CreateMap<Sport, SportViewDto>().ReverseMap();
         
         CreateMap<UserCreateDto, User>();
