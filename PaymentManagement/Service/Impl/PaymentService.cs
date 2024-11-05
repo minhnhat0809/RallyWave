@@ -221,7 +221,8 @@ public class PaymentService(IMapper mapper, IUnitOfWork unitOfWork, PayOS payOs)
                 
                 var createPayment = await _payOs.createPaymentLink(paymentData);
 
-                response.Message = createPayment.checkoutUrl;
+                response.Result = createPayment.checkoutUrl;
+                response.Message = "Processing";
             }
             catch (Exception e)
             {
@@ -295,7 +296,8 @@ public class PaymentService(IMapper mapper, IUnitOfWork unitOfWork, PayOS payOs)
                 
                 var createPayment = await _payOs.createPaymentLink(paymentData);
 
-                response.Message = createPayment.status;
+                response.Result = createPayment.checkoutUrl;
+                response.Message = "Processing";
             }
             catch (Exception e)
             {
@@ -393,15 +395,15 @@ public class PaymentService(IMapper mapper, IUnitOfWork unitOfWork, PayOS payOs)
                             items, paymentCreateDto.SuccessUrl, paymentCreateDto.CancelUrl, signature, user.UserName, 
                             user.Email, user.PhoneNumber.ToString()); 
                 
-                        await _payOs.createPaymentLink(paymentData);
+                        var createPayment = await _payOs.createPaymentLink(paymentData);
+
+                        response.Result = createPayment.checkoutUrl;
+                        response.Message = "Processing";
                     }
                     catch (Exception e)
                     {
                         return new ResponseDto(null, e.Message, false, StatusCodes.Status500InternalServerError);
                     }
-                   
-
-                    response.Message = "Processing";
 
                 }
                 else if (booking.UserId.HasValue)
@@ -422,7 +424,10 @@ public class PaymentService(IMapper mapper, IUnitOfWork unitOfWork, PayOS payOs)
                             items, paymentCreateDto.SuccessUrl, paymentCreateDto.CancelUrl, null, user.UserName, 
                             user.Email, user.PhoneNumber.ToString()); 
                 
-                        await _payOs.createPaymentLink(paymentData);
+                        var createPayment = await _payOs.createPaymentLink(paymentData);
+
+                        response.Result = createPayment.checkoutUrl;
+                        response.Message = "Processing";
                     }
                     catch (Exception e)
                     {
