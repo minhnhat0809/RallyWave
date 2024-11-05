@@ -1,3 +1,5 @@
+using Identity.API.BusinessObjects.SportUserDto;
+
 namespace Identity.API.BusinessObjects.UserViewModel;
 
 public class UserViewDto
@@ -22,7 +24,7 @@ public class UserViewDto
 
     public sbyte Status { get; set; }
     public DateTime CreatedDate { get; set; }
-    
+
     public sbyte IsTwoFactorEnabled { get; set; }
 
     public UserViewDto(int userId, string userName, string? email, int phoneNumber, string gender, DateOnly dob, string address, string province, string? avatar, sbyte status, DateTime createdDate, sbyte isTwoFactorEnabled)
@@ -40,4 +42,6 @@ public class UserViewDto
         CreatedDate = createdDate;
         IsTwoFactorEnabled = isTwoFactorEnabled;
     }
+    
+    public virtual SportUserViewDto SportUserDto { get; set; }
 }
