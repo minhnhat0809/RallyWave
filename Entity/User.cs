@@ -49,7 +49,7 @@ public partial class User
 
     public virtual ICollection<Message> Messages { get; set; } = new List<Message>();
 
-    public virtual PaymentDetail? PaymentDetail { get; set; }
+    public virtual ICollection<PaymentDetail> PaymentDetails { get; set; } = new List<PaymentDetail>();
 
     public virtual Subscription? Sub { get; set; }
 
