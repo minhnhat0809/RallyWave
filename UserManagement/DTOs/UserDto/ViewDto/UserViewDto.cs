@@ -1,4 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using Entity;
+using UserManagement.DTOs.SportUserDto;
 
 namespace UserManagement.DTOs.UserDto.ViewDto;
 
@@ -14,7 +16,8 @@ public class UserViewDto
     public string Province { get; set; } = null!;
     public string? Avatar { get; set; }
     public sbyte Status { get; set; }
-
+    
+    public virtual ICollection<UserSportViewDto> UserSports { get; set; } = new List<UserSportViewDto>();
     public UserViewDto(int userId, string userName, string? email, int phoneNumber, string gender, DateOnly dob, string address, string province, string? avatar, sbyte status)
     {
         UserId = userId;
@@ -28,5 +31,6 @@ public class UserViewDto
         Avatar = avatar;
         Status = status;
     }
+
 }
 

@@ -31,7 +31,7 @@ public class UserRepo(RallyWaveContext repositoryContext) : RepositoryBase<User>
                             u.Avatar,
                             u.Status,
                             u.CreatedDate,
-                            u.IsTwoFactorEnabled));
+                            u.IsTwoFactorEnabled) );
                     break;
 
                 case "email":
@@ -184,20 +184,34 @@ public class UserRepo(RallyWaveContext repositoryContext) : RepositoryBase<User>
             // Fetch user based on the property name and value
             return property switch
             {
+                "id" => await _repositoryContext.Users
+                    .Include(u=>u.UserSports)
+                    .ThenInclude(us=>us.Sport)
+                    .FirstOrDefaultAsync(u=>u.UserId.Equals(value)),
                 
                 "email" => await _repositoryContext.Users
+                    .Include(u=>u.UserSports)
+                    .ThenInclude(us=>us.Sport)
                     .FirstOrDefaultAsync(u => u.Email == value),
             
                 "phone-number" => await _repositoryContext.Users
+                    .Include(u=>u.UserSports)
+                    .ThenInclude(us=>us.Sport)
                     .FirstOrDefaultAsync(u => u.PhoneNumber.ToString() == value),
 
                 "address" => await _repositoryContext.Users
+                    .Include(u=>u.UserSports)
+                    .ThenInclude(us=>us.Sport)
                     .FirstOrDefaultAsync(u => u.Address == value),
 
                 "province" => await _repositoryContext.Users
+                    .Include(u=>u.UserSports)
+                    .ThenInclude(us=>us.Sport)
                     .FirstOrDefaultAsync(u => u.Province == value),
 
                 "firebase-uid" => await _repositoryContext.Users
+                    .Include(u=>u.UserSports)
+                    .ThenInclude(us=>us.Sport)
                     .FirstOrDefaultAsync(u => u.FirebaseUid == value),
 
                 _ => throw new ArgumentException($"Invalid property name: {property}")

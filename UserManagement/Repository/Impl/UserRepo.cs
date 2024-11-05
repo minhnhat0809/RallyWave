@@ -24,29 +24,39 @@ public class UserRepo(RallyWaveContext repositoryContext) : RepositoryBase<User>
         // If no filter is provided, return all users
         if (string.IsNullOrEmpty(filterField) || string.IsNullOrEmpty(filterValue))
         {
-            return await FindAllAsync(u => u);
+            return await repositoryContext.Users
+                .Include(us => us.UserSports)
+                .ThenInclude(s => s.Sport).ToListAsync();
         }
 
         // Handle dynamic filtering based on the provided filterField and filterValue
         // For simplicity, I will assume we're filtering by 'Username' or 'Email'
         if (filterField.Equals("Username", StringComparison.OrdinalIgnoreCase))
         {
-            return await FindByConditionAsync(u => u.UserName.Contains(filterValue), u => u);
+            return await repositoryContext.Users
+                .Include(us => us.UserSports)
+                .ThenInclude(s => s.Sport)
+                .Where(u => u.UserName.Contains(filterValue)).ToListAsync();
         }
-        else if (filterField.Equals("Email", StringComparison.OrdinalIgnoreCase))
+        if (filterField.Equals("Email", StringComparison.OrdinalIgnoreCase))
         {
-            return await FindByConditionAsync(u => u.Email.Contains(filterValue), u => u);
+            return await repositoryContext.Users
+                .Include(us => us.UserSports)
+                .ThenInclude(s => s.Sport)
+                .Where(u => u.Email != null && u.Email.Contains(filterValue)).ToListAsync();
         }
-        else
-        {
-            throw new ArgumentException("Invalid filter field");
-        }
+        else return await repositoryContext.Users
+            .Include(us => us.UserSports)
+            .ThenInclude(s => s.Sport).ToListAsync();
     }
 
     // Get a user by ID
     public async Task<User?> GetUserById(int userId)
     {
-        return await GetByIdAsync(userId, u => u);
+        return await repositoryContext.Users
+            .Include(us => us.UserSports)
+            .ThenInclude(s => s.Sport)
+            .FirstOrDefaultAsync(u => u.UserId.Equals(userId));
     }
 
     // Create a new user
@@ -85,6 +95,8 @@ public class UserRepo(RallyWaveContext repositoryContext) : RepositoryBase<User>
     public async Task<List<User>> GetUsersByIds(List<int> userIds)
     {
         return await repositoryContext.Users
+            .Include(us=>us.UserSports)
+            .ThenInclude(s=>s.Sport)
             .Where(u => userIds.Contains(u.UserId))
             .ToListAsync();
     }
