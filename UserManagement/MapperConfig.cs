@@ -38,10 +38,16 @@ public class MapperConfig : Profile
         
         CreateMap<Sport, SportViewDto>().ReverseMap();
 
-        CreateMap<Friendship, FriendshipViewDto>().ReverseMap();
+        CreateMap<Friendship, FriendShipViewDto>()
+            .ForMember(dest => dest.ReceiverName, 
+                opt => 
+                    opt.MapFrom(src => src.Receiver.UserName))
+            .ForMember(dest => dest.SenderName, 
+                opt => 
+                    opt.MapFrom(src => src.Sender.UserName))
+            .ReverseMap();
 
         CreateMap<CourtOwnerViewDto, CourtOwner>().ReverseMap();
-
 
 
     }

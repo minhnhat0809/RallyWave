@@ -284,12 +284,12 @@ public class UserService : IUserService
                 if (filter.ToLower() == "friends")
                 {
                     response = await _unitOfWork.FriendRepository.GetFriendShipByProperties(userId, "all-friends", null);
-                    return new ResponseDto(_mapper.Map<List<FriendshipViewDto>>(response), "Get Friends Successfully", true, StatusCodes.Status200OK);
+                    return new ResponseDto(_mapper.Map<List<FriendShipViewDto>>(response), "Get Friends Successfully", true, StatusCodes.Status200OK);
                 }else if (filter.ToLower() == "friends-request")
                 {
                     response = await _unitOfWork.FriendRepository.GetFriendShipByProperties(userId, "received-requests",
                         null);
-                    return new ResponseDto(_mapper.Map<List<FriendshipViewDto>>(response), "Get Friends Request Successfully", true, StatusCodes.Status200OK);
+                    return new ResponseDto(_mapper.Map<List<FriendShipViewDto>>(response), "Get Friends Request Successfully", true, StatusCodes.Status200OK);
                 }
 
                 responseDto.Result = response;
@@ -329,7 +329,7 @@ public class UserService : IUserService
                             Status = 0
                         };
                         friendShipExist = await _unitOfWork.FriendRepository.CreateFriendShip(friendRequest);
-                        return new ResponseDto(_mapper.Map<FriendshipViewDto>(friendShipExist), "Send Friend Request successfully!", true, StatusCodes.Status200OK);
+                        return new ResponseDto(_mapper.Map<FriendShipViewDto>(friendShipExist), "Send Friend Request successfully!", true, StatusCodes.Status200OK);
                     }
                     return new ResponseDto(null, "Friend Request Already Exist!", false, StatusCodes.Status400BadRequest);
 
@@ -363,7 +363,7 @@ public class UserService : IUserService
                             if (friendShipExist.Status == 1) throw new Exception("You already be friends");
                             friendShipExist.Status = 1;
                             friendShipExist = await _unitOfWork.FriendRepository.AcceptedFriendShip(friendShipExist);
-                            return new ResponseDto(_mapper.Map<FriendshipViewDto>(friendShipExist), "Accept Request successfully!", true,
+                            return new ResponseDto(_mapper.Map<FriendShipViewDto>(friendShipExist), "Accept Request successfully!", true,
                                 StatusCodes.Status200OK);
                         }
                         return new ResponseDto(null, "You are sent Friend Request, Can not edit!", false, StatusCodes.Status400BadRequest);
@@ -413,7 +413,7 @@ public class UserService : IUserService
                         if (friendShipExist.Status == 1)
                         {
                             friendShipExist = await _unitOfWork.FriendRepository.DeniedFriendShip(friendShipExist);
-                            return new ResponseDto(friendShipExist, "Delete Friend Successfully!", true,
+                            return new ResponseDto(_mapper.Map<FriendShipViewDto>(friendShipExist), "Delete Friend Successfully!", true,
                                 StatusCodes.Status200OK);
                         }
                     }
