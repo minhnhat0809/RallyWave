@@ -19,4 +19,5 @@ public interface IUserRepo : IRepositoryBase<User>
     Task<List<User>> GetUsersByIds(List<int> userIds);
 
     Task<List<User>> GetUnverifiedUsersOlderThanOneDay();
+    
 }
