@@ -19,6 +19,9 @@ var secret = new GetSecret();
 
 var firebaseCredentials = secret.GetFireBaseCredentials().Result;
 
+//add identity json
+builder.Configuration.AddJsonFile("appsettings.Identity.json", optional: false, reloadOnChange: true);
+
 // Firebase Admin SDK initialization
 FirebaseApp.Create(new AppOptions()
 {
