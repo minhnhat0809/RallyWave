@@ -184,10 +184,10 @@
       "DownstreamHostAndPorts": [
         {
           "Host": "identity.api",
-          "Port": 7007
+          "Port": 8080
         }
       ],
-      "UpstreamPathTemplate": "/login/google",
+      "UpstreamPathTemplate": "/auth/login/google",
       "UpstreamHttpMethod": [ "POST" ]
     },
     {
@@ -196,10 +196,10 @@
       "DownstreamHostAndPorts": [
         {
           "Host": "identity.api",
-          "Port": 7007
+          "Port": 8080
         }
       ],
-      "UpstreamPathTemplate": "/register",
+      "UpstreamPathTemplate": "/auth/register",
       "UpstreamHttpMethod": [ "POST" ]
     },
     {
@@ -208,10 +208,10 @@
       "DownstreamHostAndPorts": [
         {
           "Host": "identity.api",
-          "Port": 7007
+          "Port": 8080
         }
       ],
-      "UpstreamPathTemplate": "/login",
+      "UpstreamPathTemplate": "/auth/login",
       "UpstreamHttpMethod": [ "POST" ]
     },
     {
@@ -220,10 +220,10 @@
       "DownstreamHostAndPorts": [
         {
           "Host": "identity.api",
-          "Port": 7007
+          "Port": 8080
         }
       ],
-      "UpstreamPathTemplate": "/reset-password",
+      "UpstreamPathTemplate": "/auth/reset-password",
       "UpstreamHttpMethod": [ "POST" ]
     },
     {
@@ -232,10 +232,10 @@
       "DownstreamHostAndPorts": [
         {
           "Host": "identity.api",
-          "Port": 7007
+          "Port": 8080
         }
       ],
-      "UpstreamPathTemplate": "/forget-password",
+      "UpstreamPathTemplate": "/auth/forget-password",
       "UpstreamHttpMethod": [ "POST" ]
     },
     {
@@ -244,10 +244,10 @@
       "DownstreamHostAndPorts": [
         {
           "Host": "identity.api",
-          "Port": 7007
+          "Port": 8080
         }
       ],
-      "UpstreamPathTemplate": "/verify-account",
+      "UpstreamPathTemplate": "/auth/verify-account",
       "UpstreamHttpMethod": [ "POST" ]
     },
     {
@@ -256,10 +256,10 @@
       "DownstreamHostAndPorts": [
         {
           "Host": "identity.api",
-          "Port": 7007
+          "Port": 8080
         }
       ],
-      "UpstreamPathTemplate": "/resend-verify-account",
+      "UpstreamPathTemplate": "/auth/resend-verify-account",
       "UpstreamHttpMethod": [ "POST" ]
     },
     {
@@ -268,10 +268,10 @@
       "DownstreamHostAndPorts": [
         {
           "Host": "identity.api",
-          "Port": 7007
+          "Port": 8080
         }
       ],
-      "UpstreamPathTemplate": "/verify-password",
+      "UpstreamPathTemplate": "/auth/verify-password",
       "UpstreamHttpMethod": [ "POST" ]
     },
     {
@@ -280,10 +280,10 @@
       "DownstreamHostAndPorts": [
         {
           "Host": "identity.api",
-          "Port": 7007
+          "Port": 8080
         }
       ],
-      "UpstreamPathTemplate": "/profile",
+      "UpstreamPathTemplate": "/auth/profile",
       "UpstreamHttpMethod": [ "PUT" ]
     }
   ],

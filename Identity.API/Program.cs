@@ -29,7 +29,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("CORSPolicy", corsPolicyBuilder =>
     {
-        corsPolicyBuilder.WithOrigins("https://localhost:7152") // Adjust the origin to match your frontend
+        corsPolicyBuilder.WithOrigins() // Adjust the origin to match your frontend
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials();
