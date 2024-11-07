@@ -18,7 +18,7 @@ public class MatchRepo(RallyWaveContext repositoryContext) : RepositoryBase<Matc
     try
     {
         // Start with a base predicate that is always true
-        var basePredicate = PredicateBuilder.New<Match>(true);
+            var basePredicate = PredicateBuilder.New<Match>(true);
 
         // Check for subject and subjectId
         if (!string.IsNullOrWhiteSpace(subject) && subjectId.HasValue)
