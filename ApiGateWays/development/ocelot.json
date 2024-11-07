@@ -187,7 +187,7 @@
           "Port": 5002
         }
       ],
-      "UpstreamPathTemplate": "/login/google",
+      "UpstreamPathTemplate": "/auth/login/google",
       "UpstreamHttpMethod": [ "POST" ]
     },
     {
@@ -199,7 +199,7 @@
           "Port": 5002
         }
       ],
-      "UpstreamPathTemplate": "/register",
+      "UpstreamPathTemplate": "/auth/register",
       "UpstreamHttpMethod": [ "POST" ]
     },
     {
@@ -211,7 +211,7 @@
           "Port": 5002
         }
       ],
-      "UpstreamPathTemplate": "/login",
+      "UpstreamPathTemplate": "/auth/login",
       "UpstreamHttpMethod": [ "POST" ]
     },
     {
@@ -223,7 +223,7 @@
           "Port": 5002
         }
       ],
-      "UpstreamPathTemplate": "/reset-password",
+      "UpstreamPathTemplate": "/auth/reset-password",
       "UpstreamHttpMethod": [ "POST" ]
     },
     {
@@ -235,7 +235,7 @@
           "Port": 5002
         }
       ],
-      "UpstreamPathTemplate": "/forget-password",
+      "UpstreamPathTemplate": "/auth/forget-password",
       "UpstreamHttpMethod": [ "POST" ]
     },
     {
@@ -247,7 +247,7 @@
           "Port": 5002
         }
       ],
-      "UpstreamPathTemplate": "/verify-account",
+      "UpstreamPathTemplate": "/auth/verify-account",
       "UpstreamHttpMethod": [ "POST" ]
     },
     {
@@ -259,7 +259,7 @@
           "Port": 5002
         }
       ],
-      "UpstreamPathTemplate": "/resend-verify-account",
+      "UpstreamPathTemplate": "/auth/resend-verify-account",
       "UpstreamHttpMethod": [ "POST" ]
     },
     {
@@ -271,7 +271,7 @@
           "Port": 5002
         }
       ],
-      "UpstreamPathTemplate": "/verify-password",
+      "UpstreamPathTemplate": "/auth/verify-password",
       "UpstreamHttpMethod": [ "POST" ]
     },
     {
@@ -283,7 +283,7 @@
           "Port": 5002
         }
       ],
-      "UpstreamPathTemplate": "/profile",
+      "UpstreamPathTemplate": "/auth/profile",
       "UpstreamHttpMethod": [ "PUT" ]
     }
   ],
