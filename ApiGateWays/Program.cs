@@ -70,7 +70,6 @@ app.UseRouting();
 app.UseCors("Cors");
 app.MapControllers();
 app.UseHttpsRedirection();
-app.UseEndpoints();
 
 await app.UseOcelot();
 
