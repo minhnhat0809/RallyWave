@@ -8,4 +8,5 @@ public interface IUnitOfWork
     IUserRepo UserRepo { get; }
     IAuthRepository AuthRepository { get; }
     ICourtOwnerRepository CourtOwnerRepository { get; }
+    IFirebaseStorageRepository FirebaseStorageRepository { get; }
 }

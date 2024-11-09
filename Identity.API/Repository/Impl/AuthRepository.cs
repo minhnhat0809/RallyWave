@@ -85,23 +85,26 @@ public class AuthRepository(IConfiguration configuration) : IAuthRepository
         {
             if (courtOwner.Email != null)
             {
-                var claims = new[]
+                if (courtOwner.Name != null)
                 {
-                    new Claim(JwtRegisteredClaimNames.Sub, courtOwner.Email),
-                    new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                    new Claim(ClaimTypes.Name, courtOwner.Name),
-                    new Claim(ClaimTypes.Role, role)
-                };
+                    var claims = new[]
+                    {
+                        new Claim(JwtRegisteredClaimNames.Sub, courtOwner.Email),
+                        new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                        new Claim(ClaimTypes.Name, courtOwner.Name),
+                        new Claim(ClaimTypes.Role, role)
+                    };
 
-                var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Authentication:Jwt:SecretKey"] ?? string.Empty));
-                var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+                    var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Authentication:Jwt:SecretKey"] ?? string.Empty));
+                    var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-                var token = new JwtSecurityToken(
-                    claims: claims,
-                    expires: DateTime.Now.AddHours(1),
-                    signingCredentials: creds);
+                    var token = new JwtSecurityToken(
+                        claims: claims,
+                        expires: DateTime.Now.AddHours(1),
+                        signingCredentials: creds);
 
-                return new JwtSecurityTokenHandler().WriteToken(token);
+                    return new JwtSecurityTokenHandler().WriteToken(token);
+                }
             }
             throw new Exception("Email address not found");
         }

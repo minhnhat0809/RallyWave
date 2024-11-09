@@ -141,6 +141,33 @@ namespace Identity.API.Controllers
             }
         }
         
+        [HttpPost("upload-avatar")]
+        public async Task<ActionResult<ResponseModel>> UploadAvatar(IFormFile avatar, [FromQuery] string email)
+        {
+            try
+            {
+                var response = await _authService.UploadUserAvatarAsync(avatar, email);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return new ResponseModel(null, ex.Message, false, StatusCodes.Status500InternalServerError);
+            }
+        }
+        [HttpDelete("delete-avatar")]
+        public async Task<ActionResult<ResponseModel>> DeleteAvatar([FromQuery] string email)
+        {
+            try
+            {
+                var response = await _authService.DeleteUserAvatarAsync(email);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return new ResponseModel(null, ex.Message, false, StatusCodes.Status500InternalServerError);
+            }
+        }
+        
     }
 
 }

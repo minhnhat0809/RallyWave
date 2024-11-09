@@ -15,5 +15,7 @@ public interface IUserRepo : IRepositoryBase<User>
 
     Task<User> DeleteUser(User user);
     Task<User?> GetUserByPropertyAndValue(string property, string value);
+    
+    
 
 }

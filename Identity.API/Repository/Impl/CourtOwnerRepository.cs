@@ -20,10 +20,12 @@ public interface ICourtOwnerRepository : IRepositoryBase<CourtOwner>
 }
 public class CourtOwnerRepository(RallyWaveContext repositoryContext) : RepositoryBase<CourtOwner>(repositoryContext), ICourtOwnerRepository
 {
-     // Get a list of court owners with optional filtering based on field and value
+    private readonly RallyWaveContext _repositoryContext = repositoryContext;
+
+    // Get a list of court owners with optional filtering based on field and value
     public async Task<List<CourtOwner>> GetUsers(string? filterField, string? filterValue)
     {
-        IQueryable<CourtOwner> query = repositoryContext.CourtOwners;
+        IQueryable<CourtOwner> query = _repositoryContext.CourtOwners;
 
         if (!string.IsNullOrEmpty(filterField) && !string.IsNullOrEmpty(filterValue))
         {
@@ -44,7 +46,7 @@ public class CourtOwnerRepository(RallyWaveContext repositoryContext) : Reposito
     // Get a specific court owner by their ID
     public async Task<CourtOwner?> GetUserById(int id)
     {
-        var courtOwner = await repositoryContext.CourtOwners
+        var courtOwner = await _repositoryContext.CourtOwners
             .Where(co => co.CourtOwnerId == id)
             .FirstOrDefaultAsync();
 
@@ -56,7 +58,7 @@ public class CourtOwnerRepository(RallyWaveContext repositoryContext) : Reposito
     {
         try
         {
-            await repositoryContext.CourtOwners.AddAsync(courtOwner);
+            await _repositoryContext.CourtOwners.AddAsync(courtOwner);
             await SaveChange();
             return courtOwner;
         }
@@ -71,7 +73,7 @@ public class CourtOwnerRepository(RallyWaveContext repositoryContext) : Reposito
     {
         try
         {
-            repositoryContext.CourtOwners.Update(courtOwner);
+            _repositoryContext.CourtOwners.Update(courtOwner);
             await SaveChange();
             return courtOwner;
         }
@@ -86,7 +88,7 @@ public class CourtOwnerRepository(RallyWaveContext repositoryContext) : Reposito
     {
         try
         {
-            repositoryContext.CourtOwners.Remove(courtOwner);
+            _repositoryContext.CourtOwners.Remove(courtOwner);
             await SaveChange();
             return courtOwner;
         }
@@ -110,11 +112,11 @@ public class CourtOwnerRepository(RallyWaveContext repositoryContext) : Reposito
 
             return property switch
             {
-                "email" => await repositoryContext.CourtOwners.FirstOrDefaultAsync(co => co.Email == value),
-                "phone-number" => await repositoryContext.CourtOwners.FirstOrDefaultAsync(co => co.PhoneNumber.ToString() == value),
-                "address" => await repositoryContext.CourtOwners.FirstOrDefaultAsync(co => co.Address == value),
-                "province" => await repositoryContext.CourtOwners.FirstOrDefaultAsync(co => co.Province == value),
-                "firebase-uid" => await repositoryContext.CourtOwners.FirstOrDefaultAsync(co => co.FirebaseUid == value),
+                "email" => await _repositoryContext.CourtOwners.FirstOrDefaultAsync(co => co.Email == value),
+                "phone-number" => await _repositoryContext.CourtOwners.FirstOrDefaultAsync(co => co.PhoneNumber.ToString() == value),
+                "address" => await _repositoryContext.CourtOwners.FirstOrDefaultAsync(co => co.Address == value),
+                "province" => await _repositoryContext.CourtOwners.FirstOrDefaultAsync(co => co.Province == value),
+                "firebase-uid" => await _repositoryContext.CourtOwners.FirstOrDefaultAsync(co => co.FirebaseUid == value),
                 _ => throw new ArgumentException($"Invalid property name: {property}")
             };
         }
