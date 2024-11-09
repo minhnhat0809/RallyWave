@@ -835,7 +835,7 @@ public class AuthService : IAuthService
             {
                 if (courtOwner.Avatar != null)
                 {
-                    bool isDeleteSucceed = await _unitOfWork.FirebaseStorageRepository.DeleteImageByUrlAsync(user.Avatar);
+                    bool isDeleteSucceed = await _unitOfWork.FirebaseStorageRepository.DeleteImageByUrlAsync(courtOwner.Avatar);
                     if (!isDeleteSucceed)
                     {
                         return new ResponseModel(null, "Image upload failed in delete old image!", false, StatusCodes.Status500InternalServerError);
@@ -905,7 +905,7 @@ public class AuthService : IAuthService
             {
                 if (courtOwner.Avatar != null)
                 {
-                    bool isDeleteSucceed = await _unitOfWork.FirebaseStorageRepository.DeleteImageByUrlAsync(user.Avatar);
+                    bool isDeleteSucceed = await _unitOfWork.FirebaseStorageRepository.DeleteImageByUrlAsync(courtOwner.Avatar);
                     if (!isDeleteSucceed)
                     {
                         return new ResponseModel(null, "Image upload failed in delete old image!", false, StatusCodes.Status500InternalServerError);
