@@ -19,7 +19,7 @@ public static class ServiceCollectionExtension
         services.AddScoped<IAuthRepository, AuthRepository>();
         services.AddScoped<IUserRepo, UserRepo>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
-        
+        services.AddScoped<IFirebaseStorageRepository, FirebaseStorageRepository>();
         //mapper 
         services.AddAutoMapper(typeof(MapperConfig).Assembly);
         

@@ -1,5 +1,6 @@
 
 using System.Security.Cryptography;
+using Amazon.Runtime.Internal.Endpoints.StandardLibrary;
 using AutoMapper;
 using Entity;
 using FirebaseAdmin.Auth;
@@ -9,6 +10,7 @@ using Identity.API.BusinessObjects.CourtOwnerModel;
 using Identity.API.BusinessObjects.LoginObjects;
 using Identity.API.BusinessObjects.UserViewModel;
 using Identity.API.Repository;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Identity.API.Services;
 
@@ -25,6 +27,8 @@ public interface IAuthService
     public Task<ResponseModel> ResendVerificationEmailAccount(RequestLoginModel request);
     public Task<ResponseModel> UpdateProfile(ProfileModel request);
     public Task<ResponseModel> ResendVerifyCode(RequestLoginModel request);
+    public Task<ResponseModel> UploadUserAvatarAsync(IFormFile avatarFile, string email);
+    public Task<ResponseModel> DeleteUserAvatarAsync(string email);
 }
 
 
@@ -787,6 +791,145 @@ public class AuthService : IAuthService
         catch (Exception ex)
         {
             return new ResponseModel(null, $"An error occurred during email verification: {ex.Message}", false, StatusCodes.Status500InternalServerError);
+        }
+    }
+
+    public async Task<ResponseModel> UploadUserAvatarAsync(IFormFile avatarFile, string email)
+    {
+        try
+        {
+            // Check if the email is provided
+            if (string.IsNullOrEmpty(email))
+            {
+                return new ResponseModel(null, "Email must be provided.", false, StatusCodes.Status400BadRequest);
+            }
+
+            // Try to find the user by email
+            var user = await _unitOfWork.UserRepo.GetUserByPropertyAndValue("email", email);
+            
+            if (user != null)
+            {
+                if (user.Avatar != null)
+                {
+                    bool isDeleteSucceed = await _unitOfWork.FirebaseStorageRepository.DeleteImageByUrlAsync(user.Avatar);
+                    if (!isDeleteSucceed)
+                    {
+                        return new ResponseModel(null, "Image upload failed in delete old image!", false, StatusCodes.Status500InternalServerError);
+                    }
+                }
+
+                var url = await _unitOfWork.FirebaseStorageRepository.UploadImageAsync(email, avatarFile, "avatars");
+                
+                // Update User Avatar
+                user.Avatar = url;
+                
+                user = await _unitOfWork.UserRepo.UpdateUser(user);
+
+                return new ResponseModel(_mapper.Map<UserViewDto>(user), "User Avatar uploaded successfully!", true, StatusCodes.Status200OK);
+            }
+
+            // If user is not found, check for court owner
+            var courtOwner = await _unitOfWork.CourtOwnerRepository.GetCourtOwnerByPropertyAndValue("email", email);
+            
+            if (courtOwner != null)
+            {
+                if (courtOwner.Avatar != null)
+                {
+                    bool isDeleteSucceed = await _unitOfWork.FirebaseStorageRepository.DeleteImageByUrlAsync(user.Avatar);
+                    if (!isDeleteSucceed)
+                    {
+                        return new ResponseModel(null, "Image upload failed in delete old image!", false, StatusCodes.Status500InternalServerError);
+                    }
+                }
+
+                
+                var url = await _unitOfWork.FirebaseStorageRepository.UploadImageAsync(email, avatarFile, "avatars");
+                
+                // Update User Avatar
+                courtOwner.Avatar = url;
+
+                courtOwner = await _unitOfWork.CourtOwnerRepository.UpdateCourtOwner(courtOwner);
+
+                return new ResponseModel(_mapper.Map<CourtOwnerViewDto>(courtOwner), "Court Owner Avatar uploaded successfully!", true, StatusCodes.Status200OK);
+
+            }
+
+            // If neither user nor court owner is found
+            return new ResponseModel(null, "Email not found!", false, StatusCodes.Status404NotFound);
+        }
+        catch (FirebaseAuthException ex)
+        {
+            return new ResponseModel(null, $"Error updating Firebase user: {ex.Message}", false, StatusCodes.Status500InternalServerError);
+        }
+        catch (Exception ex)
+        {
+            return new ResponseModel(null, $"An error occurred while updating profile: {ex.Message}", false, StatusCodes.Status500InternalServerError);
+        }
+    }
+
+    public async Task<ResponseModel> DeleteUserAvatarAsync(string email)
+    {
+        try
+        {
+            // Check if the email is provided
+            if (string.IsNullOrEmpty(email))
+            {
+                return new ResponseModel(null, "Email must be provided.", false, StatusCodes.Status400BadRequest);
+            }
+
+            // Try to find the user by email
+            var user = await _unitOfWork.UserRepo.GetUserByPropertyAndValue("email", email);
+            
+            if (user != null)
+            {
+                if (user.Avatar != null)
+                {
+                    bool isDeleteSucceed = await _unitOfWork.FirebaseStorageRepository.DeleteImageByUrlAsync(user.Avatar);
+                    if (!isDeleteSucceed)
+                    {
+                        return new ResponseModel(null, "Image upload failed in delete old image!", false, StatusCodes.Status500InternalServerError);
+                    }
+                }
+
+                user.Avatar = string.Empty;
+
+                user = await _unitOfWork.UserRepo.UpdateUser(user);
+
+                return new ResponseModel(_mapper.Map<UserViewDto>(user), "User Avatar deleted successfully!", true, StatusCodes.Status200OK);
+            }
+
+            // If user is not found, check for court owner
+            var courtOwner = await _unitOfWork.CourtOwnerRepository.GetCourtOwnerByPropertyAndValue("email", email);
+            
+            if (courtOwner != null)
+            {
+                if (courtOwner.Avatar != null)
+                {
+                    bool isDeleteSucceed = await _unitOfWork.FirebaseStorageRepository.DeleteImageByUrlAsync(user.Avatar);
+                    if (!isDeleteSucceed)
+                    {
+                        return new ResponseModel(null, "Image upload failed in delete old image!", false, StatusCodes.Status500InternalServerError);
+                    }
+                }
+
+                courtOwner.Avatar = string.Empty;
+
+                courtOwner = await _unitOfWork.CourtOwnerRepository.UpdateCourtOwner(courtOwner);
+
+                return new ResponseModel(_mapper.Map<CourtOwnerViewDto>(courtOwner), "Court Owner Avatar deleted successfully!", true, StatusCodes.Status200OK);
+
+            }
+
+            // If neither user nor court owner is found
+            return new ResponseModel(null, "Email not found!", false, StatusCodes.Status404NotFound);
+        }
+        catch (FirebaseAuthException ex)
+        {
+            return new ResponseModel(null, $"Error updating Firebase user: {ex.Message}", false, StatusCodes.Status500InternalServerError);
+        }
+        catch (Exception ex)
+        {
+            return new ResponseModel(null, $"An error occurred while updating profile: {ex.Message}", false, StatusCodes.Status500InternalServerError);
         }
     }
 }
