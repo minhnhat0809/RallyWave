@@ -14,6 +14,13 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
 
+//dbcontext
+builder.Services.AddDbContext<RallyWaveContext>(options =>
+{
+    options.UseMySql(builder.Configuration.GetConnectionString("RallyWave"),
+        new MySqlServerVersion(new Version(8, 0, 39))); 
+});
+
 //service
 builder.Services.AddScoped<INotificationService, NotificationService>();
 
@@ -32,20 +39,26 @@ builder.Services.AddCors(opts =>
         .AllowAnyMethod().AllowCredentials().SetIsOriginAllowed((_) => true));
 });
 
-//db context
-builder.Services.AddDbContext<RallyWaveContext>(options =>
-{
-    options.UseMySql(builder.Configuration.GetConnectionString("RallyWave"),
-        new MySqlServerVersion(new Version(8, 0, 39))); 
-});
-
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "User Management");
+        c.RoutePrefix = "swagger"; 
+    });
+}
+else
+{
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "User Management");
+        c.RoutePrefix = "swagger"; 
+    });
 }
 
 app.UseHttpsRedirection();

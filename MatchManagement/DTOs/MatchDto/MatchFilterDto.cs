@@ -29,4 +29,6 @@ public class MatchFilterDto
     public TimeOnly? TimeEnd { get; set; }
     
     public sbyte? MatchType { get; set; }
+    
+    public sbyte? Status { get; set; }
 }

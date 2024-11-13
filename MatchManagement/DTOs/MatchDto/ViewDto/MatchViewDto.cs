@@ -5,7 +5,6 @@ public class MatchViewDto
     public int MatchId { get; set; }
     
     public int SportId { get; set; }
-
     public string SportName { get; set; } = null!;
     
     public int CreateBy { get; set; }

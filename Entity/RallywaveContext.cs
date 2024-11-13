@@ -397,13 +397,13 @@ public partial class RallyWaveContext : DbContext
 
             entity.ToTable("payment_detail");
 
+            entity.HasIndex(e => e.CourtOwnerId, "FK_Payment_Court_Owner");
+
+            entity.HasIndex(e => e.SubId, "FK_Payment_Sub");
+
+            entity.HasIndex(e => e.UserId, "FK_Payment_User");
+
             entity.HasIndex(e => e.BookingId, "booking_id").IsUnique();
-
-            entity.HasIndex(e => e.CourtOwnerId, "court_owner_id").IsUnique();
-
-            entity.HasIndex(e => e.SubId, "sub_id").IsUnique();
-
-            entity.HasIndex(e => e.UserId, "user_id").IsUnique();
 
             entity.Property(e => e.PaymentId).HasColumnName("payment_id");
             entity.Property(e => e.BookingId).HasColumnName("booking_id");
@@ -427,16 +427,16 @@ public partial class RallyWaveContext : DbContext
                 .HasForeignKey<PaymentDetail>(d => d.BookingId)
                 .HasConstraintName("FK_Payment_Booking");
 
-            entity.HasOne(d => d.CourtOwner).WithOne(p => p.PaymentDetail)
-                .HasForeignKey<PaymentDetail>(d => d.CourtOwnerId)
+            entity.HasOne(d => d.CourtOwner).WithMany(p => p.PaymentDetails)
+                .HasForeignKey(d => d.CourtOwnerId)
                 .HasConstraintName("FK_Payment_Court_Owner");
 
-            entity.HasOne(d => d.Sub).WithOne(p => p.PaymentDetail)
-                .HasForeignKey<PaymentDetail>(d => d.SubId)
+            entity.HasOne(d => d.Sub).WithMany(p => p.PaymentDetails)
+                .HasForeignKey(d => d.SubId)
                 .HasConstraintName("FK_Payment_Sub");
 
-            entity.HasOne(d => d.User).WithOne(p => p.PaymentDetail)
-                .HasForeignKey<PaymentDetail>(d => d.UserId)
+            entity.HasOne(d => d.User).WithMany(p => p.PaymentDetails)
+                .HasForeignKey(d => d.UserId)
                 .HasConstraintName("FK_Payment_User");
         });
 

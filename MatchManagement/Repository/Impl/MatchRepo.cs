@@ -1,5 +1,6 @@
 ﻿using System.Linq.Expressions;
 using Entity;
+using LinqKit;
 using MatchManagement.DTOs;
 using MatchManagement.DTOs.MatchDto;
 using MatchManagement.DTOs.MatchDto.ViewDto;
@@ -9,246 +10,116 @@ namespace MatchManagement.Repository.Impl;
 public class MatchRepo(RallyWaveContext repositoryContext) : RepositoryBase<Match>(repositoryContext),IMatchRepo
 {
     public async Task<ResponseListDto<MatchViewsDto>> GetMatches(
-        string? subject, int? subjectId, 
-        MatchFilterDto? matchFilterDto, 
-        string? sortField, string sortValue,
-        int pageNumber, int pageSize)
+    string? subject, int? subjectId, 
+    MatchFilterDto? matchFilterDto, 
+    string? sortField, string sortValue,
+    int pageNumber, int pageSize)
 {
     try
     {
-        Expression<Func<Match, bool>> basePredicate = m => true;
-        var parameter = basePredicate.Parameters[0]; // Extract the parameter to reuse in conditions
+        // Start with a base predicate that is always true
+            var basePredicate = PredicateBuilder.New<Match>(true);
 
+        // Check for subject and subjectId
         if (!string.IsNullOrWhiteSpace(subject) && subjectId.HasValue)
         {
             basePredicate = subject.ToLower() switch
             {
-                "user" => b => b.CreateBy == subjectId.Value,
-                _ => throw new ArgumentException($"Unknown subject '{subject}'") 
+                "user" => basePredicate.And(m => m.CreateBy == subjectId.Value),
+                _ => throw new ArgumentException($"Unknown subject '{subject}'")
             };
         }
 
+        // Add filter conditions from matchFilterDto
         if (matchFilterDto != null)
         {
-            // Filter by MatchName if provided
             if (!string.IsNullOrWhiteSpace(matchFilterDto.MatchName))
             {
-                // Use Contains for partial matching
-                var matchNameCondition = Expression.Call(
-                    Expression.Property(parameter, nameof(Match.MatchName)),
-                    typeof(string).GetMethod("Contains", new[] { typeof(string) })!,
-                    Expression.Constant(matchFilterDto.MatchName)
-                );
-
-                basePredicate = Expression.Lambda<Func<Match, bool>>(
-                    Expression.AndAlso(basePredicate.Body, matchNameCondition),
-                    basePredicate.Parameters
-                );
+                basePredicate = basePredicate.And(m => m.MatchName.Contains(matchFilterDto.MatchName));
             }
 
-            // Filter by TeamSize if provided
+            // Using null-conditional operator and short-circuit evaluation
             if (matchFilterDto.TeamSize.HasValue)
             {
-                var teamSizeProperty = Expression.Property(parameter, nameof(Match.TeamSize));
-                var teamSizeCondition = Expression.AndAlso(
-                    Expression.NotEqual(teamSizeProperty, Expression.Constant(null, typeof(sbyte?))),
-                    Expression.Equal(teamSizeProperty, Expression.Constant((sbyte?)matchFilterDto.TeamSize.Value, typeof(sbyte?)))
-                );
-                basePredicate = Expression.Lambda<Func<Match, bool>>(
-                    Expression.AndAlso(basePredicate.Body, teamSizeCondition),
-                    basePredicate.Parameters
-                );
+                basePredicate = basePredicate.And(m => m.TeamSize == matchFilterDto.TeamSize);
             }
 
-            // Filter by MinLevel if provided
             if (matchFilterDto.MinLevel.HasValue)
             {
-                var minLevelProperty = Expression.Property(parameter, nameof(Match.MinLevel));
-                var minLevelCondition = Expression.AndAlso(
-                    Expression.NotEqual(minLevelProperty, Expression.Constant(null, typeof(sbyte?))),
-                    Expression.Equal(minLevelProperty, Expression.Constant((sbyte?)matchFilterDto.MinLevel.Value, typeof(sbyte?)))
-                );
-
-                basePredicate = Expression.Lambda<Func<Match, bool>>(
-                    Expression.AndAlso(basePredicate.Body, minLevelCondition),
-                    basePredicate.Parameters
-                );
+                basePredicate = basePredicate.And(m => m.MinLevel == matchFilterDto.MinLevel);
             }
 
-
-            // Filter by MaxLevel if provided
             if (matchFilterDto.MaxLevel.HasValue)
             {
-                var maxLevelProperty = Expression.Property(parameter, nameof(Match.MaxLevel));
-                var maxLevelCondition = Expression.AndAlso(
-                    Expression.NotEqual(maxLevelProperty, Expression.Constant(null, typeof(sbyte?))),
-                    Expression.Equal(maxLevelProperty, Expression.Constant((sbyte?)matchFilterDto.MaxLevel.Value, typeof(sbyte?)))
-                );
-                basePredicate = Expression.Lambda<Func<Match, bool>>(
-                    Expression.AndAlso(basePredicate.Body, maxLevelCondition),
-                    basePredicate.Parameters
-                );
+                basePredicate = basePredicate.And(m => m.MaxLevel == matchFilterDto.MaxLevel);
             }
 
-            // Filter by Mode if provided
             if (matchFilterDto.Mode.HasValue)
             {
-                var modeCondition = Expression.Equal(
-                    Expression.Property(parameter, nameof(Match.Mode)),
-                    Expression.Constant(matchFilterDto.Mode.Value)
-                );
-                basePredicate = Expression.Lambda<Func<Match, bool>>(
-                    Expression.AndAlso(basePredicate.Body, modeCondition),
-                    basePredicate.Parameters
-                );
+                basePredicate = basePredicate.And(m => m.Mode == matchFilterDto.Mode);
             }
 
-            // Filter by MinAge if provided
             if (matchFilterDto.MinAge.HasValue)
             {
-                var minAgeProperty = Expression.Property(parameter, nameof(Match.MinAge));
-                var minAgeCondition = Expression.AndAlso(
-                    Expression.NotEqual(minAgeProperty, Expression.Constant(null, typeof(sbyte?))),
-                    Expression.Equal(minAgeProperty, Expression.Constant((sbyte?)matchFilterDto.MinAge.Value, typeof(sbyte?)))
-                );
-                basePredicate = Expression.Lambda<Func<Match, bool>>(
-                    Expression.AndAlso(basePredicate.Body, minAgeCondition),
-                    basePredicate.Parameters
-                );
+                basePredicate = basePredicate.And(m => m.MinAge == matchFilterDto.MinAge);
             }
 
-            // Filter by MaxAge if provided
             if (matchFilterDto.MaxAge.HasValue)
             {
-                var maxAgeProperty = Expression.Property(parameter, nameof(Match.MaxAge));
-                var maxAgeCondition = Expression.AndAlso(
-                    Expression.NotEqual(maxAgeProperty, Expression.Constant(null, typeof(sbyte?))),
-                    Expression.Equal(maxAgeProperty, Expression.Constant((sbyte?)matchFilterDto.MaxAge.Value, typeof(sbyte?)))
-                );
-                basePredicate = Expression.Lambda<Func<Match, bool>>(
-                    Expression.AndAlso(basePredicate.Body, maxAgeCondition),
-                    basePredicate.Parameters
-                );
+                basePredicate = basePredicate.And(m => m.MaxAge == matchFilterDto.MaxAge);
             }
 
-            // Filter by Gender if provided
             if (!string.IsNullOrWhiteSpace(matchFilterDto.Gender))
             {
-                var genderCondition = Expression.Equal(
-                    Expression.Property(parameter, nameof(Match.Gender)),
-                    Expression.Constant(matchFilterDto.Gender)
-                );
-                basePredicate = Expression.Lambda<Func<Match, bool>>(
-                    Expression.AndAlso(basePredicate.Body, genderCondition),
-                    basePredicate.Parameters
-                );
+                basePredicate = basePredicate.And(m => m.Gender == matchFilterDto.Gender);
             }
 
-            // Filter by Date, DateFrom, and DateTo if provided
+            // Handle Date Filters
             if (matchFilterDto.Date.HasValue)
             {
-                var dateCondition = Expression.Equal(
-                    Expression.Property(parameter, nameof(Match.Date)),
-                    Expression.Constant(matchFilterDto.Date.Value)
-                );
-                basePredicate = Expression.Lambda<Func<Match, bool>>(
-                    Expression.AndAlso(basePredicate.Body, dateCondition),
-                    basePredicate.Parameters
-                );
+                basePredicate = basePredicate.And(m => m.Date == matchFilterDto.Date.Value);
             }
             else
             {
                 if (matchFilterDto.DateFrom.HasValue)
                 {
-                    var dateFromCondition = Expression.GreaterThanOrEqual(
-                        Expression.Property(parameter, nameof(Match.Date)),
-                        Expression.Constant(matchFilterDto.DateFrom.Value)
-                    );
-                    basePredicate = Expression.Lambda<Func<Match, bool>>(
-                        Expression.AndAlso(basePredicate.Body, dateFromCondition),
-                        basePredicate.Parameters
-                    );
+                    basePredicate = basePredicate.And(m => m.Date >= matchFilterDto.DateFrom.Value);
                 }
-            
+
                 if (matchFilterDto.DateTo.HasValue)
                 {
-                    var dateToCondition = Expression.LessThanOrEqual(
-                        Expression.Property(parameter, nameof(Match.Date)),
-                        Expression.Constant(matchFilterDto.DateTo.Value)
-                    );
-                    basePredicate = Expression.Lambda<Func<Match, bool>>(
-                        Expression.AndAlso(basePredicate.Body, dateToCondition),
-                        basePredicate.Parameters
-                    );
+                    basePredicate = basePredicate.And(m => m.Date <= matchFilterDto.DateTo.Value);
                 }
             }
 
-            // Filter by TimeStart if provided
             if (matchFilterDto.TimeStart.HasValue)
             {
-                var timeStartCondition = Expression.GreaterThanOrEqual(
-                    Expression.Property(parameter, nameof(Match.TimeStart)),
-                    Expression.Constant(matchFilterDto.TimeStart.Value)
-                );
-                basePredicate = Expression.Lambda<Func<Match, bool>>(
-                    Expression.AndAlso(basePredicate.Body, timeStartCondition),
-                    basePredicate.Parameters
-                );
+                basePredicate = basePredicate.And(m => m.TimeStart >= matchFilterDto.TimeStart.Value);
             }
 
-            // Filter by TimeEnd if provided
             if (matchFilterDto.TimeEnd.HasValue)
             {
-                var timeEndCondition = Expression.LessThanOrEqual(
-                    Expression.Property(parameter, nameof(Match.TimeEnd)),
-                    Expression.Constant(matchFilterDto.TimeEnd.Value)
-                );
-                basePredicate = Expression.Lambda<Func<Match, bool>>(
-                    Expression.AndAlso(basePredicate.Body, timeEndCondition),
-                    basePredicate.Parameters
-                );
+                basePredicate = basePredicate.And(m => m.TimeEnd <= matchFilterDto.TimeEnd.Value);
             }
 
-            // Filter by MatchType if provided
             if (matchFilterDto.MatchType.HasValue)
             {
-                var matchTypeCondition = Expression.Equal(
-                    Expression.Property(parameter, nameof(Match.MatchType)),
-                    Expression.Constant(matchFilterDto.MatchType.Value)
-                );
-                basePredicate = Expression.Lambda<Func<Match, bool>>(
-                    Expression.AndAlso(basePredicate.Body, matchTypeCondition),
-                    basePredicate.Parameters
-                );
+                basePredicate = basePredicate.And(m => m.MatchType == matchFilterDto.MatchType);
+            }
+
+            if (matchFilterDto.Status.HasValue)
+            {
+                basePredicate = basePredicate.And(m => m.Status == matchFilterDto.Status.Value);
             }
         }
 
-        if (string.IsNullOrWhiteSpace(sortField))
-        {
-            sortField = "timestart";
-        }
-
-        Expression<Func<Match, object>> orderByExpression = c => c.Date;
+        // Default sorting field if not provided
+        sortField ??= "timestart";
         
-        Expression<Func<Match, object>> thenOrderByExpression = sortField.ToLower() switch
-        {
-            "timestart" => c => c.TimeStart,
-            "timeend" => c => c.TimeEnd,
-            "status" => c => c.Status!,
-            "teamsize" => c => c.TeamSize,
-            "minlevel" => c => c.MinLevel ?? 0,
-            "maxlevel" => c => c.MaxLevel ?? 5,
-            _ => throw new ArgumentException($"Unknown sorting column '{sortField}'")
-        };
-
-        var isAscending = sortValue.ToLower() switch
-        {
-            "asc" => true,
-            "desc" => false,
-            _ => true
-        };
+        // Determine sorting order
+        var isAscending = sortValue.Equals("asc", StringComparison.OrdinalIgnoreCase);
         
-
+        // Using the existing FindByConditionWithSortingAndPagingAsync
         var matches = await FindByConditionWithSortingAndPagingAsync(
             basePredicate,
             m => new MatchViewsDto(
@@ -269,18 +140,31 @@ public class MatchRepo(RallyWaveContext repositoryContext) : RepositoryBase<Matc
                 m.Status ?? 0
             ),
             pageNumber, pageSize,
-            orderByExpression, thenOrderByExpression, isAscending, isAscending
+            m => m.Date, // primary sorting field
+            sortField switch
+            {
+                "timestart" => m => m.TimeStart,
+                "timeend" => m => m.TimeEnd,
+                "status" => m => m.Status!,
+                "teamsize" => m => m.TeamSize,
+                "minlevel" => m => m.MinLevel ?? 0,
+                "maxlevel" => m => m.MaxLevel ?? 5,
+                _ => throw new ArgumentException($"Unknown sorting column '{sortField}'")
+            },
+            isAscending,
+            isAscending
         );
 
         var total = await CountByConditionAsync(basePredicate);
         var responseDto = new ResponseListDto<MatchViewsDto>(matches, total);
-
         return responseDto;
     }
     catch (Exception e)
     {
+        // Consider more specific error handling
         throw new Exception(e.Message);
     }
 }
+
 
 }

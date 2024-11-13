@@ -17,7 +17,7 @@ public partial class Subscription
 
     public virtual ICollection<CourtOwner> CourtOwners { get; set; } = new List<CourtOwner>();
 
-    public virtual PaymentDetail? PaymentDetail { get; set; }
+    public virtual ICollection<PaymentDetail> PaymentDetails { get; set; } = new List<PaymentDetail>();
 
     public virtual ICollection<User> Users { get; set; } = new List<User>();
 }

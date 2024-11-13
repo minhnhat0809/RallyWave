@@ -1,10 +1,9 @@
 using ChattingManagement.Repository;
 using ChattingManagement.Repository.Impl;
 using ChattingManagement.Service;
+using ChattingManagement.Ultility;
 using Entity;
 using Microsoft.EntityFrameworkCore;
-using ListExtensions = ChattingManagement.Ultility.ListExtensions;
-using Validate = ChattingManagement.Ultility.Validate;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,7 +13,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
 
-//db context
+//dbcontext
 builder.Services.AddDbContext<RallyWaveContext>(options =>
 {
     options.UseMySql(builder.Configuration.GetConnectionString("RallyWave"),
@@ -47,7 +46,20 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "User Management");
+        c.RoutePrefix = "swagger"; 
+    });
+}
+else
+{
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "User Management");
+        c.RoutePrefix = "swagger"; 
+    });
 }
 
 app.UseHttpsRedirection();

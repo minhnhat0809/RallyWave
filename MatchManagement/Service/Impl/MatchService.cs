@@ -237,6 +237,9 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
                 UserId = userId,
                 Status = 0
             });
+
+            responseDto.Message = "Create successfully";
+            responseDto.StatusCode = StatusCodes.Status201Created;
         }
         catch (Exception e)
         {
@@ -248,7 +251,7 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
 
     public async Task<ResponseDto> UpdateMatch(int id, MatchUpdateDto matchUpdateDto)
     {
-        var responseDto = new ResponseDto(null, "Update successfully", true, StatusCodes.Status200OK);
+        var responseDto = new ResponseDto(null, "", true, StatusCodes.Status200OK);
         try
         {
             //check match in database
@@ -271,6 +274,8 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
             match = _mapper.Map(matchUpdateDto, match);
 
             await _unitOfWork.MatchRepo.UpdateAsync(match);
+
+            responseDto.Message = "Update successfully";
         }
         catch (Exception e)
         {
@@ -296,6 +301,7 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
             }
             else
             {
+                match.Status = 3;
                 await _unitOfWork.MatchRepo.DeleteAsync(match);
             }
         }
@@ -435,7 +441,7 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
 
     private async Task<ResponseDto> ValidateForCreating(int userId, MatchCreateDto matchCreateDto)
     {
-        var responseDto = new ResponseDto(null, "Validate successfully", true, StatusCodes.Status201Created);
+        var responseDto = new ResponseDto(null, "Validate successfully", true, StatusCodes.Status200OK);
         try
         {
             
@@ -460,8 +466,16 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
                 responseDto.IsSucceed = false;
                 return responseDto;
             }
-            
 
+            if (matchCreateDto is { MinAge: not null, MaxAge: not null })
+            {
+                if (matchCreateDto.MinAge.Value >= matchCreateDto.MaxAge.Value)
+                {
+                    return new ResponseDto(null, "Min age must be less than max age", false,
+                        StatusCodes.Status400BadRequest);
+                }
+            }
+            
         }
         catch (Exception e)
         {
@@ -475,7 +489,7 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
     
     private async Task<ResponseDto> ValidateForUpdating(int id, MatchUpdateDto matchUpdateDto)
     {
-        var responseDto = new ResponseDto(null, "Validate successfully", true, StatusCodes.Status201Created);
+        var responseDto = new ResponseDto(null, "Validate successfully", true, StatusCodes.Status200OK);
         try
         {
             var existedSport = await _unitOfWork.SportRepo.AnyAsync(s => s.SportId == matchUpdateDto.SportId);
@@ -501,6 +515,15 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
                 responseDto.StatusCode = StatusCodes.Status400BadRequest;
                 responseDto.IsSucceed = false;
                 return responseDto;
+            }
+            
+            if (matchUpdateDto is { MinAge: not null, MaxAge: not null })
+            {
+                if (matchUpdateDto.MinAge.Value >= matchUpdateDto.MaxAge.Value)
+                {
+                    return new ResponseDto(null, "Min age must be less than max age", false,
+                        StatusCodes.Status400BadRequest);
+                }
             }
             
         }

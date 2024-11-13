@@ -1,4 +1,4 @@
-﻿using System.Security.Cryptography;
+﻿﻿using System.Security.Cryptography;
 using System.Text;
 using AutoMapper;
 using Entity;
@@ -193,6 +193,7 @@ public class PaymentService(IMapper mapper, IUnitOfWork unitOfWork, PayOS payOs)
                 UserId = paymentCreateDto.PaymentCreateForSub!.UserId,
                 SubId = sub.SubId,
                 Type = paymentCreateDto.Type,
+                Signature = "",
                 Total = sub.Price,
                 Status = 0
             };
@@ -214,13 +215,14 @@ public class PaymentService(IMapper mapper, IUnitOfWork unitOfWork, PayOS payOs)
                 await _unitOfWork.PaymentRepo.UpdateAsync(paymentDetail);
 
                 //start create payment
-                var paymentData = new PaymentData(paymentDetail.PaymentId, (int) sub.Price, "user",
-                    items, paymentCreateDto.SuccessUrl, paymentCreateDto.CancelUrl, signature, checkUser.UserName, 
+                var paymentData = new PaymentData(paymentDetail.PaymentId, (int) sub.Price, "Thanh toan goi premium",
+                    items, paymentCreateDto.CancelUrl, paymentCreateDto.SuccessUrl, signature, checkUser.UserName, 
                     checkUser.Email, checkUser.PhoneNumber.ToString());
                 
                 var createPayment = await _payOs.createPaymentLink(paymentData);
 
-                response.Message = createPayment.status;
+                response.Result = createPayment.checkoutUrl;
+                response.Message = "Processing";
             }
             catch (Exception e)
             {
@@ -288,13 +290,14 @@ public class PaymentService(IMapper mapper, IUnitOfWork unitOfWork, PayOS payOs)
                 
 
                 //start create payment
-                var paymentData = new PaymentData(paymentDetail.PaymentId, 1000, "courtOwner",
-                    items, paymentCreateDto.SuccessUrl, paymentCreateDto.CancelUrl, signature, checkUser.Name, 
+                var paymentData = new PaymentData(paymentDetail.PaymentId, 1000, "Thanh toan goi premium",
+                    items, paymentCreateDto.CancelUrl, paymentCreateDto.SuccessUrl, signature, checkUser.Name, 
                     checkUser.Email, checkUser.PhoneNumber.ToString());
                 
                 var createPayment = await _payOs.createPaymentLink(paymentData);
 
-                response.Message = createPayment.status;
+                response.Result = createPayment.checkoutUrl;
+                response.Message = "Processing";
             }
             catch (Exception e)
             {
@@ -330,7 +333,6 @@ public class PaymentService(IMapper mapper, IUnitOfWork unitOfWork, PayOS payOs)
                             b.Cost
                         });
             
-
             if (booking == null)
                 return new ResponseDto(null,"There are no bookings with this id", false, StatusCodes.Status404NotFound);
             
@@ -388,19 +390,19 @@ public class PaymentService(IMapper mapper, IUnitOfWork unitOfWork, PayOS payOs)
                     
                     try
                     {
-                        var paymentData = new PaymentData(paymentDetail.PaymentId, (int) paymentDetail.Total, "booking",
-                            items, paymentCreateDto.SuccessUrl, paymentCreateDto.CancelUrl, signature, user.UserName, 
+                        var paymentData = new PaymentData(paymentDetail.PaymentId, (int) paymentDetail.Total, "Thanh toan tien san",
+                            items, paymentCreateDto.CancelUrl, paymentCreateDto.SuccessUrl, signature, user.UserName, 
                             user.Email, user.PhoneNumber.ToString()); 
                 
-                        await _payOs.createPaymentLink(paymentData);
+                        var createPayment = await _payOs.createPaymentLink(paymentData);
+
+                        response.Result = createPayment.checkoutUrl;
+                        response.Message = "Processing";
                     }
                     catch (Exception e)
                     {
                         return new ResponseDto(null, e.Message, false, StatusCodes.Status500InternalServerError);
                     }
-                   
-
-                    response.Message = "Processing";
 
                 }
                 else if (booking.UserId.HasValue)
@@ -421,7 +423,10 @@ public class PaymentService(IMapper mapper, IUnitOfWork unitOfWork, PayOS payOs)
                             items, paymentCreateDto.SuccessUrl, paymentCreateDto.CancelUrl, null, user.UserName, 
                             user.Email, user.PhoneNumber.ToString()); 
                 
-                        await _payOs.createPaymentLink(paymentData);
+                        var createPayment = await _payOs.createPaymentLink(paymentData);
+
+                        response.Result = createPayment.checkoutUrl;
+                        response.Message = "Processing";
                     }
                     catch (Exception e)
                     {

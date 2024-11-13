@@ -1,0 +1,28 @@
+{
+  "Routes": [
+    {
+      "DownstreamPathTemplate": "/api/bookings",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5148
+        }
+      ],
+      "UpstreamPathTemplate": "/bookings",
+      "UpstreamHttpMethod": [ "GET", "POST" ]
+    },
+    {
+      "DownstreamPathTemplate": "/api/bookings/{id}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5148
+        }
+      ],
+      "UpstreamPathTemplate": "/bookings/{id}",
+      "UpstreamHttpMethod": [ "GET", "PUT", "DELETE" ]
+    }
+  ]
+}

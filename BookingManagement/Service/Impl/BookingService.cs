@@ -20,7 +20,7 @@ public class BookingService(IUnitOfWork unitOfWork, IMapper mapper, Validate val
     public async Task<ResponseDto> GetBookings(string? subject, int? subjectId, BookingFilterDto? bookingFilterDto, string? sortField, string sortValue, int pageNumber,
         int pageSize)
     {
-        var responseDto = new ResponseDto(null, "", true, 200);
+        var responseDto = new ResponseDto(null, "", true, StatusCodes.Status200OK);
         try
         {
             var listResponse = await unitOfWork.BookingRepo.GetBookings(subject, subjectId, bookingFilterDto, sortField, sortValue, pageNumber, pageSize); 

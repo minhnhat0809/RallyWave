@@ -1,32 +1,35 @@
 
-using System.Net.Http.Headers;
 using System.Text;
 using Entity;
 using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
-using Identity.API.BusinessObjects;
 using Identity.API.BusinessObjects.LoginObjects;
 using Identity.API.DIs;
+using Identity.API.Ultility;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
+
+var secret = new GetSecret();
+
+var firebaseCredentials = secret.GetFireBaseCredentials().Result;
+
 // Firebase Admin SDK initialization
 FirebaseApp.Create(new AppOptions()
 {
-    Credential = GoogleCredential.FromFile("rally-wave-438116-firebase-adminsdk-p2nf3-22311445b2.json")
+    Credential = GoogleCredential.FromJson(firebaseCredentials)
 });
 // CORS configuration
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("CORSPolicy", builder =>
+    options.AddPolicy("CORSPolicy", corsPolicyBuilder =>
     {
-        builder.WithOrigins("https://localhost:7152") // Adjust the origin to match your frontend
+        corsPolicyBuilder.WithOrigins("https://localhost:7152") // Adjust the origin to match your frontend
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials();
@@ -78,11 +81,11 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddAuthorization();
 
 
-// Configure the database context
+//dbcontext
 builder.Services.AddDbContext<RallyWaveContext>(options =>
 {
     options.UseMySql(builder.Configuration.GetConnectionString("RallyWave"),
-        new MySqlServerVersion(new Version(8, 0, 39)));
+        new MySqlServerVersion(new Version(8, 0, 39))); 
 });
 
 var app = builder.Build();
@@ -122,12 +125,24 @@ app.MapGet("/api/login/response-token", [Authorize] async (HttpContext context) 
     return Results.Ok(testResponse);
 });
 
-// Middleware configuration
+// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.UseDeveloperExceptionPage();
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "User Management");
+        c.RoutePrefix = "swagger"; 
+    });
+}
+else
+{
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "User Management");
+        c.RoutePrefix = "swagger"; 
+    });
 }
 
 app.UseHttpsRedirection();
