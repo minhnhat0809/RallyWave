@@ -216,7 +216,7 @@ public class PaymentService(IMapper mapper, IUnitOfWork unitOfWork, PayOS payOs)
 
                 //start create payment
                 var paymentData = new PaymentData(paymentDetail.PaymentId, (int) sub.Price, "Thanh toan goi premium",
-                    items, paymentCreateDto.SuccessUrl, paymentCreateDto.CancelUrl, signature, checkUser.UserName, 
+                    items, paymentCreateDto.CancelUrl, paymentCreateDto.SuccessUrl, signature, checkUser.UserName, 
                     checkUser.Email, checkUser.PhoneNumber.ToString());
                 
                 var createPayment = await _payOs.createPaymentLink(paymentData);
@@ -291,7 +291,7 @@ public class PaymentService(IMapper mapper, IUnitOfWork unitOfWork, PayOS payOs)
 
                 //start create payment
                 var paymentData = new PaymentData(paymentDetail.PaymentId, 1000, "Thanh toan goi premium",
-                    items, paymentCreateDto.SuccessUrl, paymentCreateDto.CancelUrl, signature, checkUser.Name, 
+                    items, paymentCreateDto.CancelUrl, paymentCreateDto.SuccessUrl, signature, checkUser.Name, 
                     checkUser.Email, checkUser.PhoneNumber.ToString());
                 
                 var createPayment = await _payOs.createPaymentLink(paymentData);
@@ -391,7 +391,7 @@ public class PaymentService(IMapper mapper, IUnitOfWork unitOfWork, PayOS payOs)
                     try
                     {
                         var paymentData = new PaymentData(paymentDetail.PaymentId, (int) paymentDetail.Total, "Thanh toan tien san",
-                            items, paymentCreateDto.SuccessUrl, paymentCreateDto.CancelUrl, signature, user.UserName, 
+                            items, paymentCreateDto.CancelUrl, paymentCreateDto.SuccessUrl, signature, user.UserName, 
                             user.Email, user.PhoneNumber.ToString()); 
                 
                         var createPayment = await _payOs.createPaymentLink(paymentData);
