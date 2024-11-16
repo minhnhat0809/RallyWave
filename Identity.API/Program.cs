@@ -19,9 +19,6 @@ var secret = new GetSecret();
 
 var firebaseCredentials = secret.GetFireBaseCredentials().Result;
 
-//add identity json
-builder.Configuration.AddJsonFile("appsettings.Identity.json", optional: false, reloadOnChange: true);
-
 // Firebase Admin SDK initialization
 FirebaseApp.Create(new AppOptions()
 {
@@ -140,7 +137,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI(c =>
     {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "User Management");
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Identity Management");
         c.RoutePrefix = "swagger"; 
     });
 }
@@ -149,7 +146,7 @@ else
     app.UseSwagger();
     app.UseSwaggerUI(c =>
     {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "User Management");
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Identity Management");
         c.RoutePrefix = "swagger"; 
     });
 }

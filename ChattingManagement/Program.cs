@@ -1,3 +1,4 @@
+using ChattingManagement;
 using ChattingManagement.Repository;
 using ChattingManagement.Repository.Impl;
 using ChattingManagement.Service;
@@ -36,6 +37,9 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped(typeof(Validate));
 builder.Services.AddScoped(typeof(ListExtensions));
 
+//mapper 
+builder.Services.AddAutoMapper(typeof(MapperConfig).Assembly);
+
 //cors
 builder.Services.AddCors(opts =>
 {
@@ -51,7 +55,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI(c =>
     {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "User Management");
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Chatting Management");
         c.RoutePrefix = "swagger"; 
     });
 }
@@ -60,7 +64,7 @@ else
     app.UseSwagger();
     app.UseSwaggerUI(c =>
     {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "User Management");
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Chatting Management");
         c.RoutePrefix = "swagger"; 
     });
 }
