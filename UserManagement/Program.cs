@@ -15,7 +15,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
 
-//dbcontext
+//db context
 builder.Services.AddDbContext<RallyWaveContext>(options =>
 {
     options.UseMySql(builder.Configuration.GetConnectionString("RallyWave"),

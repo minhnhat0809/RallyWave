@@ -25,7 +25,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("CORSPolicy", corsPolicyBuilder =>
     {
-        corsPolicyBuilder.WithOrigins("https://localhost:7152") // Adjust the origin to match your frontend
+        corsPolicyBuilder.WithOrigins() // Adjust the origin to match your frontend
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials();
@@ -40,6 +40,9 @@ builder.Services.AddControllers();
 // Add Services
 builder.Services.AddServices();
 
+//get google credentials
+var googleCredentials = secret.GetGoogleCredentials().Result;
+
 builder.Services.AddAuthentication(options =>
     {
         options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
@@ -50,8 +53,8 @@ builder.Services.AddAuthentication(options =>
     {
         options.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
         options.Authority = "https://accounts.google.com";
-        options.ClientId = builder.Configuration["Authentication:Google:ClientId"];
-        options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
+        options.ClientId = googleCredentials.ClientId;
+        options.ClientSecret = googleCredentials.ClientSecret;
         options.ResponseType = "id_token";
         options.CallbackPath = "/google-login";
         options.SaveTokens = true;
@@ -77,7 +80,7 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddAuthorization();
 
 
-//dbcontext
+//db context
 builder.Services.AddDbContext<RallyWaveContext>(options =>
 {
     options.UseMySql(builder.Configuration.GetConnectionString("RallyWave"),
@@ -127,7 +130,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI(c =>
     {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "User Management");
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Identity Management");
         c.RoutePrefix = "swagger"; 
     });
 }
@@ -136,7 +139,7 @@ else
     app.UseSwagger();
     app.UseSwaggerUI(c =>
     {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "User Management");
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Identity Management");
         c.RoutePrefix = "swagger"; 
     });
 }

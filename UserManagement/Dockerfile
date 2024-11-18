@@ -1,8 +1,10 @@
 ﻿FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
+ENV ASPNETCORE_URLS=http://+:7001
 USER $APP_UID
 WORKDIR /app
+EXPOSE 7001
 EXPOSE 8080
-EXPOSE 80
+
 
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release

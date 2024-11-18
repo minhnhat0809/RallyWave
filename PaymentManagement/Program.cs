@@ -17,7 +17,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-//dbcontext
+//db context
 builder.Services.AddDbContext<RallyWaveContext>(options =>
 {
     options.UseMySql(builder.Configuration.GetConnectionString("RallyWave"),
@@ -70,7 +70,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI(c =>
     {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "User Management");
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Payment Management");
         c.RoutePrefix = "swagger"; 
     });
 }
@@ -79,7 +79,7 @@ else
     app.UseSwagger();
     app.UseSwaggerUI(c =>
     {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "User Management");
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Payment Management");
         c.RoutePrefix = "swagger"; 
     });
 }

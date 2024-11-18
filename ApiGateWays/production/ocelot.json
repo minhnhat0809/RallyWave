@@ -5,8 +5,8 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "bookingmanagement",
-          "Port": 8080
+          "Host": "localhost",
+          "Port": 5148
         }
       ],
       "UpstreamPathTemplate": "/bookings",
@@ -17,22 +17,22 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "bookingmanagement",
-          "Port": 8080
+          "Host": "localhost",
+          "Port": 5148
         }
       ],
       "UpstreamPathTemplate": "/bookings/{id}",
       "UpstreamHttpMethod": [ "GET", "PUT", "DELETE" ]
     },
-    
-    
+
+
     {
       "DownstreamPathTemplate": "/api/matches",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "matchmanagement",
-          "Port": 8080
+          "Host": "47.129.9.120",
+          "Port": 7005
         }
       ],
       "UpstreamPathTemplate": "/matches",
@@ -43,8 +43,8 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "matchmanagement",
-          "Port": 8080
+          "Host": "47.129.9.120",
+          "Port": 7005
         }
       ],
       "UpstreamPathTemplate": "/matches/{id}",
@@ -55,8 +55,8 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "matchmanagement",
-          "Port": 8080
+          "Host": "47.129.9.120",
+          "Port": 7005
         }
       ],
       "UpstreamPathTemplate": "/matches/user/{userId}",
@@ -67,22 +67,22 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "matchmanagement",
-          "Port": 8080
+          "Host": "47.129.9.120",
+          "Port": 7005
         }
       ],
       "UpstreamPathTemplate": "/matches/match/{matchId}/user/{userId}",
       "UpstreamHttpMethod": [ "POST", "PUT" ]
     },
-    
-    
+
+
     {
       "DownstreamPathTemplate": "/api/courts",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "courtmanagement",
-          "Port": 8080
+          "Host": "localhost",
+          "Port": 5101
         }
       ],
       "UpstreamPathTemplate": "/courts",
@@ -93,8 +93,8 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "courtmanagement",
-          "Port": 8080
+          "Host": "localhost",
+          "Port": 5101
         }
       ],
       "UpstreamPathTemplate": "/courts/{id}",
@@ -105,22 +105,22 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "courtmanagement",
-          "Port": 8080
+          "Host": "localhost",
+          "Port": 5101
         }
       ],
       "UpstreamPathTemplate": "/courts/court-images/{imageId}",
       "UpstreamHttpMethod": [ "DELETE" ]
     },
-    
-    
+
+
     {
       "DownstreamPathTemplate": "/api/payments",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "paymentmanagement",
-          "Port": 8080
+          "Host": "54.254.13.15",
+          "Port": 7008
         }
       ],
       "UpstreamPathTemplate": "/payments",
@@ -131,8 +131,8 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "paymentmanagement",
-          "Port": 8080
+          "Host": "54.254.13.15",
+          "Port": 7008
         }
       ],
       "UpstreamPathTemplate": "/payments/pay-os/handler",
@@ -143,22 +143,22 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "paymentmanagement",
-          "Port": 8080
+          "Host": "54.254.13.15",
+          "Port": 7008
         }
       ],
       "UpstreamPathTemplate": "/payments/confirm-webhook",
       "UpstreamHttpMethod": [ "POST" ]
     },
-    
-    
+
+
     {
       "DownstreamPathTemplate": "/api/users",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "usermanagement",
-          "Port": 8080
+          "Host": "54.169.226.249",
+          "Port": 7001
         }
       ],
       "UpstreamPathTemplate": "/users",
@@ -169,8 +169,8 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "usermanagement",
-          "Port": 8080
+          "Host": "54.169.226.249",
+          "Port": 7001
         }
       ],
       "UpstreamPathTemplate": "/users/{id}",
@@ -183,11 +183,11 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "identity.api",
+          "Host": "13.215.153.144",
           "Port": 7007
         }
       ],
-      "UpstreamPathTemplate": "/login/google",
+      "UpstreamPathTemplate": "/auth/login/google",
       "UpstreamHttpMethod": [ "POST" ]
     },
     {
@@ -195,11 +195,11 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "identity.api",
+          "Host": "13.215.153.144",
           "Port": 7007
         }
       ],
-      "UpstreamPathTemplate": "/register",
+      "UpstreamPathTemplate": "/auth/register",
       "UpstreamHttpMethod": [ "POST" ]
     },
     {
@@ -207,11 +207,11 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "identity.api",
+          "Host": "13.215.153.144",
           "Port": 7007
         }
       ],
-      "UpstreamPathTemplate": "/login",
+      "UpstreamPathTemplate": "/auth/login",
       "UpstreamHttpMethod": [ "POST" ]
     },
     {
@@ -219,11 +219,11 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "identity.api",
+          "Host": "13.215.153.144",
           "Port": 7007
         }
       ],
-      "UpstreamPathTemplate": "/reset-password",
+      "UpstreamPathTemplate": "/auth/reset-password",
       "UpstreamHttpMethod": [ "POST" ]
     },
     {
@@ -231,11 +231,11 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "identity.api",
+          "Host": "13.215.153.144",
           "Port": 7007
         }
       ],
-      "UpstreamPathTemplate": "/forget-password",
+      "UpstreamPathTemplate": "/auth/forget-password",
       "UpstreamHttpMethod": [ "POST" ]
     },
     {
@@ -243,11 +243,11 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "identity.api",
+          "Host": "13.215.153.144",
           "Port": 7007
         }
       ],
-      "UpstreamPathTemplate": "/verify-account",
+      "UpstreamPathTemplate": "/auth/verify-account",
       "UpstreamHttpMethod": [ "POST" ]
     },
     {
@@ -255,11 +255,11 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "identity.api",
+          "Host": "13.215.153.144",
           "Port": 7007
         }
       ],
-      "UpstreamPathTemplate": "/resend-verify-account",
+      "UpstreamPathTemplate": "/auth/resend-verify-account",
       "UpstreamHttpMethod": [ "POST" ]
     },
     {
@@ -267,11 +267,11 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "identity.api",
+          "Host": "13.215.153.144",
           "Port": 7007
         }
       ],
-      "UpstreamPathTemplate": "/verify-password",
+      "UpstreamPathTemplate": "/auth/verify-password",
       "UpstreamHttpMethod": [ "POST" ]
     },
     {
@@ -279,11 +279,11 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "identity.api",
+          "Host": "13.215.153.144",
           "Port": 7007
         }
       ],
-      "UpstreamPathTemplate": "/profile",
+      "UpstreamPathTemplate": "/auth/profile",
       "UpstreamHttpMethod": [ "PUT" ]
     }
   ],
