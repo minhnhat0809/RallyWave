@@ -1,7 +1,5 @@
-using ChattingManagement.Repository;
-using ChattingManagement.Repository.Impl;
-using ChattingManagement.Service;
-using ChattingManagement.Ultility;
+using ChattingManagement;
+using ChattingManagement.DIs;
 using Entity;
 using Microsoft.EntityFrameworkCore;
 
@@ -20,18 +18,15 @@ builder.Services.AddDbContext<RallyWaveContext>(options =>
         new MySqlServerVersion(new Version(8, 0, 39))); 
 });
 
-//service
-builder.Services.AddScoped<IConservationService, ConservationService>();
-builder.Services.AddScoped<IMessageService, MessageService>();
+// authentication
+builder.Services.AddAuthentication();
+builder.Services.AddAuthorization();
 
-//repo
-builder.Services.AddScoped<IConservationRepo, ConservationRepo>();
-builder.Services.AddScoped<IMessageRepo, MessageRepo>();
-builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+// mapper
+builder.Services.AddAutoMapper(typeof(MapperConfig));
 
-//utilities
-builder.Services.AddScoped(typeof(Validate));
-builder.Services.AddScoped(typeof(ListExtensions));
+// Add Services
+builder.Services.AddServices();
 
 //cors
 builder.Services.AddCors(opts =>

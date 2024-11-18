@@ -32,7 +32,7 @@ public class ConservationService : IConservationService
         _validate = validate;
         _listExtensions = listExtensions;
     }
-    public async Task<ResponseDto?> GetConservationByProperties(string properties, string propertiesValue)
+    public async Task<ResponseDto?> GetConservationByProperties(string? properties, string? propertiesValue)
     {
         var responseDto = new ResponseDto(null, "", true, 200);
         try
@@ -64,7 +64,7 @@ public class ConservationService : IConservationService
         catch (ArgumentException ex)
         {
             // Property does not exist on Conservation entity
-            responseDto.Message = $"The property '{properties}' does not exist on the Conservation entity.";
+            responseDto.Message = $"The property '{properties}' does not exist on the Conservation entity." + ex.Message;
             responseDto.IsSucceed = false;
             responseDto.StatusCode = StatusCodes.Status400BadRequest;
         }
@@ -77,7 +77,7 @@ public class ConservationService : IConservationService
         return responseDto;
     }
 
-    public async Task<ResponseDto> GetConservationsByProperties(string properties, string propertiesValue)
+    public async Task<ResponseDto> GetConservationsByProperties(string? properties, string? propertiesValue)
     {
         var responseDto = new ResponseDto(null, "", true, 200);
         try
@@ -113,7 +113,7 @@ public class ConservationService : IConservationService
         catch (ArgumentException ex)
         {
             // Property does not exist on Conservation entity
-            responseDto.Message = $"The property '{properties}' does not exist on the Conservation entity.";
+            responseDto.Message = $"The property '{properties}' does not exist on the Conservation entity." + ex.Message;
             responseDto.IsSucceed = false;
             responseDto.StatusCode = StatusCodes.Status400BadRequest;
         }
@@ -196,14 +196,14 @@ public class ConservationService : IConservationService
             {
                 conservation.ConservationName = updateDto.ConservationName;
                 var userInConservation = conservation.Users.Select(x=>x.UserId).ToList();
-                var userInUpdate = updateDto.Users.Select(x=>x.UserId).ToList();
+                var userInUpdate = updateDto.Users.Select(x=> x!.UserId).ToList();
                 // update user in conservation
                 foreach (var userId in userInUpdate)
                 {
                     if (!userInConservation.Contains(userId))
                     {
                         var newUser = await _unitOfWork.UserRepository.GetUserById(userId);
-                        conservation.Users.Add(newUser);
+                        if (newUser != null) conservation.Users.Add(newUser);
                     }
                 }
 

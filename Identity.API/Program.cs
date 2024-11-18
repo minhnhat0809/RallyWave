@@ -15,14 +15,10 @@ using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var secret = new GetSecret();
-
-var firebaseCredentials = secret.GetFireBaseCredentials().Result;
-
 // Firebase Admin SDK initialization
 FirebaseApp.Create(new AppOptions()
 {
-    Credential = GoogleCredential.FromJson(firebaseCredentials)
+    Credential = GoogleCredential.FromFile("rally-wave-438116-firebase-adminsdk-p2nf3-22311445b2.json")
 });
 // CORS configuration
 builder.Services.AddCors(options =>

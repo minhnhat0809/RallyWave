@@ -6,19 +6,19 @@ namespace ChattingManagement.Repository.Impl;
 
 public interface IConservationRepo : IRepositoryBase<Conservation>
 {
-    Task<Conservation?> GetConservationByProperties(string properties, string propertiesValue);
-    Task<List<Conservation?>> GetConservationsByProperties(string properties, string propertiesValue);
+    Task<Conservation?> GetConservationByProperties(string properties, string? propertiesValue);
+    Task<List<Conservation?>> GetConservationsByProperties(string properties, string? propertiesValue);
     Task<Conservation> CreateConservationAsync(Conservation conservation);
     Task<Conservation> UpdateConservationAsync(Conservation conservation);
     Task<Conservation> DeleteConservationAsync(Conservation conservation);
 }
-public class ConservationRepo(RallyWaveContext repositoryContext) : RepositoryBase<Conservation>(repositoryContext), IConservationRepo
+public class ConservationRepo(RallyWaveContext repositoryContext) : RepositoryBase<Conservation>(repositoryContext: repositoryContext), IConservationRepo
 {
     private readonly RallyWaveContext _repositoryContext = repositoryContext;
 
-    public async Task<Conservation?> GetConservationByProperties(string properties, string propertiesValue)
+    public async Task<Conservation?> GetConservationByProperties(string properties, string? propertiesValue)
     {
-        var conservation = await repositoryContext.Conservations
+        var conservation = await _repositoryContext.Conservations
             .Include(x => x.Users)
             .Include(x => x.Match)
             .Include(x => x.Team)
@@ -28,7 +28,7 @@ public class ConservationRepo(RallyWaveContext repositoryContext) : RepositoryBa
         return conservation;
     }
 
-    public async Task<List<Conservation?>> GetConservationsByProperties(string? properties, string propertiesValue)
+    public async Task<List<Conservation?>> GetConservationsByProperties(string? properties, string? propertiesValue)
     {
         // If no properties are provided, return all conservations with included navigation properties
         if (string.IsNullOrEmpty(properties))
@@ -59,7 +59,7 @@ public class ConservationRepo(RallyWaveContext repositoryContext) : RepositoryBa
         }
 
         // Return the filtered list
-        return await query.ToListAsync();
+        return (await query.ToListAsync())!;
     }
 
 
