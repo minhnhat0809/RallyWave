@@ -1,5 +1,6 @@
 using ChattingManagement;
 using ChattingManagement.DIs;
+using ChattingManagement.Service.Hubs;
 using Entity;
 using Microsoft.EntityFrameworkCore;
 
@@ -35,7 +36,12 @@ builder.Services.AddCors(opts =>
         .AllowAnyMethod().AllowCredentials().SetIsOriginAllowed((_) => true));
 });
 
+// signalR
+builder.Services.AddSignalR();
+
 var app = builder.Build();
+// hubs
+app.MapHub<ChatHub>("/chatHub");
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
