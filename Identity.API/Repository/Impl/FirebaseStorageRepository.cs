@@ -3,6 +3,7 @@ using FirebaseAdmin;
 using Google;
 using Google.Apis.Auth.OAuth2;
 using Google.Cloud.Storage.V1;
+using Identity.API.Ultility;
 
 namespace Identity.API.Repository.Impl;
 
@@ -19,7 +20,8 @@ public class FirebaseStorageRepository : IFirebaseStorageRepository
         public FirebaseStorageRepository(IConfiguration configuration)
         {
             // Initialize Firebase credentials and storage client
-            var credential = GoogleCredential.FromFile(configuration["Authentication:Firebase:ServiceAccountKeyPath"]);
+            var secret = new GetSecret();
+            var credential = GoogleCredential.FromJson(secret.GetFireBaseCredentials().Result);
             _storageClient = StorageClient.Create(credential);
 
             // Set the bucket name from configuration
