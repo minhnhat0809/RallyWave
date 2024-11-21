@@ -157,7 +157,7 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "54.169.226.249",
+          "Host": "47.129.137.113",
           "Port": 7001
         }
       ],
@@ -169,21 +169,80 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "54.169.226.249",
+          "Host": "47.129.137.113",
           "Port": 7001
         }
       ],
       "UpstreamPathTemplate": "/users/{id}",
-      "UpstreamHttpMethod": [ "GET", "PUT", "DELETE" ]
+      "UpstreamHttpMethod": [ "GET", "PUT" ]
     },
-
+    {
+      "DownstreamPathTemplate": "/api/users/{userId}/sport/{sportId}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "47.129.137.113",
+          "Port": 7001
+        }
+      ],
+      "UpstreamPathTemplate": "/users/{userId}/sport/{sportId}",
+      "UpstreamHttpMethod": ["DELETE"]
+    },
+    {
+      "DownstreamPathTemplate": "/api/users/{receiverId}/friends",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "47.129.137.113",
+          "Port": 7001
+        }
+      ],
+      "UpstreamPathTemplate": "/users/{receiverId}/friends",
+      "UpstreamHttpMethod": ["GET"]
+    },
+    {
+      "DownstreamPathTemplate": "/api/users/{receiverId}/friend-requests",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "47.129.137.113",
+          "Port": 7001
+        }
+      ],
+      "UpstreamPathTemplate": "/users/{receiverId}/friend-requests",
+      "UpstreamHttpMethod": ["GET"]
+    },
+    {
+      "DownstreamPathTemplate": "/api/users/{senderId}/friend/{receiverId}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "47.129.137.113",
+          "Port": 7001
+        }
+      ],
+      "UpstreamPathTemplate": "/users/{senderId}/friend/{receiverId}",
+      "UpstreamHttpMethod": ["POST"]
+    },
+    {
+      "DownstreamPathTemplate": "/api/users/{receiverId}/friend/{senderId}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "47.129.137.113",
+          "Port": 7001
+        }
+      ],
+      "UpstreamPathTemplate": "/users/{receiverId}/friend/{senderId}",
+      "UpstreamHttpMethod": ["PUT", "DELETE"]
+    },
 
     {
       "DownstreamPathTemplate": "/api/auth/login-google",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "47.129.130.14",
+          "Host": "54.254.229.250",
           "Port": 7007
         }
       ],
@@ -195,7 +254,7 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "47.129.130.14",
+          "Host": "54.254.229.250",
           "Port": 7007
         }
       ],
@@ -207,7 +266,7 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "47.129.130.14",
+          "Host": "54.254.229.250",
           "Port": 7007
         }
       ],
@@ -219,7 +278,7 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "47.129.130.14",
+          "Host": "54.254.229.250",
           "Port": 7007
         }
       ],
@@ -231,7 +290,7 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "47.129.130.14",
+          "Host": "54.254.229.250",
           "Port": 7007
         }
       ],
@@ -243,7 +302,7 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "47.129.130.14",
+          "Host": "54.254.229.250",
           "Port": 7007
         }
       ],
@@ -251,15 +310,15 @@
       "UpstreamHttpMethod": [ "POST" ]
     },
     {
-      "DownstreamPathTemplate": "/api/auth/resend-verify-account",
+      "DownstreamPathTemplate": "/api/auth/resend-verify-code",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "47.129.130.14",
+          "Host": "54.254.229.250",
           "Port": 7007
         }
       ],
-      "UpstreamPathTemplate": "/auth/resend-verify-account",
+      "UpstreamPathTemplate": "/auth/resend-verify-code",
       "UpstreamHttpMethod": [ "POST" ]
     },
     {
@@ -267,7 +326,7 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "47.129.130.14",
+          "Host": "54.254.229.250",
           "Port": 7007
         }
       ],
@@ -279,12 +338,36 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "47.129.130.14",
+          "Host": "54.254.229.250",
           "Port": 7007
         }
       ],
       "UpstreamPathTemplate": "/auth/profile",
       "UpstreamHttpMethod": [ "PUT" ]
+    },
+    {
+      "DownstreamPathTemplate": "/api/auth/upload-avatar",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "54.254.229.250",
+          "Port": 7007
+        }
+      ],
+      "UpstreamPathTemplate": "/auth/upload-avatar",
+      "UpstreamHttpMethod": [ "POST" ]
+    },
+    {
+      "DownstreamPathTemplate": "/api/auth/delete-avatar",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "54.254.229.250",
+          "Port": 7007
+        }
+      ],
+      "UpstreamPathTemplate": "/auth/delete-avatar",
+      "UpstreamHttpMethod": [ "DELETE" ]
     }
   ],
   "GlobalConfiguration": {

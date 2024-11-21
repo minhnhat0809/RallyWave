@@ -7,7 +7,7 @@ using UserManagement.Service;
 
 namespace UserManagement.Controllers
 {
-    [Route("api/user")]
+    [Route("api/users")]
     [ApiController]
     public class UserController : ControllerBase
     {
@@ -17,17 +17,7 @@ namespace UserManagement.Controllers
         {
             _userService = userService;
         }
-
-        /// <summary>
-        /// Gets a list of users with optional filtering and sorting.
-        /// </summary>
-        /// <param name="filterField">Field to filter by.</param>
-        /// <param name="filterValue">Value to filter by.</param>
-        /// <param name="sortField">Field to sort by.</param>
-        /// <param name="sortValue">Sort order (asc or desc).</param>
-        /// <param name="pageNumber">Page number for pagination.</param>
-        /// <param name="pageSize">Number of users per page.</param>
-        /// <returns>A ResponseDto containing the list of users.</returns>
+        
         [HttpGet]
         public async Task<ActionResult<ResponseDto>> GetUsers(
             [FromQuery] string? filterField,
@@ -40,37 +30,12 @@ namespace UserManagement.Controllers
             var response = await _userService.GetUser(filterField, filterValue, sortField, sortValue, pageNumber, pageSize);
             return Ok(response);
         }
-
-        /// <summary>
-        /// Gets a user by their ID.
-        /// </summary>
-        /// <param name="userId">The ID of the user.</param>
-        /// <returns>A ResponseDto containing the user data.</returns>
         [HttpGet("{userId:int}")]
         public async Task<ActionResult<ResponseDto>> GetUserById(int userId)
         {
             var response = await _userService.GetUserById(userId);
             return response.IsSucceed ? Ok(response) : BadRequest(response);
         }
-
-        /// <summary>
-        /// Creates a new user.
-        /// </summary>
-        /// <param name="userCreateDto">The user data to create.</param>
-        /// <returns>A ResponseDto indicating the result of the operation.</returns>
-        /*[HttpPost]
-        public async Task<ActionResult<ResponseDto>> CreateUser([FromBody] UserCreateDto userCreateDto)
-        {
-            var response = await _userService.CreateUser(userCreateDto);
-            return response.IsSucceed ? CreatedAtAction(nameof(GetUserById), new { userId = response.Result?.ToString() }, response) : BadRequest(response);
-        }*/
-
-        /// <summary>
-        /// Updates an existing user.
-        /// </summary>
-        /// <param name="id">The ID of the user to update.</param>
-        /// <param name="userUpdateDto">The updated user data.</param>
-        /// <returns>A ResponseDto indicating the result of the operation.</returns>
         [HttpPut("{id:int}")]
         public async Task<ActionResult<ResponseDto>> UpdateUser(int id, [FromBody] UserUpdateDto userUpdateDto)
         {
@@ -84,22 +49,6 @@ namespace UserManagement.Controllers
             return response.IsSucceed ? Ok(response) : BadRequest(response);
         }
 
-        /// <summary>
-        /// Deletes a user by their ID.
-        /// </summary>
-        /// <param name="id">The ID of the user to delete.</param>
-        /// <returns>A ResponseDto indicating the result of the operation.</returns>
-        /*[HttpDelete("{id:int}")]
-        public async Task<ActionResult<ResponseDto>> DeleteUser(int id)
-        {
-            var response = await _userService.DeleteUser(id);
-            return response.IsSucceed ? Ok(response) : BadRequest(response);
-        }*/
-        
-        // FRIEND
-        
-        // get all friendship
-        // or get all friend request
         [HttpGet("{receiverId:int}/friends")]
         public async Task<ActionResult<ResponseDto>> GetAllFriendship(int receiverId)
         {
