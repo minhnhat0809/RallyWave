@@ -77,6 +77,12 @@ namespace UserManagement.Controllers
             var response = await _userService.UpdateUser(id, userUpdateDto);
             return response.IsSucceed ? Ok(response) : BadRequest(response);
         }
+        [HttpDelete("{userId:int}/sport/{sportId:int}")]
+        public async Task<ActionResult<ResponseDto>> UpdateUser(int userId, int sportId)
+        {
+            var response = await _userService.DeleteUserSport(userId, sportId);
+            return response.IsSucceed ? Ok(response) : BadRequest(response);
+        }
 
         /// <summary>
         /// Deletes a user by their ID.
