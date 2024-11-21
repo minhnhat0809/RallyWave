@@ -24,9 +24,9 @@ public interface IAuthService
     public Task<ResponseModel> VerifyEmailResetPassword(RequestVerifyModel requestVerifyDto);
     public Task<ResponseModel> ResetPassword(RequestLoginModel request);
     public Task<ResponseModel> ForgetPassword(string email);
-    public Task<ResponseModel> ResendVerificationEmailAccount(RequestLoginModel request);
+    // Task<ResponseModel> ResendVerificationEmailAccount(RequestLoginModel request);
     public Task<ResponseModel> UpdateProfile(ProfileModel request);
-    public Task<ResponseModel> ResendVerifyCode(RequestLoginModel request);
+    public Task<ResponseModel> ResendVerifyCode(string email);
     public Task<ResponseModel> UploadUserAvatarAsync(IFormFile avatarFile, string email);
     public Task<ResponseModel> DeleteUserAvatarAsync(string email);
 }
@@ -306,8 +306,9 @@ public class AuthService : IAuthService
                 UserRecord firebaseUser = await FirebaseAuth.DefaultInstance.CreateUserAsync(userRecordArgs);
                 newUser.FirebaseUid = firebaseUser.Uid;
 
-                // Send Verification Email Account
+                // Send Verification Email Account by Code
                 await _unitOfWork.AuthRepository.SendEmailVerificationCodeAsync(newUser.Email, newUser.TwoFactorSecret);
+                
                 // Save the new user to the database
                 await _unitOfWork.UserRepo.CreateUser(newUser);
 
@@ -320,7 +321,7 @@ public class AuthService : IAuthService
                 // Return success response with Firebase token and user details
                 return new ResponseModel(
                     new ResponseRegisterModel(firebaseToken, userViewDto),
-                    "User registered successfully! Proceed to verify email.", true, StatusCodes.Status201Created);
+                    "User registered successfully! Proceed to verify email by code.", true, StatusCodes.Status201Created);
             }
 
             // COURT OWNER REGISTER
@@ -366,7 +367,7 @@ public class AuthService : IAuthService
                 UserRecord firebaseUser = await FirebaseAuth.DefaultInstance.CreateUserAsync(userRecordArgs);
                 courtOwner.FirebaseUid = firebaseUser.Uid;
                 
-                // Send Verification Email Account
+                // Send Verification Email Account By Code
                 await _unitOfWork.AuthRepository.SendEmailVerificationCodeAsync(courtOwner.Email, courtOwner.TwoFactorSecret);
                
                 // Save the new court owner to the database
@@ -374,10 +375,6 @@ public class AuthService : IAuthService
 
                 // Generate a Firebase token for the user
                 string firebaseToken = await FirebaseAuth.DefaultInstance.CreateCustomTokenAsync(courtOwner.FirebaseUid);
-
-                // Send email verification link
-                string emailVerificationLink = await FirebaseAuth.DefaultInstance.GenerateEmailVerificationLinkAsync(courtOwner.Email);
-                await _unitOfWork.AuthRepository.SendEmailVerificationAsync(courtOwner.Email, emailVerificationLink);
 
                 // Map the court owner to a UserViewDto for the response
                 var courtOwnerViewDto = _mapper.Map<CourtOwnerViewDto>(courtOwner);
@@ -614,48 +611,7 @@ public class AuthService : IAuthService
             return new ResponseModel(null, $"An error occurred during email verification: {ex.Message}", false, StatusCodes.Status500InternalServerError);
         }
     }
-
-    // Resending verification email
-    public async Task<ResponseModel> ResendVerificationEmailAccount(RequestLoginModel request)
-    {
-        string emailVerificationLink;
-        // CHECK USER FIRST
-        var user = await _unitOfWork.UserRepo.GetUserByPropertyAndValue("email", request.Email);
-        if (user == null)
-        {
-            // CHECK COURT OWNER LATER
-            var courtOwner = await _unitOfWork.CourtOwnerRepository.GetCourtOwnerByPropertyAndValue("email", request.Email);
-            if (courtOwner== null) 
-                return new ResponseModel(null, "Email not found!", false, StatusCodes.Status404NotFound);
-                
-            // Check if the Court Owner has already verified their email
-            if (courtOwner.IsTwoFactorEnabled > 0 )
-            {
-                return new ResponseModel(null, "Email is already verified!", false, StatusCodes.Status400BadRequest);
-            }
-
-            // Generate and send a new verification link
-            emailVerificationLink = await FirebaseAuth.DefaultInstance.GenerateEmailVerificationLinkAsync(courtOwner.Email);
-            if (courtOwner.Email != null)
-                await _unitOfWork.AuthRepository.SendEmailVerificationAsync(courtOwner.Email, emailVerificationLink);
-            
-            return new ResponseModel(null, "Email verification for password being sent successfully!", true, StatusCodes.Status200OK);
-        }
-
-        // Check if the user has already verified their email
-        if (user.IsTwoFactorEnabled > 0 )
-        {
-            return new ResponseModel(null, "Email is already verified!", false, StatusCodes.Status400BadRequest);
-        }
-
-        // Generate and send a new verification link
-        emailVerificationLink = await FirebaseAuth.DefaultInstance.GenerateEmailVerificationLinkAsync(user.Email);
-        if (user.Email != null)
-            await _unitOfWork.AuthRepository.SendEmailVerificationAsync(user.Email, emailVerificationLink);
-
-        return new ResponseModel(null, "Verification email has been resent. Please check your inbox.", true, StatusCodes.Status200OK);
-    }
-
+    
     public async Task<ResponseModel> UpdateProfile(ProfileModel request)
     {
         try
@@ -679,8 +635,7 @@ public class AuthService : IAuthService
                         Uid = user.FirebaseUid,
                         DisplayName = request.UserName,
                         PhoneNumber = $"+84{request.PhoneNumber}", 
-                        Disabled = false,
-                        PhotoUrl = request.Avatar,
+                        Disabled = false
                     };
 
                     await FirebaseAuth.DefaultInstance.UpdateUserAsync(updateRequest);
@@ -693,11 +648,10 @@ public class AuthService : IAuthService
                 user.Dob = request.Dob;
                 user.Address = request.Address;
                 user.Province = request.Province;
-                user.Avatar = request.Avatar;
 
                 user = await _unitOfWork.UserRepo.UpdateUser(user);
 
-                return new ResponseModel(user, "User profile updated successfully!", true, StatusCodes.Status200OK);
+                return new ResponseModel(_mapper.Map<UserViewDto>(user), "User profile updated successfully!", true, StatusCodes.Status200OK);
             }
 
             // If user is not found, check for court owner
@@ -714,7 +668,6 @@ public class AuthService : IAuthService
                         DisplayName = request.UserName,
                         PhoneNumber = $"+84{request.PhoneNumber}", 
                         Disabled = false,
-                        PhotoUrl = request.Avatar,
                     };
 
                     await FirebaseAuth.DefaultInstance.UpdateUserAsync(updateRequest);
@@ -727,11 +680,10 @@ public class AuthService : IAuthService
                 courtOwner.Dob = request.Dob;
                 courtOwner.Address = request.Address;
                 courtOwner.Province = request.Province;
-                courtOwner.Avatar = request.Avatar;
 
                 courtOwner = await _unitOfWork.CourtOwnerRepository.UpdateCourtOwner(courtOwner);
 
-                return new ResponseModel(courtOwner, "Court owner profile updated successfully!", true, StatusCodes.Status200OK);
+                return new ResponseModel(_mapper.Map<CourtOwnerViewDto>(courtOwner), "Court owner profile updated successfully!", true, StatusCodes.Status200OK);
             }
 
             // If neither user nor court owner is found
@@ -749,16 +701,16 @@ public class AuthService : IAuthService
 
 
     // Resending Verification Code (SecretVerificationCode)
-    public async Task<ResponseModel> ResendVerifyCode(RequestLoginModel request)
+    public async Task<ResponseModel> ResendVerifyCode(string email)
     {
         try
         {
             // Find the user by email
-            var user = await _unitOfWork.UserRepo.GetUserByPropertyAndValue("email", request.Email);
+            var user = await _unitOfWork.UserRepo.GetUserByPropertyAndValue("email", email);
             if (user == null)
             {
                 // CHECK COURT OWNER LATER
-                var courtOwner = await _unitOfWork.CourtOwnerRepository.GetCourtOwnerByPropertyAndValue("email", request.Email);
+                var courtOwner = await _unitOfWork.CourtOwnerRepository.GetCourtOwnerByPropertyAndValue("email", email);
                 if (courtOwner == null) 
                     return new ResponseModel(null, "Email not found!", false, StatusCodes.Status404NotFound);
                 
@@ -785,7 +737,7 @@ public class AuthService : IAuthService
             if (user.Email != null)
                 await _unitOfWork.AuthRepository.SendEmailVerificationCodeAsync(user.Email, user.TwoFactorSecret);
 
-            return new ResponseModel(null, "Email verification for reset password being sent successfully!", true, StatusCodes.Status200OK);
+            return new ResponseModel(null, "Email verification code being sent successfully!", true, StatusCodes.Status200OK);
 
         }
         catch (Exception ex)
