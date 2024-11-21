@@ -14,7 +14,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
-
 var secret = new GetSecret();
 
 var firebaseCredentials = secret.GetFireBaseCredentials().Result;
@@ -22,7 +21,7 @@ var firebaseCredentials = secret.GetFireBaseCredentials().Result;
 // Firebase Admin SDK initialization
 FirebaseApp.Create(new AppOptions()
 {
-    Credential = GoogleCredential.FromJson(firebaseCredentials)
+    Credential = GoogleCredential.FromFile(firebaseCredentials)
 });
 // CORS configuration
 builder.Services.AddCors(options =>

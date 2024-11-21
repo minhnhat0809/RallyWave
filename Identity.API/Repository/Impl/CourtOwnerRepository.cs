@@ -32,8 +32,8 @@ public class CourtOwnerRepository(RallyWaveContext repositoryContext) : Reposito
             // Add filtering based on field and value
             query = filterField.ToLower() switch
             {
-                "email" => query.Where(co => co.Email.Contains(filterValue)),
-                "phone-number" => query.Where(co => co.PhoneNumber.ToString().Contains(filterValue)),
+                "email" => query.Where(co => co.Email!.Contains(filterValue)),
+                "phone-number" => query.Where(co => co.PhoneNumber.ToString()!.Contains(filterValue)),
                 "address" => query.Where(co => co.Address.Contains(filterValue)),
                 "province" => query.Where(co => co.Province.Contains(filterValue)),
                 _ => throw new ArgumentException($"Invalid filter field: {filterField}")

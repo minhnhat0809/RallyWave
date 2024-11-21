@@ -19,7 +19,7 @@ public class BookingNotificationService : BackgroundService
     protected override Task ExecuteAsync(CancellationToken stoppingToken)
     {
         // Check every 5 minutes for upcoming bookings
-        _timer = new Timer(CheckForUpcomingBookings, null, TimeSpan.Zero, TimeSpan.FromMinutes(5));
+        _timer = new Timer(CheckForUpcomingBookings!, null, TimeSpan.Zero, TimeSpan.FromMinutes(5));
         return Task.CompletedTask;
     }
 

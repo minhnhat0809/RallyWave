@@ -168,17 +168,28 @@ public class UserService : IUserService
 
                 var userSports =
                     user.UserSports.ToList();
-                if (userUpdateDto.UserSports != null)
+                //if (userUpdateDto.UserSports != null)
                 {
                     var userSportUpdates = userUpdateDto.UserSports.ToList();
-                    foreach (var userSport in userSports)
+                    foreach (var userSport in userSportUpdates)
                     {
-                        var updatedSport = userSportUpdates.FirstOrDefault(us => us.SportId == userSport.SportId);
+                        var existingSport = userSports.FirstOrDefault(us => us.SportId == userSport.SportId);
 
-                        if (updatedSport != null)
+                        if (existingSport != null)
                         {
-                            userSport.Level = updatedSport.SportLevel;
-        
+                            // Update the sport level for existing sports
+                            existingSport.Level = userSport.SportLevel;
+                        }
+                        else
+                        {
+                            // Add new sport if it does not exist in the user's profile
+                            user.UserSports.Add(new UserSport
+                            {
+                                SportId = userSport.SportId,
+                                Level = userSport.SportLevel,
+                                Status = 1,
+                                Sport = (await _unitOfWork.SportRepository.GetSportById(userSport.SportId))!
+                            });
                         }
                     }
                 }
@@ -431,5 +442,45 @@ public class UserService : IUserService
 
             return responseDto;
         }
-        
+
+        public async Task<ResponseDto> DeleteUserSport(int userId, int sportId)
+        {
+            var responseDto = new ResponseDto(null, "", true, 200);
+            try
+            {
+                var user = await _unitOfWork.UserRepo.GetUserById(userId);
+                if (user == null)
+                {
+                    responseDto.IsSucceed = false;
+                    responseDto.Message = "There are no users with this id";
+                    responseDto.StatusCode = StatusCodes.Status400BadRequest;
+                    return responseDto;
+                }
+
+                var userSports =
+                    user.UserSports.ToList();
+                foreach (var sport in userSports)
+                {
+                    var sportExist = await _unitOfWork.SportRepository.GetSportById(sportId);
+                    if(sportExist != null && sportId == sport.SportId){
+                        user.UserSports.Remove(sport);
+                        // sport.Status = 0; 
+                        // update user sport
+                    }
+                }
+                user = await _unitOfWork.UserRepo.UpdateUser(user);
+
+                responseDto.Result = _mapper.Map<UserViewDto>(user);
+                responseDto.Message = "Remove successfully!";
+
+            }
+            catch (Exception e)
+            {
+                responseDto.IsSucceed = false;
+                responseDto.Message = e.Message;
+                responseDto.StatusCode = StatusCodes.Status500InternalServerError;
+            }
+
+            return responseDto;
+        }
     }
