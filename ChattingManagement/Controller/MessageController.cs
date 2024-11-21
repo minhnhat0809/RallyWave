@@ -2,24 +2,62 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using ChattingManagement.Service.Hubs;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Entity;
+using Microsoft.AspNetCore.SignalR;
 
 namespace ChattingManagement.Controller
 {
-    [Route("api/[controller]")]
+    [Route("api/message")]
     [ApiController]
     public class MessageController : ControllerBase
     {
         private readonly RallyWaveContext _context;
+        private readonly IHubContext<ChatHub> _hubContext;
 
-        public MessageController(RallyWaveContext context)
+        public MessageController(IHubContext<ChatHub> hubContext, RallyWaveContext context)
         {
+            _hubContext = hubContext;
             _context = context;
         }
-
+        
+        [HttpPost("send")]
+        public async Task<IActionResult> SendMessage(int conservationId, int senderId, string senderName, string content)
+        {
+            var conservation =
+                await _context.Conservations.FirstOrDefaultAsync(c => c.ConservationId == conservationId);
+            if (conservation != null)
+            {
+                var sender = await _context.Users.FirstOrDefaultAsync(u => u.UserId == senderId);
+                if (sender != null)
+                {
+                    var message = new Message()
+                    {
+                        Conservation = conservation,
+                        Status = 1,
+                        Sender = senderId,
+                        DateTime = DateTime.Now,
+                        Content = content,
+                        ConservationId = conservation.ConservationId,
+                        SenderNavigation = sender
+                    };
+                    // add message to conservation
+                    conservation.Messages.Add(message);
+                    // save
+                    _context.Conservations.Update(conservation);
+                    await _context.SaveChangesAsync();
+                    // publish message
+                    await _hubContext.Clients.Group(conservationId.ToString()).SendAsync("ReceiveMessage", conservationId, senderId, senderName, content);
+                    return Ok(new { Message = "Message sent successfully" });
+                }
+                return BadRequest("Sender not found!");
+            }
+            return BadRequest("Conservation not found!");
+        }
+        
         // GET: api/Message
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Message>>> GetMessages()
