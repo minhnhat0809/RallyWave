@@ -3,6 +3,7 @@ using FirebaseAdmin;
 using Google;
 using Google.Apis.Auth.OAuth2;
 using Google.Cloud.Storage.V1;
+using Identity.API.Ultility;
 
 namespace Identity.API.Repository.Impl;
 
@@ -18,12 +19,22 @@ public class FirebaseStorageRepository : IFirebaseStorageRepository
 
         public FirebaseStorageRepository(IConfiguration configuration)
         {
-            // Initialize Firebase credentials and storage client
-            var credential = GoogleCredential.FromFile(configuration["Authentication:Firebase:ServiceAccountKeyPath"]);
+            // Retrieve Firebase credentials dynamically
+            var secret = new GetSecret();
+            var firebaseCredentialsJson = secret.GetFireBaseCredentials().Result;
+
+            if (string.IsNullOrEmpty(firebaseCredentialsJson))
+            {
+                throw new InvalidOperationException("Firebase credentials are missing from secrets.");
+            }
+
+            // Initialize Firebase storage client with credentials
+            var credential = GoogleCredential.FromJson(firebaseCredentialsJson);
             _storageClient = StorageClient.Create(credential);
 
-            // Set the bucket name from configuration
-            _bucketName = configuration["Authentication:Firebase:StorageBucket"] ?? throw new InvalidOperationException();
+            // Retrieve the bucket name from configuration
+            _bucketName = configuration["Authentication:Firebase:StorageBucket"] 
+                          ?? throw new InvalidOperationException("Firebase storage bucket name is missing from configuration.");
         }
         
         public async Task<string> UploadImageAsync(string name, IFormFile file, string imgFolderName)
