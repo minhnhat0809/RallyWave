@@ -15,6 +15,14 @@ using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var c = builder.Configuration.GetConnectionString("RallyWave");
+//db context
+builder.Services.AddDbContext<RallyWaveContext>(options =>
+{
+    options.UseMySql(builder.Configuration.GetConnectionString("RallyWave"),
+        new MySqlServerVersion(new Version(8, 0, 39))); 
+});
+
 var secret = new GetSecret();
 
 var firebaseCredentials = secret.GetFireBaseCredentials().Result;
@@ -84,12 +92,6 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddAuthorization();
 
 
-//db context
-builder.Services.AddDbContext<RallyWaveContext>(options =>
-{
-    options.UseMySql(builder.Configuration.GetConnectionString("RallyWave"),
-        new MySqlServerVersion(new Version(8, 0, 39))); 
-});
 
 var app = builder.Build();
 
