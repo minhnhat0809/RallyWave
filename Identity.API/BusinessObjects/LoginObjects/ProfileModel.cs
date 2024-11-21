@@ -15,6 +15,4 @@ public class ProfileModel
     public string Address { get; set; } = null!;
 
     public string Province { get; set; } = null!;
-
-    public string? Avatar { get; set; }
 }

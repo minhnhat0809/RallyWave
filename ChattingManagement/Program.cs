@@ -1,8 +1,6 @@
 using ChattingManagement;
-using ChattingManagement.Repository;
-using ChattingManagement.Repository.Impl;
-using ChattingManagement.Service;
-using ChattingManagement.Ultility;
+using ChattingManagement.DIs;
+using ChattingManagement.Service.Hubs;
 using Entity;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,31 +12,22 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
 
-//retrieve connection string from AWS Secrets Manager
-var getSecret = new GetSecret();
-var connectionString = await getSecret.GetConnectionString();
-
-//db context
+//dbcontext
 builder.Services.AddDbContext<RallyWaveContext>(options =>
 {
-    options.UseMySql(connectionString, new MySqlServerVersion(new Version(8, 0, 39))); 
+    options.UseMySql(builder.Configuration.GetConnectionString("RallyWave"),
+        new MySqlServerVersion(new Version(8, 0, 39))); 
 });
 
-//service
-builder.Services.AddScoped<IConservationService, ConservationService>();
-builder.Services.AddScoped<IMessageService, MessageService>();
+// authentication
+builder.Services.AddAuthentication();
+builder.Services.AddAuthorization();
 
-//repo
-builder.Services.AddScoped<IConservationRepo, ConservationRepo>();
-builder.Services.AddScoped<IMessageRepo, MessageRepo>();
-builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+// mapper
+builder.Services.AddAutoMapper(typeof(MapperConfig));
 
-//utilities
-builder.Services.AddScoped(typeof(Validate));
-builder.Services.AddScoped(typeof(ListExtensions));
-
-//mapper 
-builder.Services.AddAutoMapper(typeof(MapperConfig).Assembly);
+// Add Services
+builder.Services.AddServices();
 
 //cors
 builder.Services.AddCors(opts =>
@@ -47,7 +36,12 @@ builder.Services.AddCors(opts =>
         .AllowAnyMethod().AllowCredentials().SetIsOriginAllowed((_) => true));
 });
 
+// signalR
+builder.Services.AddSignalR();
+
 var app = builder.Build();
+// hubs
+app.MapHub<ChatHub>("/chatHub");
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -55,7 +49,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI(c =>
     {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Chatting Management");
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "User Management");
         c.RoutePrefix = "swagger"; 
     });
 }
@@ -64,7 +58,7 @@ else
     app.UseSwagger();
     app.UseSwaggerUI(c =>
     {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Chatting Management");
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "User Management");
         c.RoutePrefix = "swagger"; 
     });
 }

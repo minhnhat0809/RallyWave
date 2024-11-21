@@ -11,12 +11,4 @@ public interface IBookingRepo : IRepositoryBase<Booking>
         BookingFilterDto? bookingFilterDto,
         string? sortField, string sortValue,
         int pageNumber, int pageSize);
-
-    Task<Booking?> GetBookingById(int bookingId);
-
-    Task CreateBooking(Booking booking);
-
-    Task UpdateBooking(Booking booking);
-
-    Task DeleteBooking(Booking booking);
 }

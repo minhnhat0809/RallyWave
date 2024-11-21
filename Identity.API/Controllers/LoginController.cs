@@ -99,12 +99,12 @@ namespace Identity.API.Controllers
                 return new ResponseModel(null, ex.Message, false, StatusCodes.Status500InternalServerError);
             }
         }
-        [HttpPost("resend-verify-account")]
-        public async Task<ActionResult<ResponseModel>> ResendVerificationEmailAccount(RequestLoginModel request)
+        [HttpPost("resend-verify-code")]
+        public async Task<ActionResult<ResponseModel>> ResendVerificationEmailAccount([FromForm]string email)
         {
             try
             {
-                var result = await _authService.ResendVerifyCode(request);
+                var result = await _authService.ResendVerifyCode(email);
                 return Ok(result);
             }
             catch (Exception ex)

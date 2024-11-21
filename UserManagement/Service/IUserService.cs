@@ -27,4 +27,5 @@ public interface IUserService
     Task<ResponseDto> CreateFriendRequest(int senderId, int receiverId);
     Task<ResponseDto> AcceptFriendRequest(int senderId, int receiverId);
     Task<ResponseDto> DenyFriendRequest(int senderId, int receiverId);
+    Task<ResponseDto> DeleteUserSport(int userId, int sportId);
 }
