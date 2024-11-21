@@ -21,7 +21,7 @@ var firebaseCredentials = secret.GetFireBaseCredentials().Result;
 // Firebase Admin SDK initialization
 FirebaseApp.Create(new AppOptions()
 {
-    Credential = GoogleCredential.FromFile(firebaseCredentials)
+    Credential = GoogleCredential.FromJson(firebaseCredentials)
 });
 // CORS configuration
 builder.Services.AddCors(options =>
