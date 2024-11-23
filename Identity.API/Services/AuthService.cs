@@ -37,12 +37,13 @@ public class AuthService : IAuthService
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
     private readonly ResponseLoginModel _responseLoginModel;
+    private string default_avatar;
     public AuthService(IUnitOfWork unitOfWork, IMapper mapper)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
         _responseLoginModel = new ResponseLoginModel(String.Empty, String.Empty, null, false);
-        
+        default_avatar = "https://firebasestorage.googleapis.com/v0/b/rally-wave-438116.appspot.com/o/profile-avatars%2Fdefault-avatar.jpg?alt=media&token=dfcfac09-8989-4cb3-b15f-20f6059f0dd2";
     }
     // login by Email Password: User and Court Owner
     public async Task<ResponseModel> Login(RequestLoginModel request)
@@ -159,7 +160,7 @@ public class AuthService : IAuthService
                         UserName = payload.Name,
                         Email = payload.Email,
                         FirebaseUid = payload.Subject, // Store Google UID as Firebase UID
-                        Avatar = payload.Picture,
+                        Avatar = default_avatar,
                         PhoneNumber = 0,
                         Gender = "N/A",
                         Dob = DateOnly.FromDateTime(DateTime.Now),
@@ -185,12 +186,13 @@ public class AuthService : IAuthService
                         Name = payload.Name,
                         Email = payload.Email,
                         FirebaseUid = payload.Subject,
-                        Avatar = payload.Picture,
+                        Avatar = default_avatar,
                         PhoneNumber = 0,
                         Address = "N/A",
                         Gender = "N/A",
                         Province = "N/A",
                         Status = 1,
+                        CreatedDate = DateTime.Now,
                         PasswordHash = hashedPassword,
                         PasswordSalt = salt,
                         IsTwoFactorEnabled = 1,
@@ -204,50 +206,61 @@ public class AuthService : IAuthService
                     _responseLoginModel.IsNewUser = true;
                 }
             }
-            // Generate Firebase Token and Access Token
-            var firebaseToken = await FirebaseAuth.DefaultInstance.CreateCustomTokenAsync(userRecord.Uid);
+            
 
             string message = "Login Successfully!";
-            if (request.Role == new Contract().User && user != null)
-            {
+            // Handle with user first
+            user = await _unitOfWork.UserRepo.GetUserByPropertyAndValue("email", payload.Email);
+            if (user != null){
+                // Generate Firebase Token and Access Token
+                var firebaseToken = await FirebaseAuth.DefaultInstance.CreateCustomTokenAsync(user.FirebaseUid);
                 var token = _unitOfWork.AuthRepository.GenerateUserJwtToken(user, new Contract().User);
 
                 _responseLoginModel.FirebaseToken = firebaseToken;
                 _responseLoginModel.AccessToken = token;
-                
+
                 // Check if new account
                 if (user.IsTwoFactorEnabled == 0)
                 {
                     _responseLoginModel.IsNewUser = true;
                     message = "Your verify code had sent to your mail, please check and verify account!";
                 }
-                
+
                 return new ResponseModel(
-                    new ResponseLoginModel(token, firebaseToken, _mapper.Map<UserViewDto>(user), _responseLoginModel.IsNewUser),
+                    new ResponseLoginModel(token, firebaseToken, _mapper.Map<UserViewDto>(user),
+                        _responseLoginModel.IsNewUser),
                     message, true, StatusCodes.Status200OK);
             }
-            if (request.Role == new Contract().CourtOwner && courtOwner != null)
+            else
             {
-                var token = _unitOfWork.AuthRepository.GenerateCourtOwnerJwtToken(courtOwner, new Contract().CourtOwner);
-
-                // Check if new account
-                if (courtOwner.IsTwoFactorEnabled == 0)
+                courtOwner = await _unitOfWork.CourtOwnerRepository.GetCourtOwnerByPropertyAndValue("email", payload.Email);
+                if (courtOwner != null)
                 {
-                    _responseLoginModel.IsNewUser = true;
-                    message = "Your verify code had sent to your mail, please check and verify account!";
+                    // Generate Firebase Token and Access Token
+                    var firebaseToken =
+                        await FirebaseAuth.DefaultInstance.CreateCustomTokenAsync(courtOwner.FirebaseUid);
+                    var token = _unitOfWork.AuthRepository.GenerateCourtOwnerJwtToken(courtOwner,
+                        new Contract().CourtOwner);
+
+                    // Check if new account
+                    if (courtOwner.IsTwoFactorEnabled == 0)
+                    {
+                        _responseLoginModel.IsNewUser = true;
+                        message = "Your verify code had sent to your mail, please check and verify account!";
+                    }
+
+                    _responseLoginModel.FirebaseToken = firebaseToken;
+                    _responseLoginModel.AccessToken = token;
+
+                    return new ResponseModel(
+                        new ResponseLoginModel(token, firebaseToken, _mapper.Map<CourtOwnerViewDto>(courtOwner),
+                            _responseLoginModel.IsNewUser),
+                        message, true, StatusCodes.Status200OK);
                 }
-
-                _responseLoginModel.FirebaseToken = firebaseToken;
-                _responseLoginModel.AccessToken = token;
-
-                return new ResponseModel(
-                    new ResponseLoginModel(token, firebaseToken, _mapper.Map<CourtOwnerViewDto>(courtOwner), _responseLoginModel.IsNewUser),
-                    message, true, StatusCodes.Status200OK);
             }
-
             return new ResponseModel(
-                new ResponseLoginModel(string.Empty, string.Empty, null, _responseLoginModel.IsNewUser),
-                "Login fail successfully!", false, StatusCodes.Status400BadRequest);
+                null,
+                "Payload/Google token id error, can not find email", false, StatusCodes.Status404NotFound);
         }
         catch (Exception ex)
         {
@@ -283,6 +296,7 @@ public class AuthService : IAuthService
                     Email = request.Email,
                     Address = "N/A",
                     Gender = "N/A",
+                    Avatar = default_avatar,
                     Province = "N/A",
                     PhoneNumber = int.Parse(request.PhoneNumber),
                     PasswordHash = hashedPassword,
@@ -343,6 +357,7 @@ public class AuthService : IAuthService
                     Name = request.Username,
                     Email = request.Email,
                     Address = "N/A",
+                    Avatar = default_avatar,
                     Gender = "N/A",
                     Province = "N/A",
                     PhoneNumber = int.Parse(request.PhoneNumber),
@@ -761,7 +776,7 @@ public class AuthService : IAuthService
             
             if (user != null)
             {
-                if (user.Avatar != null)
+                if (user.Avatar != default_avatar && user.Avatar != null)
                 {
                     bool isDeleteSucceed = await _unitOfWork.FirebaseStorageRepository.DeleteImageByUrlAsync(user.Avatar);
                     if (!isDeleteSucceed)
@@ -785,7 +800,7 @@ public class AuthService : IAuthService
             
             if (courtOwner != null)
             {
-                if (courtOwner.Avatar != null)
+                if (courtOwner.Avatar != null && courtOwner.Avatar != default_avatar)
                 {
                     bool isDeleteSucceed = await _unitOfWork.FirebaseStorageRepository.DeleteImageByUrlAsync(courtOwner.Avatar);
                     if (!isDeleteSucceed)
@@ -834,7 +849,7 @@ public class AuthService : IAuthService
             
             if (user != null)
             {
-                if (user.Avatar != null)
+                if (user.Avatar != default_avatar && user.Avatar != null)
                 {
                     bool isDeleteSucceed = await _unitOfWork.FirebaseStorageRepository.DeleteImageByUrlAsync(user.Avatar);
                     if (!isDeleteSucceed)
@@ -843,7 +858,7 @@ public class AuthService : IAuthService
                     }
                 }
 
-                user.Avatar = string.Empty;
+                user.Avatar = default_avatar;
 
                 user = await _unitOfWork.UserRepo.UpdateUser(user);
 
@@ -855,7 +870,7 @@ public class AuthService : IAuthService
             
             if (courtOwner != null)
             {
-                if (courtOwner.Avatar != null)
+                if (courtOwner.Avatar != null && courtOwner.Avatar != default_avatar)
                 {
                     bool isDeleteSucceed = await _unitOfWork.FirebaseStorageRepository.DeleteImageByUrlAsync(courtOwner.Avatar);
                     if (!isDeleteSucceed)
@@ -864,7 +879,7 @@ public class AuthService : IAuthService
                     }
                 }
 
-                courtOwner.Avatar = string.Empty;
+                courtOwner.Avatar = default_avatar;
 
                 courtOwner = await _unitOfWork.CourtOwnerRepository.UpdateCourtOwner(courtOwner);
 
