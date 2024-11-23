@@ -100,7 +100,7 @@ namespace Identity.API.Controllers
             }
         }
         [HttpPost("resend-verify-code")]
-        public async Task<ActionResult<ResponseModel>> ResendVerificationEmailAccount([FromForm]string email)
+        public async Task<ActionResult<ResponseModel>> ResendVerificationEmailAccount([FromQuery] string email)
         {
             try
             {
@@ -142,7 +142,7 @@ namespace Identity.API.Controllers
         }
         
         [HttpPost("upload-avatar")]
-        public async Task<ActionResult<ResponseModel>> UploadAvatar(IFormFile avatar, [FromQuery] string email)
+        public async Task<ActionResult<ResponseModel>> UploadAvatar( IFormFile avatar, string email)
         {
             try
             {
