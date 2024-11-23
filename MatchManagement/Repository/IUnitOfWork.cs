@@ -13,4 +13,6 @@ public interface IUnitOfWork
     IUserSportRepo UserSportRepo { get; }
     
     IFriendShipRepo FriendShipRepo { get; }
+    
+    ITeamRepo TeamRepo { get; }
 }

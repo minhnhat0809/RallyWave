@@ -92,7 +92,29 @@ public class MatchService(IUnitOfWork unitOfWork, IMapper mapper, Validate valid
                     break;
                 }
                 case 2:
+                    var userRequestTeams =
+                        await _unitOfWork.UserRepo.GetByConditionAsync(u => u.UserId == userId, u => u.Teams);
                     
+                    var userOwnerTeams = 
+                        await _unitOfWork.UserRepo.GetByConditionAsync(u => u.UserId == matchEnroll.UserId, u => u.Teams);
+
+                    var userRequestTeamsId = userRequestTeams?.Select(t => t.TeamId);
+
+                    var userOwnerTeamsId = userOwnerTeams?.Select(t => t.TeamId);
+
+                    if (userRequestTeamsId != null && userOwnerTeamsId != null)
+                    {
+                        var isInSameTeam = userRequestTeamsId.Intersect(userOwnerTeamsId).ToList();
+
+                        if (isInSameTeam.Count == 0)
+                        {
+                            return new ResponseDto(null, "Users are not the same team", false, StatusCodes.Status400BadRequest);
+                        }
+                    }
+                    else
+                    {
+                        return new ResponseDto(null, "Users are not the same team", false, StatusCodes.Status400BadRequest);
+                    }
                     break;
             }
 

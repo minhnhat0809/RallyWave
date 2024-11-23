@@ -17,4 +17,6 @@ public class UnitOfWork(RallyWaveContext context) : IUnitOfWork
     public IUserSportRepo UserSportRepo { get; } = new UserSportRepo(context);
 
     public IFriendShipRepo FriendShipRepo { get; } = new FriendShipRepo(context);
+
+    public ITeamRepo TeamRepo { get; } = new TeamRepo(context);
 }

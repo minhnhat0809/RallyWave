@@ -1,7 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using UserManagement.DTOs;
-using UserManagement.DTOs.UserDto;
 using UserManagement.DTOs.UserDto.ViewDto;
 using UserManagement.Service;
 

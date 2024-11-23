@@ -37,6 +37,7 @@ builder.Services.AddScoped<ISportRepo, SportRepo>();
 builder.Services.AddScoped<IUserRepo, UserRepo>();
 builder.Services.AddScoped<IUserSportRepo, UserSportRepo>();
 builder.Services.AddScoped<IUserMatchRepo, UserMatchRepo>();
+builder.Services.AddScoped<ITeamRepo, TeamRepo>();
 
 //utilities
 builder.Services.AddScoped(typeof(Validate));
